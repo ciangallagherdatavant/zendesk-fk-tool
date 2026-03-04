@@ -1,7 +1,7 @@
 # FK Analysis Results
 
 ## Sample Article - How to Reset Your Password
-Date tested: [todays date]
+Date tested: [04 March]
 
 SCORE: 8.0
 Reading Level: Middle School
