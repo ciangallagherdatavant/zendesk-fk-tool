@@ -7,15 +7,15 @@
 # 2. Fetches an article by its ID
 # 3. Sends the article to Claude for FK analysis
 # 4. Saves the result to the results folder
+# 5. Automatically updates the dashboard
 # ============================================
 
 import os
 import re
+import glob
 from datetime import datetime
 from dotenv import load_dotenv
 import requests
-import urllib3
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 import anthropic
 
 # ============================================
@@ -143,9 +143,6 @@ def get_zendesk_article(article_id):
     title = data['article']['title']
     body = data['article']['body']
     
-    # Remove HTML tags from the article body
-    # Zendesk stores articles in HTML format
-    # We need plain text for the analysis
     clean_body = re.sub('<[^<]+?>', '', body)
     
     print(f"Article fetched successfully: {title}")
@@ -184,13 +181,11 @@ def analyse_with_claude(title, content):
 def save_result(title, result):
     print(f"\nSaving result...")
     
-    # Create a clean filename from the article title
     clean_title = re.sub(r'[^a-zA-Z0-9\s]', '', title)
     clean_title = clean_title.replace(' ', '-').lower()
     timestamp = datetime.now().strftime('%Y%m%d-%H%M%S')
     filename = f"results/{clean_title}-{timestamp}.md"
     
-    # Write the result file
     with open(filename, 'w') as f:
         f.write(f"# FK Analysis Result\n\n")
         f.write(f"**Article:** {title}\n")
@@ -199,6 +194,237 @@ def save_result(title, result):
     
     print(f"Result saved to: {filename}")
     return filename
+
+# ============================================
+# READ ALL RESULTS
+# Reads every result file in the results
+# folder and extracts the key information
+# This is used to rebuild the dashboard
+# ============================================
+def read_all_results():
+    print("\nReading all result files...")
+    
+    results = []
+    result_files = glob.glob('results/*.md')
+    
+    # Skip the .gitkeep file
+    result_files = [f for f in result_files if '.gitkeep' not in f]
+    
+    for filepath in result_files:
+        with open(filepath, 'r') as f:
+            content = f.read()
+        
+        # Extract article title
+        title_match = re.search(r'\*\*Article:\*\* (.+)', content)
+        title = title_match.group(1).strip() if title_match else 'Unknown Article'
+        
+        # Extract date
+        date_match = re.search(r'\*\*Date:\*\* (.+)', content)
+        date = date_match.group(1).strip() if date_match else 'Unknown Date'
+        
+        # Extract score - looks for SCORE: followed by a number
+        score_match = re.search(r'SCORE:\s*\*?\*?(\d+\.?\d*)', content)
+        score = float(score_match.group(1)) if score_match else 0
+        
+        # Extract reading level
+        level_match = re.search(r'Reading Level:\s*\*?\*?(.+)', content)
+        level = level_match.group(1).strip() if level_match else 'Unknown'
+        
+        results.append({
+            'title': title,
+            'date': date,
+            'score': score,
+            'level': level,
+            'filepath': filepath
+        })
+    
+    # Sort by score highest first
+    results.sort(key=lambda x: x['score'], reverse=True)
+    
+    print(f"Found {len(results)} result files")
+    return results
+
+# ============================================
+# BUILD DASHBOARD
+# Takes all the results and rebuilds
+# the index.html dashboard automatically
+# This runs after every new analysis
+# ============================================
+def build_dashboard(results):
+    print("\nUpdating dashboard...")
+    
+    total = len(results)
+    failing = len([r for r in results if r['score'] > 8])
+    passing = len([r for r in results if r['score'] <= 8])
+    avg_score = round(sum(r['score'] for r in results) / total, 1) if total > 0 else 0
+    today = datetime.now().strftime('%d %B %Y')
+    
+    # Build the article cards HTML
+    cards_html = ""
+    for r in results:
+        status = "fail" if r['score'] > 8 else "pass"
+        status_text = "❌ Needs Improvement" if r['score'] > 8 else "✅ Meets Target"
+        
+        cards_html += f"""
+        <div class="article-card {status}">
+            <div class="card-header">
+                <div class="article-title">{r['title']}</div>
+                <div class="score-badge">{r['score']}</div>
+            </div>
+            <div class="reading-level">{r['level']}</div>
+            <span class="status-pill {status}">{status_text}</span>
+            <div class="card-meta">Tested: {r['date']}</div>
+        </div>
+"""
+    
+    # Build the full HTML page
+    html = f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FK Readability Dashboard - Datavant</title>
+    <style>
+        * {{ margin: 0; padding: 0; box-sizing: border-box; }}
+        body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f7fa; color: #333; }}
+        header {{ background: #1a1a2e; color: white; padding: 20px 40px; display: flex; justify-content: space-between; align-items: center; }}
+        header h1 {{ font-size: 22px; font-weight: 600; }}
+        header p {{ font-size: 13px; opacity: 0.7; margin-top: 4px; }}
+        .target-badge {{ background: #16213e; border: 1px solid #0f3460; padding: 8px 16px; border-radius: 20px; font-size: 13px; }}
+        .stats-bar {{ background: white; padding: 20px 40px; display: flex; gap: 40px; border-bottom: 1px solid #e0e0e0; flex-wrap: wrap; }}
+        .stat {{ text-align: center; }}
+        .stat-number {{ font-size: 28px; font-weight: 700; color: #1a1a2e; }}
+        .stat-label {{ font-size: 12px; color: #888; margin-top: 2px; }}
+        .stat-number.pass {{ color: #27ae60; }}
+        .stat-number.fail {{ color: #e74c3c; }}
+        .main {{ padding: 30px 40px; }}
+        .section-title {{ font-size: 16px; font-weight: 600; margin-bottom: 16px; color: #1a1a2e; }}
+        .articles-grid {{ display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 16px; margin-bottom: 40px; }}
+        .article-card {{ background: white; border-radius: 10px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); border-left: 5px solid #ccc; }}
+        .article-card.pass {{ border-left-color: #27ae60; }}
+        .article-card.fail {{ border-left-color: #e74c3c; }}
+        .card-header {{ display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }}
+        .article-title {{ font-size: 14px; font-weight: 600; color: #1a1a2e; flex: 1; margin-right: 10px; }}
+        .score-badge {{ font-size: 22px; font-weight: 800; color: #e74c3c; }}
+        .score-badge.pass {{ color: #27ae60; }}
+        .reading-level {{ font-size: 12px; color: #888; margin-bottom: 8px; }}
+        .status-pill {{ display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; margin-bottom: 10px; }}
+        .status-pill.pass {{ background: #eafaf1; color: #27ae60; }}
+        .status-pill.fail {{ background: #fdf0ed; color: #e74c3c; }}
+        .card-meta {{ font-size: 11px; color: #aaa; border-top: 1px solid #f0f0f0; padding-top: 8px; margin-top: 8px; }}
+        .analyse-section {{ background: white; border-radius: 10px; padding: 30px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 40px; }}
+        .analyse-section h2 {{ font-size: 16px; font-weight: 600; margin-bottom: 8px; color: #1a1a2e; }}
+        .analyse-section p {{ font-size: 13px; color: #888; margin-bottom: 16px; }}
+        .input-row {{ display: flex; gap: 10px; flex-wrap: wrap; }}
+        .input-row input {{ flex: 1; padding: 10px 16px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; min-width: 200px; }}
+        .input-row button {{ padding: 10px 24px; background: #1a1a2e; color: white; border: none; border-radius: 6px; font-size: 14px; cursor: pointer; font-weight: 600; }}
+        .input-row button:hover {{ background: #0f3460; }}
+        .notice {{ margin-top: 12px; padding: 12px 16px; background: #fff8e1; border-radius: 6px; font-size: 12px; color: #856404; }}
+        .last-updated {{ font-size: 11px; color: #aaa; margin-bottom: 20px; }}
+        footer {{ text-align: center; padding: 20px; font-size: 12px; color: #aaa; border-top: 1px solid #e0e0e0; }}
+    </style>
+</head>
+<body>
+
+<header>
+    <div>
+        <h1>FK Readability Dashboard</h1>
+        <p>Datavant Technical Writing Team</p>
+    </div>
+    <div class="target-badge">Target: Grade 8 or below</div>
+</header>
+
+<div class="stats-bar">
+    <div class="stat">
+        <div class="stat-number">{total}</div>
+        <div class="stat-label">Total Articles Tested</div>
+    </div>
+    <div class="stat">
+        <div class="stat-number fail">{failing}</div>
+        <div class="stat-label">Need Improvement</div>
+    </div>
+    <div class="stat">
+        <div class="stat-number pass">{passing}</div>
+        <div class="stat-label">Passing Grade 8</div>
+    </div>
+    <div class="stat">
+        <div class="stat-number">{avg_score}</div>
+        <div class="stat-label">Average Score</div>
+    </div>
+</div>
+
+<div class="main">
+
+    <div class="analyse-section">
+        <h2>Analyse a New Article</h2>
+        <p>Enter a Zendesk article ID below to run a new FK readability analysis</p>
+        <div class="input-row">
+            <input type="text" id="articleId" placeholder="Enter Zendesk Article ID e.g. 26609721445140" />
+            <button onclick="showInstructions()">Analyse Article</button>
+        </div>
+        <div class="notice" id="instructions" style="display:none">
+            To analyse this article run the following in Terminal:<br><br>
+            <strong>python3 fk_analysis.py</strong><br><br>
+            Then enter your article ID when prompted.
+            The dashboard will update automatically after the analysis completes.
+        </div>
+    </div>
+
+    <div class="section-title">All Article Results</div>
+    <div class="last-updated">Last updated: {today}</div>
+
+    <div class="articles-grid">
+        {cards_html}
+    </div>
+</div>
+
+<footer>
+    FK Readability Dashboard - Datavant Technical Writing Team -
+    Built by Cian Gallagher
+</footer>
+
+<script>
+function showInstructions() {{
+    const id = document.getElementById('articleId').value;
+    if (id) {{
+        document.getElementById('instructions').style.display = 'block';
+    }} else {{
+        alert('Please enter an article ID first');
+    }}
+}}
+</script>
+
+</body>
+</html>"""
+    
+    with open('index.html', 'w') as f:
+        f.write(html)
+    
+    print("Dashboard updated successfully")
+
+# ============================================
+# PUSH TO GITHUB
+# Automatically commits and pushes
+# all changes to GitHub
+# ============================================
+def push_to_github(article_title):
+    print("\nPushing to GitHub...")
+    
+    try:
+        import subprocess
+        
+        subprocess.run(['git', 'add', '.'], check=True)
+        subprocess.run(['git', 'commit', '-m', 
+            f'FK analysis: {article_title} - {datetime.now().strftime("%d %b %Y")}'], 
+            check=True)
+        subprocess.run(['git', 'push'], check=True)
+        
+        print("Successfully pushed to GitHub")
+        print("Dashboard will update in about 2 minutes")
+        
+    except Exception as e:
+        print(f"Could not auto push to GitHub: {e}")
+        print("Please push manually using GitHub Desktop")
 
 # ============================================
 # MAIN FUNCTION
@@ -211,7 +437,6 @@ def main():
     print("  Datavant Technical Writing Team")
     print("========================================")
     
-    # Ask the user for the article ID
     article_id = input("\nEnter the Zendesk article ID: ").strip()
     
     if not article_id.isdigit():
@@ -226,17 +451,23 @@ def main():
     # Step 2: Analyse with Claude
     result = analyse_with_claude(title, content)
     
-    # Step 3: Save result
+    # Step 3: Save result file
     filename = save_result(title, result)
     
-    # Step 4: Print result to screen
+    # Step 4: Read all results and rebuild dashboard
+    all_results = read_all_results()
+    build_dashboard(all_results)
+    
+    # Step 5: Push everything to GitHub
+    push_to_github(title)
+    
+    # Step 6: Print result to screen
     print("\n========================================")
     print("  ANALYSIS COMPLETE")
     print("========================================")
     print(result)
     print(f"\nResult saved to: {filename}")
+    print("\nDashboard has been updated automatically")
 
-# This line means the script only runs
-# when you directly execute it
 if __name__ == "__main__":
     main()
