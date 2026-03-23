@@ -14,6 +14,8 @@ import re
 from datetime import datetime
 from dotenv import load_dotenv
 import requests
+import urllib3
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 import anthropic
 
 # ============================================
@@ -130,7 +132,7 @@ def get_zendesk_article(article_id):
         ZENDESK_API_TOKEN
     )
     
-    response = requests.get(url, auth=auth)
+    response = requests.get(url, auth=auth, verify=False)
     
     if response.status_code != 200:
         print(f"Error fetching article: {response.status_code}")
