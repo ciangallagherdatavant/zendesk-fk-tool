@@ -18,7 +18,8 @@
         .stat-number.pass { color: #27ae60; }
         .stat-number.fail { color: #e74c3c; }
         .main { padding: 30px 40px; }
-        .section-title { font-size: 16px; font-weight: 600; margin-bottom: 16px; color: #1a1a2e; }
+        .section-title { font-size: 16px; font-weight: 600; margin-bottom: 8px; color: #1a1a2e; }
+        .last-updated { font-size: 11px; color: #aaa; margin-bottom: 20px; }
         .articles-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 16px; margin-bottom: 40px; }
         .article-card { background: white; border-radius: 10px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); border-left: 5px solid #ccc; }
         .article-card.pass { border-left-color: #27ae60; }
@@ -28,10 +29,16 @@
         .score-badge { font-size: 22px; font-weight: 800; color: #e74c3c; }
         .score-badge.pass { color: #27ae60; }
         .reading-level { font-size: 12px; color: #888; margin-bottom: 8px; }
-        .status-pill { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; margin-bottom: 10px; }
+        .status-pill { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; margin-bottom: 8px; }
         .status-pill.pass { background: #eafaf1; color: #27ae60; }
         .status-pill.fail { background: #fdf0ed; color: #e74c3c; }
-        .card-meta { font-size: 11px; color: #aaa; border-top: 1px solid #f0f0f0; padding-top: 8px; margin-top: 8px; }
+        .summary-text { font-size: 12px; color: #666; margin-bottom: 8px; line-height: 1.5; }
+        .card-meta { font-size: 11px; color: #aaa; border-top: 1px solid #f0f0f0; padding-top: 8px; margin-top: 8px; margin-bottom: 8px; }
+        .rec-toggle { width: 100%; padding: 8px; background: #f5f7fa; border: 1px solid #e0e0e0; border-radius: 6px; font-size: 12px; cursor: pointer; text-align: left; color: #1a1a2e; font-weight: 600; }
+        .rec-toggle:hover { background: #e8eaf0; }
+        .recommendations { margin-top: 12px; padding: 12px; background: #f9f9f9; border-radius: 6px; border-left: 3px solid #1a1a2e; }
+        .recommendations p { font-size: 12px; color: #444; margin-bottom: 8px; line-height: 1.6; }
+        .recommendations p:last-child { margin-bottom: 0; }
         .analyse-section { background: white; border-radius: 10px; padding: 30px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 40px; }
         .analyse-section h2 { font-size: 16px; font-weight: 600; margin-bottom: 8px; color: #1a1a2e; }
         .analyse-section p { font-size: 13px; color: #888; margin-bottom: 16px; }
@@ -40,7 +47,6 @@
         .input-row button { padding: 10px 24px; background: #1a1a2e; color: white; border: none; border-radius: 6px; font-size: 14px; cursor: pointer; font-weight: 600; }
         .input-row button:hover { background: #0f3460; }
         .notice { margin-top: 12px; padding: 12px 16px; background: #fff8e1; border-radius: 6px; font-size: 12px; color: #856404; }
-        .last-updated { font-size: 11px; color: #aaa; margin-bottom: 20px; }
         footer { text-align: center; padding: 20px; font-size: 12px; color: #aaa; border-top: 1px solid #e0e0e0; }
     </style>
 </head>
@@ -56,7 +62,7 @@
 
 <div class="stats-bar">
     <div class="stat">
-        <div class="stat-number">8</div>
+        <div class="stat-number">6</div>
         <div class="stat-label">Total Articles Tested</div>
     </div>
     <div class="stat">
@@ -64,11 +70,11 @@
         <div class="stat-label">Need Improvement</div>
     </div>
     <div class="stat">
-        <div class="stat-number pass">3</div>
+        <div class="stat-number pass">1</div>
         <div class="stat-label">Passing Grade 8</div>
     </div>
     <div class="stat">
-        <div class="stat-number">9.7</div>
+        <div class="stat-number">11.7</div>
         <div class="stat-label">Average Score</div>
     </div>
 </div>
@@ -83,7 +89,8 @@
             <button onclick="showInstructions()">Analyse Article</button>
         </div>
         <div class="notice" id="instructions" style="display:none">
-            To analyse this article run the following in Terminal:<br><br>
+            To analyse this article open Terminal and run:<br><br>
+            <strong>cd ~/Documents/zendesk-fk-tool/zendesk-fk-tool</strong><br>
             <strong>python3 fk_analysis.py</strong><br><br>
             Then enter your article ID when prompted.
             The dashboard will update automatically after the analysis completes.
@@ -102,7 +109,14 @@
             </div>
             <div class="reading-level">College level</div>
             <span class="status-pill fail">❌ Needs Improvement</span>
+            <div class="summary-text">This content is too complex for most audiences and should be simplified to reach the ideal Grade 8 target.</div>
             <div class="card-meta">Tested: 23 March 2026 09:07</div>
+            <button class="rec-toggle" onclick="toggleRec(0)">
+                View Recommendations ▼
+            </button>
+            <div class="recommendations" id="rec-0" style="display:none">
+                <p>1. Reduce multi-syllable technical terms: Replace complex words with simpler alternatives where possible. For example: "onboarding" → "adding," "distribution" → "delivery," "associated" → "linked," "minimize" → "reduce," "corresponding" → "matching."</p><p>2. Shorten sentence length: Break longer sentences into two shorter ones. Example: "When an associated data table is updated with new records, either incrementally or in a full refresh, the Match run automatically runs to process the newly added records and to distribute DVIDs through the active distribution subscription" (34 words) could become: "When you update a data table with new records, Match runs automatically. It processes the new records and sends out DVIDs through your active subscription" (26 words split into 2 sentences).</p><p>3. Simplify complex explanations: Use more direct language in explanatory sentences. Example: "A data pool is like a bucket of data used to determine DVIDs" works well, but "Match retains old records and their DVID assignments from previous dataset versions to minimize changes to existing DVIDs" (18 words, complex) could be: "Match keeps old records and their DVIDs from earlier versions. This reduces changes to existing DVIDs" (15 words, simpler structure).</p>
+            </div>
         </div>
 
         <div class="article-card fail">
@@ -112,7 +126,14 @@
             </div>
             <div class="reading-level">College level</div>
             <span class="status-pill fail">❌ Needs Improvement</span>
+            <div class="summary-text">This content exceeds the recommended Grade 8 target and requires significant simplification to improve accessibility for a broader audience.</div>
             <div class="card-meta">Tested: 23 March 2026 14:31</div>
+            <button class="rec-toggle" onclick="toggleRec(1)">
+                View Recommendations ▼
+            </button>
+            <div class="recommendations" id="rec-1" style="display:none">
+                <p>1. Break down long, complex sentences - Many sentences exceed 20 words and contain multiple clauses. For example: "A trial tokenization project is created whenever a sponsor uses the Datavant Trials Web Portal or Datavant Trials Desktop Application" could become: "You create a trial tokenization project when you use the Web Portal or Desktop Application."</p><p>2. Replace multi-syllable words with simpler alternatives - Use "use" instead of "utilize," "show" instead of "display," "track" instead of "monitor," "check" instead of "evaluate," and "ready" instead of "readiness." Replace "reconciliation" with "matching" and "associated" with "linked to."</p><p>3. Simplify technical phrases and reduce prepositional phrases - Phrases like "view tokenization counts based on" could be "count by," "designated as admins" could be "who are admins," and "placed in an approval queue for review" could be "sent for approval."</p>
+            </div>
         </div>
 
         <div class="article-card fail">
@@ -122,7 +143,14 @@
             </div>
             <div class="reading-level">College level</div>
             <span class="status-pill fail">❌ Needs Improvement</span>
-            <div class="card-meta">Tested: 23 March 2026 14:33</div>
+            <div class="summary-text">This technical documentation scores at a college reading level, which is too complex for optimal accessibility and should be simplified to reach a broader technical audience.</div>
+            <div class="card-meta">Tested: 23 March 2026 15:39</div>
+            <button class="rec-toggle" onclick="toggleRec(2)">
+                View Recommendations ▼
+            </button>
+            <div class="recommendations" id="rec-2" style="display:none">
+                <p>1. Shorten sentences significantly: Many sentences exceed 25-30 words. Break complex instructions into multiple shorter sentences. For example: "This guide applies to organizations that are implementing Datavant Connect Discovery Cloud in AWS" (14 words) could remain, but longer sentences like "If the S3 bucket where your data is stored uses KMS (AWS Key Management Service) encryption, access to the bucket alone is not sufficient" (25 words) should be split into: "Check if your S3 bucket uses KMS encryption. If it does, bucket access alone is not sufficient."</p><p>2. Reduce multi-syllable words where possible: Replace complex terms with simpler alternatives when they don't sacrifice technical accuracy. Examples: "completing" → "doing", "subsequent" → "next", "associated" → "linked", "establish" → "set up", "configured" → "set up".</p><p>3. Use more active voice and direct commands: Convert passive constructions to active voice. For example: "The defined policies are what is necessary for connecting" becomes "These policies connect" or "Use these policies to connect". Change "you will create" to "create" to make instructions more direct and reduce word count.</p>
+            </div>
         </div>
 
         <div class="article-card fail">
@@ -132,7 +160,14 @@
             </div>
             <div class="reading-level">College level</div>
             <span class="status-pill fail">❌ Needs Improvement</span>
+            <div class="summary-text">This technical documentation scores at college level, indicating it may be too complex for most general audiences and should be simplified to improve accessibility.</div>
             <div class="card-meta">Tested: 23 March 2026 14:32</div>
+            <button class="rec-toggle" onclick="toggleRec(3)">
+                View Recommendations ▼
+            </button>
+            <div class="recommendations" id="rec-3" style="display:none">
+                <p>1. Reduce sentence length: Many sentences exceed 25 words. Break complex sentences into shorter ones. For example: "Datavant's tokenization engine creates tokens, or de-identified patient keys, from different permutations of patient demographics, such as name, date of birth, gender, and social security number" (25 words) could become: "Datavant's tokenization engine creates tokens from patient demographics. These tokens are de-identified patient keys. The engine uses data such as name, date of birth, gender, and social security number."</p><p>2. Simplify technical vocabulary: Replace multi-syllable technical terms with simpler alternatives where possible. Examples: "permutations" → "combinations", "facilitates" → "enables", "specifications" → "specs", "executable permissions" → "run permissions".</p><p>3. Use active voice and direct instructions: Convert passive constructions to active voice. For example: "Any errors will be sent to the console" should become "The system sends errors to the console." Also: "Output files will not contain error tokens" becomes "Output files exclude error tokens."</p>
+            </div>
         </div>
 
         <div class="article-card fail">
@@ -142,17 +177,14 @@
             </div>
             <div class="reading-level">College level</div>
             <span class="status-pill fail">❌ Needs Improvement</span>
+            <div class="summary-text">This text requires college-level reading ability and exceeds the Grade 8 target for technical documentation.</div>
             <div class="card-meta">Tested: 23 March 2026 14:30</div>
-        </div>
-
-        <div class="article-card pass">
-            <div class="card-header">
-                <div class="article-title">Unknown Article</div>
-                <div class="score-badge">8.0</div>
+            <button class="rec-toggle" onclick="toggleRec(4)">
+                View Recommendations ▼
+            </button>
+            <div class="recommendations" id="rec-4" style="display:none">
+                <p>1. Break down complex sentences: The opening sentence contains 32 words with multiple clauses. Split it into 2-3 shorter sentences. For example: "This article is for organizations implementing Datavant Connect Discovery Cloud in AWS. The solution enables pre-sales feasibility assessments and dataset evaluations. It uses the Datavant Connect Web Platform. All data remains securely within each source's AWS environment."</p><p>2. Simplify multi-syllable words: Replace complex terms with simpler alternatives where possible: "implementing" → "setting up", "evaluations" → "reviews", "establishing" → "setting up", "sufficient" → "enough", "potential" → "possible".</p><p>3. Reduce sentence length in the description sections: The sentence "This should provide sufficient information for a potential data consumer to understand what is in the table" (17 words) could become: "Give enough details so users understand what is in the table" (11 words).</p>
             </div>
-            <div class="reading-level">Middle School</div>
-            <span class="status-pill pass">✅ Meets Target</span>
-            <div class="card-meta">Tested: Unknown Date</div>
         </div>
 
         <div class="article-card pass">
@@ -162,17 +194,14 @@
             </div>
             <div class="reading-level">College level</div>
             <span class="status-pill pass">✅ Meets Target</span>
+            <div class="summary-text">This content requires a college-level reading ability, which is above the recommended Grade 8 target for technical documentation.</div>
             <div class="card-meta">Tested: 23 March 2026 15:32</div>
-        </div>
-
-        <div class="article-card pass">
-            <div class="card-header">
-                <div class="article-title">Datavant Partner Program</div>
-                <div class="score-badge">0</div>
+            <button class="rec-toggle" onclick="toggleRec(5)">
+                View Recommendations ▼
+            </button>
+            <div class="recommendations" id="rec-5" style="display:none">
+                <p>1. Break down complex sentences: The opening sentence under "What is the Datavant Partner Program?" is 24 words long with multiple clauses. Split it into two sentences: "The Datavant Partner Program elevates organizations who are most active in our ecosystem. It increases their status and visibility."</p><p>2. Simplify multi-syllable words: Replace complex vocabulary with simpler alternatives:</p><p>- "attained" → "earned" or "reached"</p><p>- "proactive" → "active" or "ready"</p><p>- "enhanced visibility" → "more visibility" or "greater visibility"</p><p>3. Reduce sentence complexity in "How it Works": The sentence "Partner status is attained through a points system based on a combination of three factors" (15 words, complex structure) could become: "Partners earn their status through points. Points come from three factors."</p>
             </div>
-            <div class="reading-level">College level</div>
-            <span class="status-pill pass">✅ Meets Target</span>
-            <div class="card-meta">Tested: 23 March 2026 09:10</div>
         </div>
 
     </div>
@@ -184,6 +213,18 @@
 </footer>
 
 <script>
+function toggleRec(id) {
+    const rec = document.getElementById('rec-' + id);
+    const btn = rec.previousElementSibling;
+    if (rec.style.display === 'none') {
+        rec.style.display = 'block';
+        btn.textContent = 'Hide Recommendations ▲';
+    } else {
+        rec.style.display = 'none';
+        btn.textContent = 'View Recommendations ▼';
+    }
+}
+
 function showInstructions() {
     const id = document.getElementById('articleId').value;
     if (id) {
