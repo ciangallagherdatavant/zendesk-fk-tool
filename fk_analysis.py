@@ -2,28 +2,18 @@
 # FK Readability Analysis Tool
 # Built by Cian Gallagher - Datavant
 # ============================================
-# What this script does:
-# 1. Connects to Zendesk using API credentials
-# 2. Fetches an article by its ID
-# 3. Sends the article to Claude for FK analysis
-# 4. Saves the result to the results folder
-# 5. Automatically updates the dashboard
-# ============================================
 
 import os
 import re
 import glob
+import urllib3
 from datetime import datetime
 from dotenv import load_dotenv
 import requests
 import anthropic
 
-# ============================================
-# LOAD SECRET CREDENTIALS
-# Reads your .env file and loads all
-# your API keys safely into the script
-# Nobody can see these values
-# ============================================
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
 load_dotenv()
 
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
@@ -31,13 +21,6 @@ ZENDESK_SUBDOMAIN = os.getenv("ZENDESK_SUBDOMAIN")
 ZENDESK_EMAIL = os.getenv("ZENDESK_EMAIL")
 ZENDESK_API_TOKEN = os.getenv("ZENDESK_API_TOKEN")
 
-# ============================================
-# YOUR FK ANALYSIS PROMPT
-# This is the brain of the tool
-# Tells Claude exactly what to do
-# Nobody using the tool can edit this
-# It is locked inside the script
-# ============================================
 FK_PROMPT = """
 You are a technical writing assistant that performs 
 Flesch-Kincaid Grade Level (FKGL) readability assessments 
@@ -83,7 +66,7 @@ Only include text that:
 4. Is intended for reader comprehension
 
 ## How to Present Results
-Use this exact format:
+Use this exact format every time:
 
 ---
 FLESCH-KINCAID GRADE LEVEL ANALYSIS
@@ -119,30 +102,21 @@ RECOMMENDATIONS:
 
 # ============================================
 # FETCH ARTICLE FROM ZENDESK
-# Goes into Zendesk and retrieves the
-# article text using the article ID
 # ============================================
 def get_zendesk_article(article_id):
     print(f"\nFetching article {article_id} from Zendesk...")
     
     url = f"https://{ZENDESK_SUBDOMAIN}.zendesk.com/api/v2/help_center/articles/{article_id}"
-    
-    auth = (
-        f"{ZENDESK_EMAIL}/token",
-        ZENDESK_API_TOKEN
-    )
-    
+    auth = (f"{ZENDESK_EMAIL}/token", ZENDESK_API_TOKEN)
     response = requests.get(url, auth=auth, verify=False)
     
     if response.status_code != 200:
         print(f"Error fetching article: {response.status_code}")
-        print(f"Message: {response.text}")
         return None, None
     
     data = response.json()
     title = data['article']['title']
     body = data['article']['body']
-    
     clean_body = re.sub('<[^<]+?>', '', body)
     
     print(f"Article fetched successfully: {title}")
@@ -150,14 +124,11 @@ def get_zendesk_article(article_id):
 
 # ============================================
 # ANALYSE WITH CLAUDE
-# Sends the article text to Claude
-# with your FK prompt and gets score back
 # ============================================
 def analyse_with_claude(title, content):
     print(f"\nSending article to Claude for FK analysis...")
     
     client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
-    
     message = client.messages.create(
         model="claude-sonnet-4-5",
         max_tokens=2000,
@@ -175,8 +146,6 @@ def analyse_with_claude(title, content):
 
 # ============================================
 # SAVE RESULT
-# Saves the FK score result as a file
-# in your results folder automatically
 # ============================================
 def save_result(title, result):
     print(f"\nSaving result...")
@@ -197,18 +166,19 @@ def save_result(title, result):
 
 # ============================================
 # READ ALL RESULTS
-# Reads every result file in the results
-# folder and extracts the key information
-# This is used to rebuild the dashboard
+# Reads every result file and extracts
+# all the key information including
+# recommendations for the dashboard
 # ============================================
 def read_all_results():
     print("\nReading all result files...")
     
     results = []
     result_files = glob.glob('results/*.md')
-    
-    # Skip the .gitkeep file
     result_files = [f for f in result_files if '.gitkeep' not in f]
+    result_files = [f for f in result_files if 'sample-article' not in f]
+    
+    seen_titles = {}
     
     for filepath in result_files:
         with open(filepath, 'r') as f:
@@ -222,33 +192,60 @@ def read_all_results():
         date_match = re.search(r'\*\*Date:\*\* (.+)', content)
         date = date_match.group(1).strip() if date_match else 'Unknown Date'
         
-        # Extract score - looks for SCORE: followed by a number
+        # Extract score
         score_match = re.search(r'SCORE:\s*\*?\*?(\d+\.?\d*)', content)
         score = float(score_match.group(1)) if score_match else 0
         
         # Extract reading level
         level_match = re.search(r'Reading Level:\s*\*?\*?(.+)', content)
         level = level_match.group(1).strip() if level_match else 'Unknown'
+        level = re.sub(r'\*', '', level).strip()
         
-        results.append({
-            'title': title,
-            'date': date,
-            'score': score,
-            'level': level,
-            'filepath': filepath
-        })
+        # Extract summary
+        summary_match = re.search(r'Summary:\s*\*?\*?(.+)', content)
+        summary = summary_match.group(1).strip() if summary_match else ''
+        summary = re.sub(r'\*', '', summary).strip()
+        
+        # Extract recommendations section
+        rec_match = re.search(r'RECOMMENDATIONS:\s*\n(.*?)(?=---|$)', 
+                             content, re.DOTALL)
+        recommendations = rec_match.group(1).strip() if rec_match else ''
+        recommendations = re.sub(r'\*\*', '', recommendations)
+        
+        # If we have seen this title before keep the most recent
+        if title in seen_titles:
+            existing_date = seen_titles[title]['date']
+            if date > existing_date:
+                seen_titles[title] = {
+                    'title': title,
+                    'date': date,
+                    'score': score,
+                    'level': level,
+                    'summary': summary,
+                    'recommendations': recommendations,
+                    'filepath': filepath
+                }
+        else:
+            seen_titles[title] = {
+                'title': title,
+                'date': date,
+                'score': score,
+                'level': level,
+                'summary': summary,
+                'recommendations': recommendations,
+                'filepath': filepath
+            }
     
-    # Sort by score highest first
+    results = list(seen_titles.values())
     results.sort(key=lambda x: x['score'], reverse=True)
     
-    print(f"Found {len(results)} result files")
+    print(f"Found {len(results)} unique articles")
     return results
 
 # ============================================
 # BUILD DASHBOARD
-# Takes all the results and rebuilds
-# the index.html dashboard automatically
-# This runs after every new analysis
+# Rebuilds the full dashboard with
+# expandable recommendation sections
 # ============================================
 def build_dashboard(results):
     print("\nUpdating dashboard...")
@@ -259,11 +256,18 @@ def build_dashboard(results):
     avg_score = round(sum(r['score'] for r in results) / total, 1) if total > 0 else 0
     today = datetime.now().strftime('%d %B %Y')
     
-    # Build the article cards HTML
     cards_html = ""
-    for r in results:
+    for i, r in enumerate(results):
         status = "fail" if r['score'] > 8 else "pass"
         status_text = "❌ Needs Improvement" if r['score'] > 8 else "✅ Meets Target"
+        
+        # Format recommendations as HTML
+        rec_lines = r['recommendations'].split('\n')
+        rec_html = ""
+        for line in rec_lines:
+            line = line.strip()
+            if line:
+                rec_html += f"<p>{line}</p>"
         
         cards_html += f"""
         <div class="article-card {status}">
@@ -273,11 +277,17 @@ def build_dashboard(results):
             </div>
             <div class="reading-level">{r['level']}</div>
             <span class="status-pill {status}">{status_text}</span>
+            <div class="summary-text">{r['summary']}</div>
             <div class="card-meta">Tested: {r['date']}</div>
+            <button class="rec-toggle" onclick="toggleRec({i})">
+                View Recommendations ▼
+            </button>
+            <div class="recommendations" id="rec-{i}" style="display:none">
+                {rec_html}
+            </div>
         </div>
 """
     
-    # Build the full HTML page
     html = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -298,7 +308,8 @@ def build_dashboard(results):
         .stat-number.pass {{ color: #27ae60; }}
         .stat-number.fail {{ color: #e74c3c; }}
         .main {{ padding: 30px 40px; }}
-        .section-title {{ font-size: 16px; font-weight: 600; margin-bottom: 16px; color: #1a1a2e; }}
+        .section-title {{ font-size: 16px; font-weight: 600; margin-bottom: 8px; color: #1a1a2e; }}
+        .last-updated {{ font-size: 11px; color: #aaa; margin-bottom: 20px; }}
         .articles-grid {{ display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 16px; margin-bottom: 40px; }}
         .article-card {{ background: white; border-radius: 10px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); border-left: 5px solid #ccc; }}
         .article-card.pass {{ border-left-color: #27ae60; }}
@@ -308,10 +319,16 @@ def build_dashboard(results):
         .score-badge {{ font-size: 22px; font-weight: 800; color: #e74c3c; }}
         .score-badge.pass {{ color: #27ae60; }}
         .reading-level {{ font-size: 12px; color: #888; margin-bottom: 8px; }}
-        .status-pill {{ display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; margin-bottom: 10px; }}
+        .status-pill {{ display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; margin-bottom: 8px; }}
         .status-pill.pass {{ background: #eafaf1; color: #27ae60; }}
         .status-pill.fail {{ background: #fdf0ed; color: #e74c3c; }}
-        .card-meta {{ font-size: 11px; color: #aaa; border-top: 1px solid #f0f0f0; padding-top: 8px; margin-top: 8px; }}
+        .summary-text {{ font-size: 12px; color: #666; margin-bottom: 8px; line-height: 1.5; }}
+        .card-meta {{ font-size: 11px; color: #aaa; border-top: 1px solid #f0f0f0; padding-top: 8px; margin-top: 8px; margin-bottom: 8px; }}
+        .rec-toggle {{ width: 100%; padding: 8px; background: #f5f7fa; border: 1px solid #e0e0e0; border-radius: 6px; font-size: 12px; cursor: pointer; text-align: left; color: #1a1a2e; font-weight: 600; }}
+        .rec-toggle:hover {{ background: #e8eaf0; }}
+        .recommendations {{ margin-top: 12px; padding: 12px; background: #f9f9f9; border-radius: 6px; border-left: 3px solid #1a1a2e; }}
+        .recommendations p {{ font-size: 12px; color: #444; margin-bottom: 8px; line-height: 1.6; }}
+        .recommendations p:last-child {{ margin-bottom: 0; }}
         .analyse-section {{ background: white; border-radius: 10px; padding: 30px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 40px; }}
         .analyse-section h2 {{ font-size: 16px; font-weight: 600; margin-bottom: 8px; color: #1a1a2e; }}
         .analyse-section p {{ font-size: 13px; color: #888; margin-bottom: 16px; }}
@@ -320,7 +337,6 @@ def build_dashboard(results):
         .input-row button {{ padding: 10px 24px; background: #1a1a2e; color: white; border: none; border-radius: 6px; font-size: 14px; cursor: pointer; font-weight: 600; }}
         .input-row button:hover {{ background: #0f3460; }}
         .notice {{ margin-top: 12px; padding: 12px 16px; background: #fff8e1; border-radius: 6px; font-size: 12px; color: #856404; }}
-        .last-updated {{ font-size: 11px; color: #aaa; margin-bottom: 20px; }}
         footer {{ text-align: center; padding: 20px; font-size: 12px; color: #aaa; border-top: 1px solid #e0e0e0; }}
     </style>
 </head>
@@ -363,7 +379,8 @@ def build_dashboard(results):
             <button onclick="showInstructions()">Analyse Article</button>
         </div>
         <div class="notice" id="instructions" style="display:none">
-            To analyse this article run the following in Terminal:<br><br>
+            To analyse this article open Terminal and run:<br><br>
+            <strong>cd ~/Documents/zendesk-fk-tool/zendesk-fk-tool</strong><br>
             <strong>python3 fk_analysis.py</strong><br><br>
             Then enter your article ID when prompted.
             The dashboard will update automatically after the analysis completes.
@@ -384,6 +401,18 @@ def build_dashboard(results):
 </footer>
 
 <script>
+function toggleRec(id) {{
+    const rec = document.getElementById('rec-' + id);
+    const btn = rec.previousElementSibling;
+    if (rec.style.display === 'none') {{
+        rec.style.display = 'block';
+        btn.textContent = 'Hide Recommendations ▲';
+    }} else {{
+        rec.style.display = 'none';
+        btn.textContent = 'View Recommendations ▼';
+    }}
+}}
+
 function showInstructions() {{
     const id = document.getElementById('articleId').value;
     if (id) {{
@@ -404,32 +433,25 @@ function showInstructions() {{
 
 # ============================================
 # PUSH TO GITHUB
-# Automatically commits and pushes
-# all changes to GitHub
 # ============================================
 def push_to_github(article_title):
     print("\nPushing to GitHub...")
     
     try:
         import subprocess
-        
         subprocess.run(['git', 'add', '.'], check=True)
         subprocess.run(['git', 'commit', '-m', 
             f'FK analysis: {article_title} - {datetime.now().strftime("%d %b %Y")}'], 
             check=True)
         subprocess.run(['git', 'push'], check=True)
-        
         print("Successfully pushed to GitHub")
         print("Dashboard will update in about 2 minutes")
-        
     except Exception as e:
-        print(f"Could not auto push to GitHub: {e}")
+        print(f"Could not auto push: {e}")
         print("Please push manually using GitHub Desktop")
 
 # ============================================
 # MAIN FUNCTION
-# This runs when you start the script
-# Asks for article ID then runs everything
 # ============================================
 def main():
     print("========================================")
@@ -454,20 +476,20 @@ def main():
     # Step 3: Save result file
     filename = save_result(title, result)
     
-    # Step 4: Read all results and rebuild dashboard
+    # Step 4: Rebuild dashboard
     all_results = read_all_results()
     build_dashboard(all_results)
     
-    # Step 5: Push everything to GitHub
+    # Step 5: Push to GitHub
     push_to_github(title)
     
-    # Step 6: Print result to screen
+    # Step 6: Print result
     print("\n========================================")
     print("  ANALYSIS COMPLETE")
     print("========================================")
     print(result)
     print(f"\nResult saved to: {filename}")
-    print("\nDashboard has been updated automatically")
+    print("\nDashboard updated and pushed to GitHub automatically")
 
 if __name__ == "__main__":
     main()
