@@ -22,17 +22,17 @@ ZENDESK_EMAIL = os.getenv("ZENDESK_EMAIL")
 ZENDESK_API_TOKEN = os.getenv("ZENDESK_API_TOKEN")
 
 FK_PROMPT = """
-You are a technical writing assistant that performs 
-Flesch-Kincaid Grade Level (FKGL) readability assessments 
+You are a technical writing assistant that performs
+Flesch-Kincaid Grade Level (FKGL) readability assessments
 on Zendesk help content.
 
-You help a technical writing team ensure their documentation 
+You help a technical writing team ensure their documentation
 is clear and accessible to their intended audience.
 
 ## What is Flesch-Kincaid Grade Level
-The Flesch-Kincaid Grade Level formula measures how easy or 
-hard text is to read. It looks at average sentence length and 
-average number of syllables per word. The result maps to a US 
+The Flesch-Kincaid Grade Level formula measures how easy or
+hard text is to read. It looks at average sentence length and
+average number of syllables per word. The result maps to a US
 school grade level.
 
 Reading level guide:
@@ -45,7 +45,7 @@ Reading level guide:
 Technical writing should ideally target Grade 8 or below.
 
 The formula is:
-(0.39 x average words per sentence) + 
+(0.39 x average words per sentence) +
 (11.8 x average syllables per word) - 15.59
 
 ## EXCLUSION CRITERIA
@@ -103,27 +103,22 @@ RECOMMENDATIONS:
 
 def get_zendesk_article(article_id):
     print(f"\nFetching article {article_id} from Zendesk...")
-
     url = f"https://{ZENDESK_SUBDOMAIN}.zendesk.com/api/v2/help_center/articles/{article_id}"
     auth = (f"{ZENDESK_EMAIL}/token", ZENDESK_API_TOKEN)
     response = requests.get(url, auth=auth, verify=False)
-
     if response.status_code != 200:
         print(f"Error fetching article: {response.status_code}")
         return None, None
-
     data = response.json()
     title = data['article']['title']
     body = data['article']['body']
     clean_body = re.sub('<[^<]+?>', '', body)
-
     print(f"Article fetched successfully: {title}")
     return title, clean_body
 
 
 def analyse_with_claude(title, content):
     print(f"\nSending article to Claude for FK analysis...")
-
     client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
     message = client.messages.create(
         model="claude-sonnet-4-5",
@@ -135,7 +130,6 @@ def analyse_with_claude(title, content):
             }
         ]
     )
-
     result = message.content[0].text
     print("Analysis complete")
     return result
@@ -143,52 +137,40 @@ def analyse_with_claude(title, content):
 
 def save_result(title, result):
     print(f"\nSaving result...")
-
     clean_title = re.sub(r'[^a-zA-Z0-9\s]', '', title)
     clean_title = clean_title.replace(' ', '-').lower()
     timestamp = datetime.now().strftime('%Y%m%d-%H%M%S')
     filename = f"results/{clean_title}-{timestamp}.md"
-
     with open(filename, 'w') as f:
         f.write(f"# FK Analysis Result\n\n")
         f.write(f"**Article:** {title}\n")
         f.write(f"**Date:** {datetime.now().strftime('%d %B %Y %H:%M')}\n\n")
         f.write(result)
-
     print(f"Result saved to: {filename}")
     return filename
 
 
 def read_all_results():
     print("\nReading all result files...")
-
     result_files = glob.glob('results/*.md')
     result_files = [f for f in result_files if '.gitkeep' not in f]
     result_files = [f for f in result_files if 'sample-article' not in f]
-
     seen_titles = {}
-
     for filepath in result_files:
         with open(filepath, 'r') as f:
             content = f.read()
-
         title_match = re.search(r'\*\*Article:\*\* (.+)', content)
         title = title_match.group(1).strip() if title_match else 'Unknown Article'
-
         date_match = re.search(r'\*\*Date:\*\* (.+)', content)
         date = date_match.group(1).strip() if date_match else 'Unknown Date'
-
         score_match = re.search(r'\*?\*?SCORE:\*?\*?\s*\*?\*?(\d+\.?\d*)', content)
         score = float(score_match.group(1)) if score_match else 0
-
         level_match = re.search(r'Reading Level:\s*\*?\*?(.+)', content)
         level = level_match.group(1).strip() if level_match else 'Unknown'
         level = re.sub(r'\*', '', level).strip()
-
         summary_match = re.search(r'Summary:\s*\*?\*?(.+)', content)
         summary = summary_match.group(1).strip() if summary_match else ''
         summary = re.sub(r'\*', '', summary).strip()
-
         rec_match = re.search(
             r'RECOMMENDATIONS:\s*\n(.*?)(?=---|$)',
             content,
@@ -196,7 +178,6 @@ def read_all_results():
         )
         recommendations = rec_match.group(1).strip() if rec_match else ''
         recommendations = re.sub(r'\*\*', '', recommendations)
-
         if title in seen_titles:
             existing_date = seen_titles[title]['date']
             if date > existing_date:
@@ -219,17 +200,14 @@ def read_all_results():
                 'recommendations': recommendations,
                 'filepath': filepath
             }
-
     results = list(seen_titles.values())
     results.sort(key=lambda x: x['score'], reverse=True)
-
     print(f"Found {len(results)} unique articles")
     return results
 
 
 def build_dashboard(results):
     print("\nUpdating dashboard...")
-
     total = len(results)
     failing = len([r for r in results if r['score'] > 8])
     passing = len([r for r in results if r['score'] <= 8])
@@ -242,14 +220,12 @@ def build_dashboard(results):
     for i, r in enumerate(results):
         status = "fail" if r['score'] > 8 else "pass"
         status_text = "❌ Needs Improvement" if r['score'] > 8 else "✅ Meets Target"
-
         rec_lines = r['recommendations'].split('\n')
         rec_html = ""
         for line in rec_lines:
             line = line.strip()
             if line:
                 rec_html += f"<p>{line}</p>"
-
         cards_html += f"""
         <div class="article-card {status}">
             <div class="card-header">
@@ -369,6 +345,7 @@ def build_dashboard(results):
                 <li style="margin-bottom:6px;">Wait about 30 seconds for it to complete</li>
                 <li style="margin-bottom:6px;">Come back to this page and refresh</li>
                 <li style="margin-bottom:6px;">Your new score will appear automatically</li>
+                <li style="margin-bottom:6px;color:#856404;"><strong>Note:</strong> The dashboard can take 2 to 3 minutes to update after the action completes. If you do not see your result yet simply refresh the page again.</li>
             </ol>
         </div>
     </div>
@@ -430,13 +407,11 @@ function toggleRec(id) {{
 
     with open('index.html', 'w') as f:
         f.write(html)
-
     print("Dashboard updated successfully")
 
 
 def push_to_github(article_title):
     print("\nPushing to GitHub...")
-
     try:
         import subprocess
         subprocess.run(['git', 'add', '.'], check=True)
