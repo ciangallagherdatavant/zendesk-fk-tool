@@ -46,9 +46,7 @@
         .input-row input { flex: 1; padding: 10px 16px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; min-width: 200px; }
         .input-row button { padding: 10px 24px; background: #1a1a2e; color: white; border: none; border-radius: 6px; font-size: 14px; cursor: pointer; font-weight: 600; }
         .input-row button:hover { background: #0f3460; }
-        .notice { margin-top: 16px; padding: 16px; background: #f0f7ff; border-radius: 8px; border-left: 4px solid #1a1a2e; font-size: 13px; color: #333; line-height: 1.8; }
-        .steps { margin-top: 8px; padding-left: 4px; }
-        .steps li { margin-bottom: 6px; }
+        .notice { margin-top: 12px; padding: 12px 16px; background: #fff8e1; border-radius: 6px; font-size: 12px; color: #856404; }
         footer { text-align: center; padding: 20px; font-size: 12px; color: #aaa; border-top: 1px solid #e0e0e0; }
     </style>
 </head>
@@ -64,11 +62,11 @@
 
 <div class="stats-bar">
     <div class="stat">
-        <div class="stat-number">6</div>
+        <div class="stat-number">7</div>
         <div class="stat-label">Total Articles Tested</div>
     </div>
     <div class="stat">
-        <div class="stat-number fail">6</div>
+        <div class="stat-number fail">7</div>
         <div class="stat-label">Need Improvement</div>
     </div>
     <div class="stat">
@@ -76,7 +74,7 @@
         <div class="stat-label">Passing Grade 8</div>
     </div>
     <div class="stat">
-        <div class="stat-number">14.0</div>
+        <div class="stat-number">13.9</div>
         <div class="stat-label">Average Score</div>
     </div>
 </div>
@@ -85,22 +83,17 @@
 
     <div class="analyse-section">
         <h2>Analyse a New Article</h2>
-        <p>Enter a Zendesk article ID below and click Analyse Article to run a new FK readability analysis</p>
+        <p>Enter a Zendesk article ID below to run a new FK readability analysis</p>
         <div class="input-row">
             <input type="text" id="articleId" placeholder="Enter Zendesk Article ID e.g. 26609721445140" />
-            <button onclick="analyseArticle()">Analyse Article</button>
+            <button onclick="showInstructions()">Analyse Article</button>
         </div>
         <div class="notice" id="instructions" style="display:none">
-            <strong>GitHub Actions is opening in a new tab</strong><br><br>
-            Your article ID has been copied to your clipboard. Follow these steps:<br><br>
-            <ol class="steps">
-                <li>In the new tab click the green <strong>Run workflow</strong> button</li>
-                <li>Paste your article ID into the box</li>
-                <li>Click the green <strong>Run workflow</strong> button</li>
-                <li>Wait about 30 seconds for it to complete</li>
-                <li>Come back to this page and refresh</li>
-                <li>Your new score will appear automatically</li>
-            </ol>
+            To analyse this article open Terminal and run:<br><br>
+            <strong>cd ~/Documents/zendesk-fk-tool/zendesk-fk-tool</strong><br>
+            <strong>python3 fk_analysis.py</strong><br><br>
+            Then enter your article ID when prompted.
+            The dashboard will update automatically after the analysis completes.
         </div>
     </div>
 
@@ -108,41 +101,7 @@
     <div class="last-updated">Last updated: 30 March 2026</div>
 
     <div class="articles-grid">
-
-        <div class="article-card fail">
-            <div class="card-header">
-                <div class="article-title">Datavant ID (DVID) Change Management</div>
-                <div class="score-badge">14.3</div>
-            </div>
-            <div class="reading-level">College level</div>
-            <span class="status-pill fail">❌ Needs Improvement</span>
-            <div class="summary-text">This content is too complex for most audiences and should be simplified to reach the ideal Grade 8 target.</div>
-            <div class="card-meta">Tested: 23 March 2026 09:07</div>
-            <button class="rec-toggle" onclick="toggleRec(0)">View Recommendations ▼</button>
-            <div class="recommendations" id="rec-0" style="display:none">
-                <p>1. Reduce multi-syllable technical terms: Replace complex words with simpler alternatives where possible. For example: onboarding to adding, distribution to delivery, associated to linked, minimize to reduce, corresponding to matching.</p>
-                <p>2. Shorten sentence length: Break longer sentences into two shorter ones.</p>
-                <p>3. Simplify complex explanations: Use more direct language in explanatory sentences.</p>
-            </div>
-        </div>
-
-        <div class="article-card fail">
-            <div class="card-header">
-                <div class="article-title">Trial Tokenization Project Dashboard</div>
-                <div class="score-badge">14.3</div>
-            </div>
-            <div class="reading-level">College level</div>
-            <span class="status-pill fail">❌ Needs Improvement</span>
-            <div class="summary-text">This content exceeds the recommended Grade 8 target and requires significant simplification to improve accessibility for a broader audience.</div>
-            <div class="card-meta">Tested: 23 March 2026 14:31</div>
-            <button class="rec-toggle" onclick="toggleRec(1)">View Recommendations ▼</button>
-            <div class="recommendations" id="rec-1" style="display:none">
-                <p>1. Break down long complex sentences - Many sentences exceed 20 words and contain multiple clauses.</p>
-                <p>2. Replace multi-syllable words with simpler alternatives - Use use instead of utilize, show instead of display, track instead of monitor.</p>
-                <p>3. Simplify technical phrases and reduce prepositional phrases.</p>
-            </div>
-        </div>
-
+        
         <div class="article-card fail">
             <div class="card-header">
                 <div class="article-title">Configure an IAM Role and Permissions for Discovery Cloud</div>
@@ -152,28 +111,11 @@
             <span class="status-pill fail">❌ Needs Improvement</span>
             <div class="summary-text">This documentation is written at a college reading level, which is too complex for most audiences and should be simplified for better accessibility.</div>
             <div class="card-meta">Tested: 23 March 2026 14:33</div>
-            <button class="rec-toggle" onclick="toggleRec(2)">View Recommendations ▼</button>
-            <div class="recommendations" id="rec-2" style="display:none">
-                <p>1. Shorten sentences significantly - Many sentences exceed 20 words and contain multiple clauses.</p>
-                <p>2. Replace multi-syllable technical terms with simpler alternatives or add brief definitions.</p>
-                <p>3. Simplify conditional and compound sentences.</p>
-            </div>
-        </div>
-
-        <div class="article-card fail">
-            <div class="card-header">
-                <div class="article-title">International Tokenization Guide</div>
-                <div class="score-badge">13.8</div>
-            </div>
-            <div class="reading-level">College level</div>
-            <span class="status-pill fail">❌ Needs Improvement</span>
-            <div class="summary-text">This technical documentation scores at college level, indicating it may be too complex for most general audiences and should be simplified to improve accessibility.</div>
-            <div class="card-meta">Tested: 23 March 2026 14:32</div>
-            <button class="rec-toggle" onclick="toggleRec(3)">View Recommendations ▼</button>
-            <div class="recommendations" id="rec-3" style="display:none">
-                <p>1. Reduce sentence length - Many sentences exceed 25 words. Break complex sentences into shorter ones.</p>
-                <p>2. Simplify technical vocabulary - Replace multi-syllable technical terms with simpler alternatives where possible.</p>
-                <p>3. Use active voice and direct instructions - Convert passive constructions to active voice.</p>
+            <button class="rec-toggle" onclick="toggleRec(0)">
+                View Recommendations ▼
+            </button>
+            <div class="recommendations" id="rec-0" style="display:none">
+                <p>1. Shorten sentences significantly: Many sentences exceed 20 words and contain multiple clauses. For example, "This guide applies to organizations that are implementing Datavant Connect Discovery Cloud in AWS" (14 words) could be "This guide is for organizations implementing Discovery Cloud in AWS" (10 words). Break complex sentences into two shorter ones.</p><p>2. Replace multi-syllable technical terms with simpler alternatives or add brief definitions: Words like "prerequisites" (4 syllables), "implementation" (5 syllables), "feasibility" (5 syllables), and "subsequent" (3 syllables) increase complexity. Use "requirements," "setup," "testing," and "next" instead.</p><p>3. Simplify conditional and compound sentences: Sentences like "If you are interested in this Datavant solution, please reach out to your Customer Success Lead or cloud-integrations@datavant.com" contain dependencies and multiple concepts. Split into: "Are you interested in this solution? Contact your Customer Success Lead. You can also email cloud-integrations@datavant.com."</p>
             </div>
         </div>
 
@@ -186,11 +128,62 @@
             <span class="status-pill fail">❌ Needs Improvement</span>
             <div class="summary-text">This content requires a college-level reading ability, which is above the recommended Grade 8 target for technical documentation.</div>
             <div class="card-meta">Tested: 23 March 2026 15:32</div>
-            <button class="rec-toggle" onclick="toggleRec(4)">View Recommendations ▼</button>
+            <button class="rec-toggle" onclick="toggleRec(1)">
+                View Recommendations ▼
+            </button>
+            <div class="recommendations" id="rec-1" style="display:none">
+                <p>1. Break down complex sentences: The opening sentence under "What is the Datavant Partner Program?" is 24 words long with multiple clauses. Split it into two sentences: "The Datavant Partner Program elevates organizations who are most active in our ecosystem. It increases their status and visibility."</p><p>2. Simplify multi-syllable words: Replace complex vocabulary with simpler alternatives:</p><p>- "attained" → "earned" or "reached"</p><p>- "proactive" → "active" or "ready"</p><p>- "enhanced visibility" → "more visibility" or "greater visibility"</p><p>3. Reduce sentence complexity in "How it Works": The sentence "Partner status is attained through a points system based on a combination of three factors" (15 words, complex structure) could become: "Partners earn their status through points. Points come from three factors."</p>
+            </div>
+        </div>
+
+        <div class="article-card fail">
+            <div class="card-header">
+                <div class="article-title">Trial Tokenization Project Dashboard</div>
+                <div class="score-badge">14.3</div>
+            </div>
+            <div class="reading-level">College level</div>
+            <span class="status-pill fail">❌ Needs Improvement</span>
+            <div class="summary-text">This content exceeds the recommended Grade 8 target and requires significant simplification to improve accessibility for a broader audience.</div>
+            <div class="card-meta">Tested: 23 March 2026 14:31</div>
+            <button class="rec-toggle" onclick="toggleRec(2)">
+                View Recommendations ▼
+            </button>
+            <div class="recommendations" id="rec-2" style="display:none">
+                <p>1. Break down long, complex sentences - Many sentences exceed 20 words and contain multiple clauses. For example: "A trial tokenization project is created whenever a sponsor uses the Datavant Trials Web Portal or Datavant Trials Desktop Application" could become: "You create a trial tokenization project when you use the Web Portal or Desktop Application."</p><p>2. Replace multi-syllable words with simpler alternatives - Use "use" instead of "utilize," "show" instead of "display," "track" instead of "monitor," "check" instead of "evaluate," and "ready" instead of "readiness." Replace "reconciliation" with "matching" and "associated" with "linked to."</p><p>3. Simplify technical phrases and reduce prepositional phrases - Phrases like "view tokenization counts based on" could be "count by," "designated as admins" could be "who are admins," and "placed in an approval queue for review" could be "sent for approval."</p>
+            </div>
+        </div>
+
+        <div class="article-card fail">
+            <div class="card-header">
+                <div class="article-title">Datavant ID (DVID) Change Management</div>
+                <div class="score-badge">14.3</div>
+            </div>
+            <div class="reading-level">College level</div>
+            <span class="status-pill fail">❌ Needs Improvement</span>
+            <div class="summary-text">This content is too complex for most audiences and should be simplified to reach the ideal Grade 8 target.</div>
+            <div class="card-meta">Tested: 23 March 2026 09:07</div>
+            <button class="rec-toggle" onclick="toggleRec(3)">
+                View Recommendations ▼
+            </button>
+            <div class="recommendations" id="rec-3" style="display:none">
+                <p>1. Reduce multi-syllable technical terms: Replace complex words with simpler alternatives where possible. For example: "onboarding" → "adding," "distribution" → "delivery," "associated" → "linked," "minimize" → "reduce," "corresponding" → "matching."</p><p>2. Shorten sentence length: Break longer sentences into two shorter ones. Example: "When an associated data table is updated with new records, either incrementally or in a full refresh, the Match run automatically runs to process the newly added records and to distribute DVIDs through the active distribution subscription" (34 words) could become: "When you update a data table with new records, Match runs automatically. It processes the new records and sends out DVIDs through your active subscription" (26 words split into 2 sentences).</p><p>3. Simplify complex explanations: Use more direct language in explanatory sentences. Example: "A data pool is like a bucket of data used to determine DVIDs" works well, but "Match retains old records and their DVID assignments from previous dataset versions to minimize changes to existing DVIDs" (18 words, complex) could be: "Match keeps old records and their DVIDs from earlier versions. This reduces changes to existing DVIDs" (15 words, simpler structure).</p>
+            </div>
+        </div>
+
+        <div class="article-card fail">
+            <div class="card-header">
+                <div class="article-title">International Tokenization Guide</div>
+                <div class="score-badge">13.8</div>
+            </div>
+            <div class="reading-level">College level</div>
+            <span class="status-pill fail">❌ Needs Improvement</span>
+            <div class="summary-text">This technical documentation scores at college level, indicating it may be too complex for most general audiences and should be simplified to improve accessibility.</div>
+            <div class="card-meta">Tested: 23 March 2026 14:32</div>
+            <button class="rec-toggle" onclick="toggleRec(4)">
+                View Recommendations ▼
+            </button>
             <div class="recommendations" id="rec-4" style="display:none">
-                <p>1. Break down complex sentences - The opening sentence is 24 words long with multiple clauses. Split into two sentences.</p>
-                <p>2. Simplify multi-syllable words - Replace attained with earned, proactive with active, enhanced visibility with more visibility.</p>
-                <p>3. Reduce sentence complexity in How it Works section.</p>
+                <p>1. Reduce sentence length: Many sentences exceed 25 words. Break complex sentences into shorter ones. For example: "Datavant's tokenization engine creates tokens, or de-identified patient keys, from different permutations of patient demographics, such as name, date of birth, gender, and social security number" (25 words) could become: "Datavant's tokenization engine creates tokens from patient demographics. These tokens are de-identified patient keys. The engine uses data such as name, date of birth, gender, and social security number."</p><p>2. Simplify technical vocabulary: Replace multi-syllable technical terms with simpler alternatives where possible. Examples: "permutations" → "combinations", "facilitates" → "enables", "specifications" → "specs", "executable permissions" → "run permissions".</p><p>3. Use active voice and direct instructions: Convert passive constructions to active voice. For example: "Any errors will be sent to the console" should become "The system sends errors to the console." Also: "Output files will not contain error tokens" becomes "Output files exclude error tokens."</p>
             </div>
         </div>
 
@@ -203,11 +196,28 @@
             <span class="status-pill fail">❌ Needs Improvement</span>
             <div class="summary-text">This text requires college-level reading ability and exceeds the Grade 8 target for technical documentation.</div>
             <div class="card-meta">Tested: 23 March 2026 14:30</div>
-            <button class="rec-toggle" onclick="toggleRec(5)">View Recommendations ▼</button>
+            <button class="rec-toggle" onclick="toggleRec(5)">
+                View Recommendations ▼
+            </button>
             <div class="recommendations" id="rec-5" style="display:none">
-                <p>1. Break down complex sentences - The opening sentence contains 32 words with multiple clauses. Split into 2-3 shorter sentences.</p>
-                <p>2. Simplify multi-syllable words - Replace implementing with setting up, evaluations with reviews, establishing with setting up.</p>
-                <p>3. Reduce sentence length in the description sections.</p>
+                <p>1. Break down complex sentences: The opening sentence contains 32 words with multiple clauses. Split it into 2-3 shorter sentences. For example: "This article is for organizations implementing Datavant Connect Discovery Cloud in AWS. The solution enables pre-sales feasibility assessments and dataset evaluations. It uses the Datavant Connect Web Platform. All data remains securely within each source's AWS environment."</p><p>2. Simplify multi-syllable words: Replace complex terms with simpler alternatives where possible: "implementing" → "setting up", "evaluations" → "reviews", "establishing" → "setting up", "sufficient" → "enough", "potential" → "possible".</p><p>3. Reduce sentence length in the description sections: The sentence "This should provide sufficient information for a potential data consumer to understand what is in the table" (17 words) could become: "Give enough details so users understand what is in the table" (11 words).</p>
+            </div>
+        </div>
+
+        <div class="article-card fail">
+            <div class="card-header">
+                <div class="article-title">Token Selection Rationale</div>
+                <div class="score-badge">13.2</div>
+            </div>
+            <div class="reading-level">College level</div>
+            <span class="status-pill fail">❌ Needs Improvement</span>
+            <div class="summary-text">This content is written at a college/graduate level (Grade 13.2), which exceeds the ideal Grade 8 target for technical documentation and may be difficult for general audiences to understand.</div>
+            <div class="card-meta">Tested: 30 March 2026 10:25</div>
+            <button class="rec-toggle" onclick="toggleRec(6)">
+                View Recommendations ▼
+            </button>
+            <div class="recommendations" id="rec-6" style="display:none">
+                <p>Since this content scores above Grade 8, here are three specific suggestions to improve readability:</p><p>1. Reduce multi-syllable technical terms: Replace or define complex words like "deterministic" (5 syllables), "probabilistic" (5 syllables), "standardization" (5 syllables), and "statistician" (4 syllables) on first use. Consider: "Deterministic tokens (tokens based on unique values)" or use simpler alternatives where possible.</p><p>2. Shorten sentence length: Your average sentence length is 14 words, which is reasonable, but several sentences exceed 20 words. Break down complex sentences, especially those with multiple clauses. For example: "Different tokens produce different false positive and false negative rates when used to match records across tables" (17 words) could become: "Different tokens produce different error rates. These errors occur when matching records across tables." (14 words split into 2 shorter sentences).</p><p>3. Simplify compound concepts: Many sentences combine multiple technical concepts. For example: "Fuzzy standardization, however, is more flexible" contains three concepts (fuzzy, standardization, flexibility). Consider adding brief explanatory phrases or breaking into smaller chunks: "Fuzzy standardization works differently. It is more flexible."</p>
             </div>
         </div>
 
@@ -220,32 +230,6 @@
 </footer>
 
 <script>
-function analyseArticle() {
-    const id = document.getElementById('articleId').value.trim();
-    if (!id) {
-        alert('Please enter a Zendesk Article ID first');
-        return;
-    }
-
-    navigator.clipboard.writeText(id).then(function() {
-        document.getElementById('instructions').style.display = 'block';
-        setTimeout(function() {
-            window.open(
-                'https://github.com/ciangallagherdatavant/zendesk-fk-tool/actions/workflows/analyse.yml',
-                '_blank'
-            );
-        }, 1000);
-    }).catch(function() {
-        document.getElementById('instructions').style.display = 'block';
-        setTimeout(function() {
-            window.open(
-                'https://github.com/ciangallagherdatavant/zendesk-fk-tool/actions/workflows/analyse.yml',
-                '_blank'
-            );
-        }, 1000);
-    });
-}
-
 function toggleRec(id) {
     const rec = document.getElementById('rec-' + id);
     const btn = rec.previousElementSibling;
@@ -255,6 +239,15 @@ function toggleRec(id) {
     } else {
         rec.style.display = 'none';
         btn.textContent = 'View Recommendations ▼';
+    }
+}
+
+function showInstructions() {
+    const id = document.getElementById('articleId').value;
+    if (id) {
+        document.getElementById('instructions').style.display = 'block';
+    } else {
+        alert('Please enter an article ID first');
     }
 }
 </script>
