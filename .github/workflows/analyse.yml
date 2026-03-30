@@ -1,0 +1,53 @@
+name: FK Readability Analysis
+
+on:
+  workflow_dispatch:
+    inputs:
+      article_id:
+        description: 'Zendesk Article ID'
+        required: true
+        type: string
+
+jobs:
+  analyse:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install anthropic requests python-dotenv gitpython
+
+      - name: Run FK Analysis
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          ZENDESK_SUBDOMAIN: ${{ secrets.ZENDESK_SUBDOMAIN }}
+          ZENDESK_EMAIL: ${{ secrets.ZENDESK_EMAIL }}
+          ZENDESK_API_TOKEN: ${{ secrets.ZENDESK_API_TOKEN }}
+        run: |
+          python3 -c "
+          import os
+          os.environ['ARTICLE_ID'] = '${{ github.event.inputs.article_id }}'
+          from fk_analysis import get_zendesk_article, analyse_with_claude, save_result, read_all_results, build_dashboard
+          title, content = get_zendesk_article('${{ github.event.inputs.article_id }}')
+          if title:
+              result = analyse_with_claude(title, content)
+              save_result(title, result)
+              results = read_all_results()
+              build_dashboard(results)
+          "
+
+      - name: Commit and push results
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add .
+          git diff --staged --quiet || git commit -m "FK analysis via GitHub Actions"
+          git push
