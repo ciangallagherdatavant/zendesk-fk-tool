@@ -42,7 +42,7 @@ Reading level guide:
 - Grade 11 to 12 = High School Advanced, becoming complex
 - Grade 13 and above = College level, too complex for most audiences
 
-Technical writing should ideally target Grade 8 or below.
+Technical writing should ideally target Grade 12 or below.
 
 The formula is:
 (0.39 x average words per sentence) +
@@ -95,8 +95,8 @@ CONTENT EXCLUDED FROM SCORING:
 - Product names noted: [list any found]
 
 RECOMMENDATIONS:
-[If Grade 8 or below: confirm content meets target]
-[If above Grade 8: give 3 specific suggestions]
+[If Grade 12 or below: confirm content meets target]
+[If above Grade 12: give 3 specific suggestions]
 ---
 """
 
@@ -206,11 +206,21 @@ def read_all_results():
     return results
 
 
+def get_status(score):
+    if score <= 12.0:
+        return 'good', '✅ Meets Target', '#27ae60'
+    elif score <= 14.9:
+        return 'warning', '⚠️ Needs Improvement', '#f39c12'
+    else:
+        return 'bad', '🔴 Needs Significant Work', '#e74c3c'
+
+
 def build_dashboard(results):
     print("\nUpdating dashboard...")
     total = len(results)
-    failing = len([r for r in results if r['score'] > 8])
-    passing = len([r for r in results if r['score'] <= 8])
+    good_count = len([r for r in results if r['score'] <= 12.0])
+    warning_count = len([r for r in results if 12.0 < r['score'] <= 14.9])
+    bad_count = len([r for r in results if r['score'] > 14.9])
     avg_score = round(
         sum(r['score'] for r in results) / total, 1
     ) if total > 0 else 0
@@ -218,8 +228,7 @@ def build_dashboard(results):
 
     cards_html = ""
     for i, r in enumerate(results):
-        status = "fail" if r['score'] > 8 else "pass"
-        status_text = "❌ Needs Improvement" if r['score'] > 8 else "✅ Meets Target"
+        status, status_text, status_colour = get_status(r['score'])
         rec_lines = r['recommendations'].split('\n')
         rec_html = ""
         for line in rec_lines:
@@ -230,7 +239,7 @@ def build_dashboard(results):
         <div class="article-card {status}">
             <div class="card-header">
                 <div class="article-title">{r['title']}</div>
-                <div class="score-badge">{r['score']}</div>
+                <div class="score-badge {status}">{r['score']}</div>
             </div>
             <div class="reading-level">{r['level']}</div>
             <span class="status-pill {status}">{status_text}</span>
@@ -262,23 +271,35 @@ def build_dashboard(results):
         .stat {{ text-align: center; }}
         .stat-number {{ font-size: 28px; font-weight: 700; color: #1a1a2e; }}
         .stat-label {{ font-size: 12px; color: #888; margin-top: 2px; }}
-        .stat-number.pass {{ color: #27ae60; }}
-        .stat-number.fail {{ color: #e74c3c; }}
+        .stat-number.good {{ color: #27ae60; }}
+        .stat-number.warning {{ color: #f39c12; }}
+        .stat-number.bad {{ color: #e74c3c; }}
         .main {{ padding: 30px 40px; }}
         .section-title {{ font-size: 16px; font-weight: 600; margin-bottom: 8px; color: #1a1a2e; }}
         .last-updated {{ font-size: 11px; color: #aaa; margin-bottom: 20px; }}
+        .legend {{ background: white; border-radius: 10px; padding: 20px 30px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 24px; display: flex; gap: 24px; flex-wrap: wrap; align-items: center; }}
+        .legend-title {{ font-size: 13px; font-weight: 600; color: #1a1a2e; margin-right: 8px; }}
+        .legend-item {{ display: flex; align-items: center; gap: 8px; font-size: 12px; color: #555; }}
+        .legend-dot {{ width: 12px; height: 12px; border-radius: 50%; }}
+        .legend-dot.good {{ background: #27ae60; }}
+        .legend-dot.warning {{ background: #f39c12; }}
+        .legend-dot.bad {{ background: #e74c3c; }}
         .articles-grid {{ display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 16px; margin-bottom: 40px; }}
         .article-card {{ background: white; border-radius: 10px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); border-left: 5px solid #ccc; }}
-        .article-card.pass {{ border-left-color: #27ae60; }}
-        .article-card.fail {{ border-left-color: #e74c3c; }}
+        .article-card.good {{ border-left-color: #27ae60; }}
+        .article-card.warning {{ border-left-color: #f39c12; }}
+        .article-card.bad {{ border-left-color: #e74c3c; }}
         .card-header {{ display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }}
         .article-title {{ font-size: 14px; font-weight: 600; color: #1a1a2e; flex: 1; margin-right: 10px; }}
-        .score-badge {{ font-size: 22px; font-weight: 800; color: #e74c3c; }}
-        .score-badge.pass {{ color: #27ae60; }}
+        .score-badge {{ font-size: 22px; font-weight: 800; }}
+        .score-badge.good {{ color: #27ae60; }}
+        .score-badge.warning {{ color: #f39c12; }}
+        .score-badge.bad {{ color: #e74c3c; }}
         .reading-level {{ font-size: 12px; color: #888; margin-bottom: 8px; }}
         .status-pill {{ display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; margin-bottom: 8px; }}
-        .status-pill.pass {{ background: #eafaf1; color: #27ae60; }}
-        .status-pill.fail {{ background: #fdf0ed; color: #e74c3c; }}
+        .status-pill.good {{ background: #eafaf1; color: #27ae60; }}
+        .status-pill.warning {{ background: #fef9e7; color: #f39c12; }}
+        .status-pill.bad {{ background: #fdf0ed; color: #e74c3c; }}
         .summary-text {{ font-size: 12px; color: #666; margin-bottom: 8px; line-height: 1.5; }}
         .card-meta {{ font-size: 11px; color: #aaa; border-top: 1px solid #f0f0f0; padding-top: 8px; margin-top: 8px; margin-bottom: 8px; }}
         .rec-toggle {{ width: 100%; padding: 8px; background: #f5f7fa; border: 1px solid #e0e0e0; border-radius: 6px; font-size: 12px; cursor: pointer; text-align: left; color: #1a1a2e; font-weight: 600; }}
@@ -304,7 +325,7 @@ def build_dashboard(results):
         <h1>FK Readability Dashboard</h1>
         <p>Datavant Technical Writing Team</p>
     </div>
-    <div class="target-badge">Target: Grade 8 or below</div>
+    <div class="target-badge">Target: Grade 12 or below</div>
 </header>
 
 <div class="stats-bar">
@@ -313,12 +334,16 @@ def build_dashboard(results):
         <div class="stat-label">Total Articles Tested</div>
     </div>
     <div class="stat">
-        <div class="stat-number fail">{failing}</div>
-        <div class="stat-label">Need Improvement</div>
+        <div class="stat-number good">{good_count}</div>
+        <div class="stat-label">Meets Target</div>
     </div>
     <div class="stat">
-        <div class="stat-number pass">{passing}</div>
-        <div class="stat-label">Passing Grade 8</div>
+        <div class="stat-number warning">{warning_count}</div>
+        <div class="stat-label">Needs Improvement</div>
+    </div>
+    <div class="stat">
+        <div class="stat-number bad">{bad_count}</div>
+        <div class="stat-label">Needs Significant Work</div>
     </div>
     <div class="stat">
         <div class="stat-number">{avg_score}</div>
@@ -352,6 +377,22 @@ def build_dashboard(results):
 
     <div class="section-title">All Article Results</div>
     <div class="last-updated">Last updated: {today}</div>
+
+    <div class="legend">
+        <span class="legend-title">Score Guide:</span>
+        <div class="legend-item">
+            <div class="legend-dot good"></div>
+            <span>12.0 or below = Meets Target</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-dot warning"></div>
+            <span>12.1 to 14.9 = Needs Improvement</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-dot bad"></div>
+            <span>15.0 and above = Needs Significant Work</span>
+        </div>
+    </div>
 
     <div class="articles-grid">
         {cards_html}
