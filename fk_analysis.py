@@ -317,7 +317,7 @@ def build_dashboard(results):
         .input-row input {{ flex: 1; padding: 10px 16px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; min-width: 200px; }}
         .input-row button {{ padding: 10px 24px; background: #1a1a2e; color: white; border: none; border-radius: 6px; font-size: 14px; cursor: pointer; font-weight: 600; }}
         .input-row button:hover {{ background: #0f3460; }}
-        .notice {{ margin-top: 12px; padding: 12px 16px; background: #fff8e1; border-radius: 6px; font-size: 12px; color: #856404; }}
+        .notice {{ margin-top: 16px; padding: 16px; background: #f0f7ff; border-radius: 8px; border-left: 4px solid #1a1a2e; font-size: 13px; color: #333; line-height: 1.8; }}
         footer {{ text-align: center; padding: 20px; font-size: 12px; color: #aaa; border-top: 1px solid #e0e0e0; }}
     </style>
 </head>
@@ -354,17 +354,22 @@ def build_dashboard(results):
 
     <div class="analyse-section">
         <h2>Analyse a New Article</h2>
-        <p>Enter a Zendesk article ID below to run a new FK readability analysis</p>
+        <p>Enter a Zendesk article ID below and click Analyse Article to run a new FK readability analysis</p>
         <div class="input-row">
             <input type="text" id="articleId" placeholder="Enter Zendesk Article ID e.g. 26609721445140" />
-            <button onclick="showInstructions()">Analyse Article</button>
+            <button onclick="analyseArticle()">Analyse Article</button>
         </div>
         <div class="notice" id="instructions" style="display:none">
-            To analyse this article open Terminal and run:<br><br>
-            <strong>cd ~/Documents/zendesk-fk-tool/zendesk-fk-tool</strong><br>
-            <strong>python3 fk_analysis.py</strong><br><br>
-            Then enter your article ID when prompted.
-            The dashboard will update automatically after the analysis completes.
+            <strong>GitHub Actions is opening in a new tab</strong><br><br>
+            Your article ID has been copied to your clipboard. Follow these steps:<br><br>
+            <ol style="margin-left:16px;margin-top:8px;">
+                <li style="margin-bottom:6px;">In the new tab click the green <strong>Run workflow</strong> button</li>
+                <li style="margin-bottom:6px;">Paste your article ID into the box</li>
+                <li style="margin-bottom:6px;">Click the green <strong>Run workflow</strong> button</li>
+                <li style="margin-bottom:6px;">Wait about 30 seconds for it to complete</li>
+                <li style="margin-bottom:6px;">Come back to this page and refresh</li>
+                <li style="margin-bottom:6px;">Your new score will appear automatically</li>
+            </ol>
         </div>
     </div>
 
@@ -382,6 +387,31 @@ def build_dashboard(results):
 </footer>
 
 <script>
+function analyseArticle() {{
+    const id = document.getElementById('articleId').value.trim();
+    if (!id) {{
+        alert('Please enter a Zendesk Article ID first');
+        return;
+    }}
+    navigator.clipboard.writeText(id).then(function() {{
+        document.getElementById('instructions').style.display = 'block';
+        setTimeout(function() {{
+            window.open(
+                'https://github.com/ciangallagherdatavant/zendesk-fk-tool/actions/workflows/analyse.yml',
+                '_blank'
+            );
+        }}, 1000);
+    }}).catch(function() {{
+        document.getElementById('instructions').style.display = 'block';
+        setTimeout(function() {{
+            window.open(
+                'https://github.com/ciangallagherdatavant/zendesk-fk-tool/actions/workflows/analyse.yml',
+                '_blank'
+            );
+        }}, 1000);
+    }});
+}}
+
 function toggleRec(id) {{
     const rec = document.getElementById('rec-' + id);
     const btn = rec.previousElementSibling;
@@ -391,15 +421,6 @@ function toggleRec(id) {{
     }} else {{
         rec.style.display = 'none';
         btn.textContent = 'View Recommendations ▼';
-    }}
-}}
-
-function showInstructions() {{
-    const id = document.getElementById('articleId').value;
-    if (id) {{
-        document.getElementById('instructions').style.display = 'block';
-    }} else {{
-        alert('Please enter an article ID first');
     }}
 }}
 </script>
