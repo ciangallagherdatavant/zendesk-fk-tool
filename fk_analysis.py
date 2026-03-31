@@ -168,28 +168,37 @@ def read_all_results():
     result_files = glob.glob('results/*.md')
     result_files = [f for f in result_files if '.gitkeep' not in f]
     result_files = [f for f in result_files if 'sample-article' not in f]
-    seen_titles = {}
+
+    all_by_title = {}
+
     for filepath in result_files:
         with open(filepath, 'r') as f:
             content = f.read()
+
         title_match = re.search(r'\*\*Article:\*\* (.+)', content)
         title = title_match.group(1).strip() if title_match else 'Unknown Article'
+
         date_match = re.search(r'\*\*Date:\*\* (.+)', content)
         date = date_match.group(1).strip() if date_match else 'Unknown Date'
+
         score_match = re.search(r'\*?\*?SCORE:\*?\*?\s*\*?\*?(\d+\.?\d*)', content)
         score = float(score_match.group(1)) if score_match else 0
+
         level_match = re.search(r'Reading Level:\s*\*?\*?(.+)', content)
         level = level_match.group(1).strip() if level_match else 'Unknown'
         level = re.sub(r'\*', '', level).strip()
+
         summary_match = re.search(r'Summary:\s*\*?\*?(.+)', content)
         summary = summary_match.group(1).strip() if summary_match else ''
         summary = re.sub(r'\*', '', summary).strip()
+
         fk_rec_match = re.search(
             r'FK RECOMMENDATIONS:\s*\n(.*?)(?=WCAG 2\.2 WRITING|---|$)',
             content, re.DOTALL
         )
         fk_recommendations = fk_rec_match.group(1).strip() if fk_rec_match else ''
         fk_recommendations = re.sub(r'\*\*', '', fk_recommendations)
+
         if not fk_recommendations:
             rec_match = re.search(
                 r'RECOMMENDATIONS:\s*\n(.*?)(?=WCAG|---|$)',
@@ -197,37 +206,45 @@ def read_all_results():
             )
             fk_recommendations = rec_match.group(1).strip() if rec_match else ''
             fk_recommendations = re.sub(r'\*\*', '', fk_recommendations)
+
         wcag_match = re.search(
             r'WCAG 2\.2 WRITING ACCESSIBILITY NOTES:\s*\n(.*?)(?=---|$)',
             content, re.DOTALL
         )
         wcag_notes = wcag_match.group(1).strip() if wcag_match else ''
         wcag_notes = re.sub(r'\*\*', '', wcag_notes)
-        if title in seen_titles:
-            existing_date = seen_titles[title]['date']
-            if date > existing_date:
-                seen_titles[title] = {
-                    'title': title,
-                    'date': date,
-                    'score': score,
-                    'level': level,
-                    'summary': summary,
-                    'fk_recommendations': fk_recommendations,
-                    'wcag_notes': wcag_notes,
-                    'filepath': filepath
-                }
-        else:
-            seen_titles[title] = {
-                'title': title,
-                'date': date,
-                'score': score,
-                'level': level,
-                'summary': summary,
-                'fk_recommendations': fk_recommendations,
-                'wcag_notes': wcag_notes,
-                'filepath': filepath
-            }
-    results = list(seen_titles.values())
+
+        entry = {
+            'title': title,
+            'date': date,
+            'score': score,
+            'level': level,
+            'summary': summary,
+            'fk_recommendations': fk_recommendations,
+            'wcag_notes': wcag_notes,
+            'filepath': filepath
+        }
+
+        if title not in all_by_title:
+            all_by_title[title] = []
+        all_by_title[title].append(entry)
+
+    results = []
+    for title, entries in all_by_title.items():
+        entries.sort(key=lambda x: x['date'])
+        latest = entries[-1]
+        history = entries[:-1]
+
+        first_score = entries[0]['score'] if len(entries) > 1 else None
+        improvement = None
+        if first_score and first_score != latest['score']:
+            improvement = round(first_score - latest['score'], 1)
+
+        latest['history'] = history
+        latest['first_score'] = first_score
+        latest['improvement'] = improvement
+        results.append(latest)
+
     results.sort(key=lambda x: x['score'], reverse=True)
     print(f"Found {len(results)} unique articles")
     return results
@@ -245,6 +262,40 @@ def get_status(score):
 def get_progress_width(score):
     capped = min(score, 20)
     return int((capped / 20) * 100)
+
+
+def build_history_html(history, first_score, improvement, current_score):
+    if not history:
+        return ''
+
+    trend_html = ''
+    if improvement is not None:
+        if improvement > 0:
+            trend_html = f'<span class="trend-good">↓ Improved by {improvement} points</span>'
+        elif improvement < 0:
+            trend_html = f'<span class="trend-bad">↑ Declined by {abs(improvement)} points</span>'
+        else:
+            trend_html = f'<span class="trend-neutral">→ No change</span>'
+
+    history_rows = ''
+    all_entries = history + [{'date': 'Current', 'score': current_score}]
+    for entry in reversed(history):
+        h_status, _ = get_status(entry['score'])
+        history_rows += f"""
+        <div class="history-row">
+            <span class="history-date">{entry['date']}</span>
+            <span class="history-score {h_status}">{entry['score']}</span>
+        </div>
+        """
+
+    return f"""
+    <div class="progression-section">
+        <div class="progression-header">
+            📈 Score History {trend_html}
+        </div>
+        {history_rows}
+    </div>
+    """
 
 
 def build_dashboard(results):
@@ -282,6 +333,13 @@ def build_dashboard(results):
         if not wcag_html:
             wcag_html = "<p>Re-run this article to generate WCAG accessibility notes.</p>"
 
+        history_html = build_history_html(
+            r.get('history', []),
+            r.get('first_score'),
+            r.get('improvement'),
+            r['score']
+        )
+
         cards_html += f"""
         <div class="article-card {status}" data-status="{status}" style="animation-delay:{delay}s">
             <div class="card-header">
@@ -294,6 +352,7 @@ def build_dashboard(results):
             <div class="reading-level">{r['level']}</div>
             <span class="status-pill {status}">{status_text}</span>
             <div class="summary-text">{r['summary']}</div>
+            {history_html}
             <div class="card-meta">Tested: {r['date']}</div>
             <button class="rec-toggle" onclick="toggleSection('fk-{i}', this)">
                 <span>📊 FK Recommendations</span><span>▼</span>
@@ -375,6 +434,18 @@ def build_dashboard(results):
         .status-pill.warning {{ background: #fef9e7; color: #f39c12; }}
         .status-pill.bad {{ background: #fdf0ed; color: #e74c3c; }}
         .summary-text {{ font-size: 12px; color: #666; margin-bottom: 10px; line-height: 1.6; }}
+        .progression-section {{ background: #f8f9fa; border-radius: 8px; padding: 12px; margin-bottom: 10px; border-left: 3px solid #6c757d; }}
+        .progression-header {{ font-size: 12px; font-weight: 700; color: #555; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 4px; }}
+        .trend-good {{ color: #27ae60; font-size: 11px; font-weight: 700; }}
+        .trend-bad {{ color: #e74c3c; font-size: 11px; font-weight: 700; }}
+        .trend-neutral {{ color: #999; font-size: 11px; font-weight: 700; }}
+        .history-row {{ display: flex; justify-content: space-between; align-items: center; padding: 4px 0; border-bottom: 1px solid #eee; font-size: 11px; }}
+        .history-row:last-child {{ border-bottom: none; }}
+        .history-date {{ color: #999; }}
+        .history-score {{ font-weight: 700; }}
+        .history-score.good {{ color: #27ae60; }}
+        .history-score.warning {{ color: #f39c12; }}
+        .history-score.bad {{ color: #e74c3c; }}
         .card-meta {{ font-size: 11px; color: #bbb; border-top: 1px solid #f5f5f5; padding-top: 10px; margin-top: 4px; margin-bottom: 10px; }}
         .rec-toggle {{ width: 100%; padding: 9px 12px; background: #f8f9fa; border: 1px solid #eee; border-radius: 8px; font-size: 12px; cursor: pointer; text-align: left; color: #1a1a2e; font-weight: 600; transition: all 0.2s; display: flex; justify-content: space-between; align-items: center; }}
         .rec-toggle:hover {{ background: #e9ecef; border-color: #ddd; }}
