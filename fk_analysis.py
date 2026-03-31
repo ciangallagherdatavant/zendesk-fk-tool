@@ -97,47 +97,7 @@ CONTENT EXCLUDED FROM SCORING:
 
 FK RECOMMENDATIONS:
 [If Grade 12 or below: confirm content meets target]
-[If above Grade 12: give 3 specific suggestions to improve the score]
-
-WCAG 2.2 WRITING ACCESSIBILITY NOTES:
-Check the content against these WCAG 2.2 writing guidelines
-and provide specific findings for each:
-
-1. Plain Language (WCAG 3.1.5)
-   Is the content written in plain language?
-   Flag any unnecessarily complex words or phrases
-   and suggest simpler alternatives
-
-2. Sentence and Paragraph Length
-   Are sentences under 20 words where possible?
-   Are paragraphs focused on one idea?
-   Flag any sentences exceeding 25 words
-
-3. Jargon and Technical Terms (WCAG 3.1.3)
-   Are technical terms explained on first use?
-   List any unexplained jargon found
-
-4. Active Voice
-   Is the content written in active voice?
-   Flag any passive voice constructions
-   and suggest active alternatives
-
-5. Heading and Structure Clarity
-   Based on the content structure
-   are headings clear and descriptive?
-   Do they accurately describe the content below?
-
-6. Link Text Quality (WCAG 2.4.6)
-   Are any links described with vague text
-   like click here or read more?
-   Flag these and suggest descriptive alternatives
-
-7. Abbreviations and Acronyms (WCAG 3.1.4)
-   Are abbreviations and acronyms
-   spelled out on first use?
-   List any that are not explained
-
-Format the WCAG section like this:
+[If above Grade 12: give 3 specific suggestions]
 
 WCAG 2.2 WRITING ACCESSIBILITY NOTES:
 
@@ -226,26 +186,23 @@ def read_all_results():
         summary = re.sub(r'\*', '', summary).strip()
         fk_rec_match = re.search(
             r'FK RECOMMENDATIONS:\s*\n(.*?)(?=WCAG 2\.2 WRITING|---|$)',
-            content,
-            re.DOTALL
+            content, re.DOTALL
         )
         fk_recommendations = fk_rec_match.group(1).strip() if fk_rec_match else ''
         fk_recommendations = re.sub(r'\*\*', '', fk_recommendations)
-        wcag_match = re.search(
-            r'WCAG 2\.2 WRITING ACCESSIBILITY NOTES:\s*\n(.*?)(?=---|$)',
-            content,
-            re.DOTALL
-        )
-        wcag_notes = wcag_match.group(1).strip() if wcag_match else ''
-        wcag_notes = re.sub(r'\*\*', '', wcag_notes)
         if not fk_recommendations:
             rec_match = re.search(
-                r'RECOMMENDATIONS:\s*\n(.*?)(?=---|$)',
-                content,
-                re.DOTALL
+                r'RECOMMENDATIONS:\s*\n(.*?)(?=WCAG|---|$)',
+                content, re.DOTALL
             )
             fk_recommendations = rec_match.group(1).strip() if rec_match else ''
             fk_recommendations = re.sub(r'\*\*', '', fk_recommendations)
+        wcag_match = re.search(
+            r'WCAG 2\.2 WRITING ACCESSIBILITY NOTES:\s*\n(.*?)(?=---|$)',
+            content, re.DOTALL
+        )
+        wcag_notes = wcag_match.group(1).strip() if wcag_match else ''
+        wcag_notes = re.sub(r'\*\*', '', wcag_notes)
         if title in seen_titles:
             existing_date = seen_titles[title]['date']
             if date > existing_date:
@@ -278,11 +235,16 @@ def read_all_results():
 
 def get_status(score):
     if score <= 12.0:
-        return 'good', '✅ Meets Target', '#27ae60'
+        return 'good', '✅ Meets Target'
     elif score <= 14.9:
-        return 'warning', '⚠️ Needs Improvement', '#f39c12'
+        return 'warning', '⚠️ Needs Improvement'
     else:
-        return 'bad', '🔴 Needs Significant Work', '#e74c3c'
+        return 'bad', '🔴 Needs Significant Work'
+
+
+def get_progress_width(score):
+    capped = min(score, 20)
+    return int((capped / 20) * 100)
 
 
 def build_dashboard(results):
@@ -298,7 +260,9 @@ def build_dashboard(results):
 
     cards_html = ""
     for i, r in enumerate(results):
-        status, status_text, status_colour = get_status(r['score'])
+        status, status_text = get_status(r['score'])
+        progress = get_progress_width(r['score'])
+        delay = round(0.1 + (i * 0.1), 1)
 
         fk_rec_lines = r['fk_recommendations'].split('\n')
         fk_rec_html = ""
@@ -306,6 +270,8 @@ def build_dashboard(results):
             line = line.strip()
             if line:
                 fk_rec_html += f"<p>{line}</p>"
+        if not fk_rec_html:
+            fk_rec_html = "<p>Re-run this article to generate FK recommendations.</p>"
 
         wcag_lines = r.get('wcag_notes', '').split('\n')
         wcag_html = ""
@@ -313,30 +279,35 @@ def build_dashboard(results):
             line = line.strip()
             if line:
                 wcag_html += f"<p>{line}</p>"
+        if not wcag_html:
+            wcag_html = "<p>Re-run this article to generate WCAG accessibility notes.</p>"
 
         cards_html += f"""
-        <div class="article-card {status}">
+        <div class="article-card {status}" data-status="{status}" style="animation-delay:{delay}s">
             <div class="card-header">
                 <div class="article-title">{r['title']}</div>
                 <div class="score-badge {status}">{r['score']}</div>
+            </div>
+            <div class="progress-bar-wrap">
+                <div class="progress-bar {status}" style="width:{progress}%"></div>
             </div>
             <div class="reading-level">{r['level']}</div>
             <span class="status-pill {status}">{status_text}</span>
             <div class="summary-text">{r['summary']}</div>
             <div class="card-meta">Tested: {r['date']}</div>
             <button class="rec-toggle" onclick="toggleSection('fk-{i}', this)">
-                📊 FK Recommendations ▼
+                <span>📊 FK Recommendations</span><span>▼</span>
             </button>
-            <div class="recommendations" id="fk-{i}" style="display:none">
+            <div class="recommendations" id="fk-{i}">
                 <div class="rec-section-title">Flesch-Kincaid Recommendations</div>
-                {fk_rec_html if fk_rec_html else '<p>No FK recommendations available for this article yet. Re-run the analysis to generate them.</p>'}
+                {fk_rec_html}
             </div>
-            <button class="rec-toggle wcag-toggle" onclick="toggleSection('wcag-{i}', this)" style="margin-top:6px;">
-                ♿ WCAG Accessibility Notes ▼
+            <button class="rec-toggle wcag-toggle" onclick="toggleSection('wcag-{i}', this)">
+                <span>♿ WCAG Accessibility Notes</span><span>▼</span>
             </button>
-            <div class="recommendations wcag-rec" id="wcag-{i}" style="display:none">
+            <div class="recommendations wcag-rec" id="wcag-{i}">
                 <div class="rec-section-title">WCAG 2.2 Writing Accessibility</div>
-                {wcag_html if wcag_html else '<p>No WCAG notes available for this article yet. Re-run the analysis to generate them.</p>'}
+                {wcag_html}
             </div>
         </div>
 """
@@ -349,64 +320,83 @@ def build_dashboard(results):
     <title>FK Readability Dashboard - Datavant</title>
     <style>
         * {{ margin: 0; padding: 0; box-sizing: border-box; }}
-        body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f7fa; color: #333; }}
-        header {{ background: #1a1a2e; color: white; padding: 20px 40px; display: flex; justify-content: space-between; align-items: center; }}
-        header h1 {{ font-size: 22px; font-weight: 600; }}
-        header p {{ font-size: 13px; opacity: 0.7; margin-top: 4px; }}
-        .target-badge {{ background: #16213e; border: 1px solid #0f3460; padding: 8px 16px; border-radius: 20px; font-size: 13px; }}
-        .stats-bar {{ background: white; padding: 20px 40px; display: flex; gap: 40px; border-bottom: 1px solid #e0e0e0; flex-wrap: wrap; }}
-        .stat {{ text-align: center; }}
-        .stat-number {{ font-size: 28px; font-weight: 700; color: #1a1a2e; }}
-        .stat-label {{ font-size: 12px; color: #888; margin-top: 2px; }}
+        body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f0f2f5; color: #333; }}
+        header {{ background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%); color: white; padding: 24px 40px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 20px rgba(0,0,0,0.3); }}
+        header h1 {{ font-size: 24px; font-weight: 700; letter-spacing: -0.5px; }}
+        header p {{ font-size: 13px; opacity: 0.6; margin-top: 4px; }}
+        .target-badge {{ background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); padding: 8px 18px; border-radius: 20px; font-size: 13px; backdrop-filter: blur(10px); }}
+        .stats-bar {{ background: white; padding: 24px 40px; display: flex; gap: 0; border-bottom: 1px solid #e8ecf0; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }}
+        .stat {{ text-align: center; flex: 1; padding: 8px 0; border-right: 1px solid #f0f0f0; transition: transform 0.2s; }}
+        .stat:last-child {{ border-right: none; }}
+        .stat:hover {{ transform: translateY(-2px); }}
+        .stat-number {{ font-size: 32px; font-weight: 800; color: #1a1a2e; line-height: 1; }}
+        .stat-label {{ font-size: 11px; color: #999; margin-top: 4px; text-transform: uppercase; letter-spacing: 0.5px; }}
         .stat-number.good {{ color: #27ae60; }}
         .stat-number.warning {{ color: #f39c12; }}
         .stat-number.bad {{ color: #e74c3c; }}
         .main {{ padding: 30px 40px; }}
-        .section-title {{ font-size: 16px; font-weight: 600; margin-bottom: 8px; color: #1a1a2e; }}
+        .section-title {{ font-size: 18px; font-weight: 700; margin-bottom: 8px; color: #1a1a2e; }}
         .last-updated {{ font-size: 11px; color: #aaa; margin-bottom: 20px; }}
-        .legend {{ background: white; border-radius: 10px; padding: 20px 30px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 24px; display: flex; gap: 24px; flex-wrap: wrap; align-items: center; }}
-        .legend-title {{ font-size: 13px; font-weight: 600; color: #1a1a2e; margin-right: 8px; }}
+        .filter-bar {{ display: flex; gap: 8px; margin-bottom: 24px; flex-wrap: wrap; }}
+        .filter-btn {{ padding: 8px 18px; border-radius: 20px; border: 2px solid #e0e0e0; background: white; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s; color: #666; }}
+        .filter-btn:hover {{ border-color: #1a1a2e; color: #1a1a2e; }}
+        .filter-btn.active {{ background: #1a1a2e; color: white; border-color: #1a1a2e; }}
+        .filter-btn.good-filter.active {{ background: #27ae60; border-color: #27ae60; }}
+        .filter-btn.warning-filter.active {{ background: #f39c12; border-color: #f39c12; }}
+        .filter-btn.bad-filter.active {{ background: #e74c3c; border-color: #e74c3c; }}
+        .legend {{ background: white; border-radius: 12px; padding: 16px 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 24px; display: flex; gap: 24px; flex-wrap: wrap; align-items: center; }}
+        .legend-title {{ font-size: 12px; font-weight: 700; color: #1a1a2e; text-transform: uppercase; letter-spacing: 0.5px; }}
         .legend-item {{ display: flex; align-items: center; gap: 8px; font-size: 12px; color: #555; }}
-        .legend-dot {{ width: 12px; height: 12px; border-radius: 50%; }}
+        .legend-dot {{ width: 10px; height: 10px; border-radius: 50%; }}
         .legend-dot.good {{ background: #27ae60; }}
         .legend-dot.warning {{ background: #f39c12; }}
         .legend-dot.bad {{ background: #e74c3c; }}
-        .articles-grid {{ display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 16px; margin-bottom: 40px; }}
-        .article-card {{ background: white; border-radius: 10px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); border-left: 5px solid #ccc; }}
+        .articles-grid {{ display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 20px; margin-bottom: 40px; }}
+        .article-card {{ background: white; border-radius: 14px; padding: 22px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); border-left: 5px solid #ccc; transition: transform 0.25s ease, box-shadow 0.25s ease; opacity: 0; animation: fadeInUp 0.5s ease forwards; }}
+        .article-card:hover {{ transform: translateY(-4px); box-shadow: 0 8px 30px rgba(0,0,0,0.12); }}
         .article-card.good {{ border-left-color: #27ae60; }}
         .article-card.warning {{ border-left-color: #f39c12; }}
         .article-card.bad {{ border-left-color: #e74c3c; }}
+        @keyframes fadeInUp {{ from {{ opacity: 0; transform: translateY(20px); }} to {{ opacity: 1; transform: translateY(0); }} }}
         .card-header {{ display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }}
-        .article-title {{ font-size: 14px; font-weight: 600; color: #1a1a2e; flex: 1; margin-right: 10px; }}
-        .score-badge {{ font-size: 22px; font-weight: 800; }}
+        .article-title {{ font-size: 14px; font-weight: 700; color: #1a1a2e; flex: 1; margin-right: 12px; line-height: 1.4; }}
+        .score-badge {{ font-size: 26px; font-weight: 900; line-height: 1; }}
         .score-badge.good {{ color: #27ae60; }}
         .score-badge.warning {{ color: #f39c12; }}
         .score-badge.bad {{ color: #e74c3c; }}
-        .reading-level {{ font-size: 12px; color: #888; margin-bottom: 8px; }}
-        .status-pill {{ display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; margin-bottom: 8px; }}
+        .progress-bar-wrap {{ height: 4px; background: #f0f0f0; border-radius: 2px; margin: 8px 0 10px; overflow: hidden; }}
+        .progress-bar {{ height: 100%; border-radius: 2px; transition: width 1s ease; }}
+        .progress-bar.good {{ background: #27ae60; }}
+        .progress-bar.warning {{ background: #f39c12; }}
+        .progress-bar.bad {{ background: #e74c3c; }}
+        .reading-level {{ font-size: 11px; color: #999; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.3px; }}
+        .status-pill {{ display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 700; margin-bottom: 10px; letter-spacing: 0.3px; }}
         .status-pill.good {{ background: #eafaf1; color: #27ae60; }}
         .status-pill.warning {{ background: #fef9e7; color: #f39c12; }}
         .status-pill.bad {{ background: #fdf0ed; color: #e74c3c; }}
-        .summary-text {{ font-size: 12px; color: #666; margin-bottom: 8px; line-height: 1.5; }}
-        .card-meta {{ font-size: 11px; color: #aaa; border-top: 1px solid #f0f0f0; padding-top: 8px; margin-top: 8px; margin-bottom: 8px; }}
-        .rec-toggle {{ width: 100%; padding: 8px; background: #f5f7fa; border: 1px solid #e0e0e0; border-radius: 6px; font-size: 12px; cursor: pointer; text-align: left; color: #1a1a2e; font-weight: 600; }}
-        .rec-toggle:hover {{ background: #e8eaf0; }}
-        .wcag-toggle {{ background: #f0f7ff; border-color: #c0d8f0; }}
+        .summary-text {{ font-size: 12px; color: #666; margin-bottom: 10px; line-height: 1.6; }}
+        .card-meta {{ font-size: 11px; color: #bbb; border-top: 1px solid #f5f5f5; padding-top: 10px; margin-top: 4px; margin-bottom: 10px; }}
+        .rec-toggle {{ width: 100%; padding: 9px 12px; background: #f8f9fa; border: 1px solid #eee; border-radius: 8px; font-size: 12px; cursor: pointer; text-align: left; color: #1a1a2e; font-weight: 600; transition: all 0.2s; display: flex; justify-content: space-between; align-items: center; }}
+        .rec-toggle:hover {{ background: #e9ecef; border-color: #ddd; }}
+        .wcag-toggle {{ background: #f0f7ff; border-color: #daeaf8; margin-top: 6px; }}
         .wcag-toggle:hover {{ background: #ddeeff; }}
-        .recommendations {{ margin-top: 8px; padding: 12px; background: #f9f9f9; border-radius: 6px; border-left: 3px solid #1a1a2e; }}
+        .recommendations {{ margin-top: 8px; padding: 0 14px; background: #f9f9f9; border-radius: 8px; border-left: 3px solid #1a1a2e; max-height: 0; overflow: hidden; transition: max-height 0.4s ease, padding 0.3s ease; }}
+        .recommendations.open {{ max-height: 2000px; padding: 14px; }}
         .wcag-rec {{ background: #f0f7ff; border-left-color: #3498db; }}
-        .rec-section-title {{ font-size: 11px; font-weight: 700; color: #888; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }}
-        .recommendations p {{ font-size: 12px; color: #444; margin-bottom: 8px; line-height: 1.6; }}
+        .rec-section-title {{ font-size: 10px; font-weight: 800; color: #aaa; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }}
+        .recommendations p {{ font-size: 12px; color: #444; margin-bottom: 8px; line-height: 1.7; }}
         .recommendations p:last-child {{ margin-bottom: 0; }}
-        .analyse-section {{ background: white; border-radius: 10px; padding: 30px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 40px; }}
-        .analyse-section h2 {{ font-size: 16px; font-weight: 600; margin-bottom: 8px; color: #1a1a2e; }}
-        .analyse-section p {{ font-size: 13px; color: #888; margin-bottom: 16px; }}
+        .analyse-section {{ background: white; border-radius: 14px; padding: 30px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); margin-bottom: 30px; }}
+        .analyse-section h2 {{ font-size: 18px; font-weight: 700; margin-bottom: 6px; color: #1a1a2e; }}
+        .analyse-section p {{ font-size: 13px; color: #999; margin-bottom: 18px; }}
         .input-row {{ display: flex; gap: 10px; flex-wrap: wrap; }}
-        .input-row input {{ flex: 1; padding: 10px 16px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; min-width: 200px; }}
-        .input-row button {{ padding: 10px 24px; background: #1a1a2e; color: white; border: none; border-radius: 6px; font-size: 14px; cursor: pointer; font-weight: 600; }}
-        .input-row button:hover {{ background: #0f3460; }}
-        .notice {{ margin-top: 16px; padding: 16px; background: #f0f7ff; border-radius: 8px; border-left: 4px solid #1a1a2e; font-size: 13px; color: #333; line-height: 1.8; }}
-        footer {{ text-align: center; padding: 20px; font-size: 12px; color: #aaa; border-top: 1px solid #e0e0e0; }}
+        .input-row input {{ flex: 1; padding: 12px 18px; border: 2px solid #eee; border-radius: 10px; font-size: 14px; min-width: 200px; transition: border-color 0.2s; outline: none; }}
+        .input-row input:focus {{ border-color: #1a1a2e; }}
+        .input-row button {{ padding: 12px 28px; background: linear-gradient(135deg, #1a1a2e, #0f3460); color: white; border: none; border-radius: 10px; font-size: 14px; cursor: pointer; font-weight: 700; transition: all 0.2s; letter-spacing: 0.3px; }}
+        .input-row button:hover {{ transform: translateY(-2px); box-shadow: 0 6px 20px rgba(15,52,96,0.4); }}
+        .notice {{ margin-top: 16px; padding: 16px 20px; background: #f0f7ff; border-radius: 10px; border-left: 4px solid #3498db; font-size: 13px; color: #333; line-height: 1.8; }}
+        footer {{ text-align: center; padding: 24px; font-size: 12px; color: #bbb; border-top: 1px solid #eee; background: white; }}
+        .hidden {{ display: none !important; }}
     </style>
 </head>
 <body>
@@ -416,13 +406,13 @@ def build_dashboard(results):
         <h1>FK Readability Dashboard</h1>
         <p>Datavant Technical Writing Team</p>
     </div>
-    <div class="target-badge">Target: Grade 12 or below</div>
+    <div class="target-badge">🎯 Target: Grade 12 or below</div>
 </header>
 
 <div class="stats-bar">
     <div class="stat">
         <div class="stat-number">{total}</div>
-        <div class="stat-label">Total Articles Tested</div>
+        <div class="stat-label">Total Tested</div>
     </div>
     <div class="stat">
         <div class="stat-number good">{good_count}</div>
@@ -446,10 +436,10 @@ def build_dashboard(results):
 
     <div class="analyse-section">
         <h2>Analyse a New Article</h2>
-        <p>Enter a Zendesk article ID below and click Analyse Article to run a new FK readability analysis</p>
+        <p>Enter a Zendesk article ID below and click Analyse Article to run a new FK and WCAG readability analysis</p>
         <div class="input-row">
             <input type="text" id="articleId" placeholder="Enter Zendesk Article ID e.g. 26609721445140" />
-            <button onclick="analyseArticle()">Analyse Article</button>
+            <button onclick="analyseArticle()">Analyse Article →</button>
         </div>
         <div class="notice" id="instructions" style="display:none">
             <strong>GitHub Actions is opening in a new tab</strong><br><br>
@@ -469,42 +459,52 @@ def build_dashboard(results):
     <div class="section-title">All Article Results</div>
     <div class="last-updated">Last updated: {today}</div>
 
-    <div class="legend">
-        <span class="legend-title">Score Guide:</span>
-        <div class="legend-item">
-            <div class="legend-dot good"></div>
-            <span>12.0 or below = Meets Target</span>
-        </div>
-        <div class="legend-item">
-            <div class="legend-dot warning"></div>
-            <span>12.1 to 14.9 = Needs Improvement</span>
-        </div>
-        <div class="legend-item">
-            <div class="legend-dot bad"></div>
-            <span>15.0 and above = Needs Significant Work</span>
-        </div>
+    <div class="filter-bar">
+        <button class="filter-btn active" onclick="filterCards('all', this)">All Articles</button>
+        <button class="filter-btn good-filter" onclick="filterCards('good', this)">✅ Meets Target</button>
+        <button class="filter-btn warning-filter" onclick="filterCards('warning', this)">⚠️ Needs Improvement</button>
+        <button class="filter-btn bad-filter" onclick="filterCards('bad', this)">🔴 Needs Significant Work</button>
     </div>
 
-    <div class="articles-grid">
+    <div class="legend">
+        <span class="legend-title">Score Guide:</span>
+        <div class="legend-item"><div class="legend-dot good"></div><span>12.0 or below = Meets Target</span></div>
+        <div class="legend-item"><div class="legend-dot warning"></div><span>12.1 to 14.9 = Needs Improvement</span></div>
+        <div class="legend-item"><div class="legend-dot bad"></div><span>15.0 and above = Needs Significant Work</span></div>
+    </div>
+
+    <div class="articles-grid" id="articles-grid">
         {cards_html}
     </div>
 </div>
 
 <footer>
-    FK Readability Dashboard - Datavant Technical Writing Team -
-    Built by Cian Gallagher
+    FK Readability Dashboard · Datavant Technical Writing Team · Built by Cian Gallagher
 </footer>
 
 <script>
 function toggleSection(id, btn) {{
     const section = document.getElementById(id);
-    if (section.style.display === 'none') {{
-        section.style.display = 'block';
-        btn.textContent = btn.textContent.replace('▼', '▲');
+    const arrow = btn.querySelector('span:last-child');
+    if (section.classList.contains('open')) {{
+        section.classList.remove('open');
+        arrow.textContent = '▼';
     }} else {{
-        section.style.display = 'none';
-        btn.textContent = btn.textContent.replace('▲', '▼');
+        section.classList.add('open');
+        arrow.textContent = '▲';
     }}
+}}
+
+function filterCards(status, btn) {{
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.article-card').forEach(card => {{
+        if (status === 'all' || card.dataset.status === status) {{
+            card.classList.remove('hidden');
+        }} else {{
+            card.classList.add('hidden');
+        }}
+    }});
 }}
 
 function analyseArticle() {{
