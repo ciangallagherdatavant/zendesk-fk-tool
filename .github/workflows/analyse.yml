@@ -11,7 +11,7 @@ on:
 jobs:
   analyse:
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -34,7 +34,6 @@ jobs:
         run: |
           python3 -c "
           import os
-          os.environ['ARTICLE_ID'] = '${{ github.event.inputs.article_id }}'
           from fk_analysis import get_zendesk_article, analyse_with_claude, save_result, read_all_results, build_dashboard
           title, content = get_zendesk_article('${{ github.event.inputs.article_id }}')
           if title:
@@ -49,5 +48,4 @@ jobs:
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           git add .
-          git diff --staged --quiet || git commit -m "FK analysis via GitHub Actions"
-          git push
+          git diff --staged --quiet || (git pull --rebase origin main && git commit -m "FK analysis via GitHub Actions" && git push)
