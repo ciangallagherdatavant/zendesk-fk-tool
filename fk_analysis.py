@@ -24,10 +24,11 @@ ZENDESK_API_TOKEN = os.getenv("ZENDESK_API_TOKEN")
 FK_PROMPT = """
 You are a technical writing assistant that performs
 Flesch-Kincaid Grade Level (FKGL) readability assessments
+and WCAG 2.2 writing accessibility checks
 on Zendesk help content.
 
 You help a technical writing team ensure their documentation
-is clear and accessible to their intended audience.
+is clear, accessible and easy to understand.
 
 ## What is Flesch-Kincaid Grade Level
 The Flesch-Kincaid Grade Level formula measures how easy or
@@ -94,9 +95,61 @@ CONTENT EXCLUDED FROM SCORING:
 - Images: [yes/no and count]
 - Product names noted: [list any found]
 
-RECOMMENDATIONS:
+FK RECOMMENDATIONS:
 [If Grade 12 or below: confirm content meets target]
-[If above Grade 12: give 3 specific suggestions]
+[If above Grade 12: give 3 specific suggestions to improve the score]
+
+WCAG 2.2 WRITING ACCESSIBILITY NOTES:
+Check the content against these WCAG 2.2 writing guidelines
+and provide specific findings for each:
+
+1. Plain Language (WCAG 3.1.5)
+   Is the content written in plain language?
+   Flag any unnecessarily complex words or phrases
+   and suggest simpler alternatives
+
+2. Sentence and Paragraph Length
+   Are sentences under 20 words where possible?
+   Are paragraphs focused on one idea?
+   Flag any sentences exceeding 25 words
+
+3. Jargon and Technical Terms (WCAG 3.1.3)
+   Are technical terms explained on first use?
+   List any unexplained jargon found
+
+4. Active Voice
+   Is the content written in active voice?
+   Flag any passive voice constructions
+   and suggest active alternatives
+
+5. Heading and Structure Clarity
+   Based on the content structure
+   are headings clear and descriptive?
+   Do they accurately describe the content below?
+
+6. Link Text Quality (WCAG 2.4.6)
+   Are any links described with vague text
+   like click here or read more?
+   Flag these and suggest descriptive alternatives
+
+7. Abbreviations and Acronyms (WCAG 3.1.4)
+   Are abbreviations and acronyms
+   spelled out on first use?
+   List any that are not explained
+
+Format the WCAG section like this:
+
+WCAG 2.2 WRITING ACCESSIBILITY NOTES:
+
+Plain Language: [Pass or flag with specific examples]
+Sentence Length: [Pass or flag sentences over 25 words]
+Jargon: [Pass or list unexplained terms found]
+Active Voice: [Pass or flag passive constructions]
+Heading Clarity: [Pass or suggestions]
+Link Text: [Pass or flag vague link text]
+Abbreviations: [Pass or list unexplained abbreviations]
+
+Overall WCAG Writing Score: [Good / Needs Attention / Needs Significant Work]
 ---
 """
 
@@ -118,11 +171,11 @@ def get_zendesk_article(article_id):
 
 
 def analyse_with_claude(title, content):
-    print(f"\nSending article to Claude for FK analysis...")
+    print(f"\nSending article to Claude for FK and WCAG analysis...")
     client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
     message = client.messages.create(
         model="claude-sonnet-4-5",
-        max_tokens=2000,
+        max_tokens=3000,
         messages=[
             {
                 "role": "user",
@@ -171,13 +224,28 @@ def read_all_results():
         summary_match = re.search(r'Summary:\s*\*?\*?(.+)', content)
         summary = summary_match.group(1).strip() if summary_match else ''
         summary = re.sub(r'\*', '', summary).strip()
-        rec_match = re.search(
-            r'RECOMMENDATIONS:\s*\n(.*?)(?=---|$)',
+        fk_rec_match = re.search(
+            r'FK RECOMMENDATIONS:\s*\n(.*?)(?=WCAG 2\.2 WRITING|---|$)',
             content,
             re.DOTALL
         )
-        recommendations = rec_match.group(1).strip() if rec_match else ''
-        recommendations = re.sub(r'\*\*', '', recommendations)
+        fk_recommendations = fk_rec_match.group(1).strip() if fk_rec_match else ''
+        fk_recommendations = re.sub(r'\*\*', '', fk_recommendations)
+        wcag_match = re.search(
+            r'WCAG 2\.2 WRITING ACCESSIBILITY NOTES:\s*\n(.*?)(?=---|$)',
+            content,
+            re.DOTALL
+        )
+        wcag_notes = wcag_match.group(1).strip() if wcag_match else ''
+        wcag_notes = re.sub(r'\*\*', '', wcag_notes)
+        if not fk_recommendations:
+            rec_match = re.search(
+                r'RECOMMENDATIONS:\s*\n(.*?)(?=---|$)',
+                content,
+                re.DOTALL
+            )
+            fk_recommendations = rec_match.group(1).strip() if rec_match else ''
+            fk_recommendations = re.sub(r'\*\*', '', fk_recommendations)
         if title in seen_titles:
             existing_date = seen_titles[title]['date']
             if date > existing_date:
@@ -187,7 +255,8 @@ def read_all_results():
                     'score': score,
                     'level': level,
                     'summary': summary,
-                    'recommendations': recommendations,
+                    'fk_recommendations': fk_recommendations,
+                    'wcag_notes': wcag_notes,
                     'filepath': filepath
                 }
         else:
@@ -197,7 +266,8 @@ def read_all_results():
                 'score': score,
                 'level': level,
                 'summary': summary,
-                'recommendations': recommendations,
+                'fk_recommendations': fk_recommendations,
+                'wcag_notes': wcag_notes,
                 'filepath': filepath
             }
     results = list(seen_titles.values())
@@ -229,12 +299,21 @@ def build_dashboard(results):
     cards_html = ""
     for i, r in enumerate(results):
         status, status_text, status_colour = get_status(r['score'])
-        rec_lines = r['recommendations'].split('\n')
-        rec_html = ""
-        for line in rec_lines:
+
+        fk_rec_lines = r['fk_recommendations'].split('\n')
+        fk_rec_html = ""
+        for line in fk_rec_lines:
             line = line.strip()
             if line:
-                rec_html += f"<p>{line}</p>"
+                fk_rec_html += f"<p>{line}</p>"
+
+        wcag_lines = r.get('wcag_notes', '').split('\n')
+        wcag_html = ""
+        for line in wcag_lines:
+            line = line.strip()
+            if line:
+                wcag_html += f"<p>{line}</p>"
+
         cards_html += f"""
         <div class="article-card {status}">
             <div class="card-header">
@@ -245,11 +324,19 @@ def build_dashboard(results):
             <span class="status-pill {status}">{status_text}</span>
             <div class="summary-text">{r['summary']}</div>
             <div class="card-meta">Tested: {r['date']}</div>
-            <button class="rec-toggle" onclick="toggleRec({i})">
-                View Recommendations ▼
+            <button class="rec-toggle" onclick="toggleSection('fk-{i}', this)">
+                📊 FK Recommendations ▼
             </button>
-            <div class="recommendations" id="rec-{i}" style="display:none">
-                {rec_html}
+            <div class="recommendations" id="fk-{i}" style="display:none">
+                <div class="rec-section-title">Flesch-Kincaid Recommendations</div>
+                {fk_rec_html if fk_rec_html else '<p>No FK recommendations available for this article yet. Re-run the analysis to generate them.</p>'}
+            </div>
+            <button class="rec-toggle wcag-toggle" onclick="toggleSection('wcag-{i}', this)" style="margin-top:6px;">
+                ♿ WCAG Accessibility Notes ▼
+            </button>
+            <div class="recommendations wcag-rec" id="wcag-{i}" style="display:none">
+                <div class="rec-section-title">WCAG 2.2 Writing Accessibility</div>
+                {wcag_html if wcag_html else '<p>No WCAG notes available for this article yet. Re-run the analysis to generate them.</p>'}
             </div>
         </div>
 """
@@ -304,7 +391,11 @@ def build_dashboard(results):
         .card-meta {{ font-size: 11px; color: #aaa; border-top: 1px solid #f0f0f0; padding-top: 8px; margin-top: 8px; margin-bottom: 8px; }}
         .rec-toggle {{ width: 100%; padding: 8px; background: #f5f7fa; border: 1px solid #e0e0e0; border-radius: 6px; font-size: 12px; cursor: pointer; text-align: left; color: #1a1a2e; font-weight: 600; }}
         .rec-toggle:hover {{ background: #e8eaf0; }}
-        .recommendations {{ margin-top: 12px; padding: 12px; background: #f9f9f9; border-radius: 6px; border-left: 3px solid #1a1a2e; }}
+        .wcag-toggle {{ background: #f0f7ff; border-color: #c0d8f0; }}
+        .wcag-toggle:hover {{ background: #ddeeff; }}
+        .recommendations {{ margin-top: 8px; padding: 12px; background: #f9f9f9; border-radius: 6px; border-left: 3px solid #1a1a2e; }}
+        .wcag-rec {{ background: #f0f7ff; border-left-color: #3498db; }}
+        .rec-section-title {{ font-size: 11px; font-weight: 700; color: #888; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }}
         .recommendations p {{ font-size: 12px; color: #444; margin-bottom: 8px; line-height: 1.6; }}
         .recommendations p:last-child {{ margin-bottom: 0; }}
         .analyse-section {{ background: white; border-radius: 10px; padding: 30px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 40px; }}
@@ -405,6 +496,17 @@ def build_dashboard(results):
 </footer>
 
 <script>
+function toggleSection(id, btn) {{
+    const section = document.getElementById(id);
+    if (section.style.display === 'none') {{
+        section.style.display = 'block';
+        btn.textContent = btn.textContent.replace('▼', '▲');
+    }} else {{
+        section.style.display = 'none';
+        btn.textContent = btn.textContent.replace('▲', '▼');
+    }}
+}}
+
 function analyseArticle() {{
     const id = document.getElementById('articleId').value.trim();
     if (!id) {{
@@ -428,18 +530,6 @@ function analyseArticle() {{
             );
         }}, 1000);
     }});
-}}
-
-function toggleRec(id) {{
-    const rec = document.getElementById('rec-' + id);
-    const btn = rec.previousElementSibling;
-    if (rec.style.display === 'none') {{
-        rec.style.display = 'block';
-        btn.textContent = 'Hide Recommendations ▲';
-    }} else {{
-        rec.style.display = 'none';
-        btn.textContent = 'View Recommendations ▼';
-    }}
 }}
 </script>
 
