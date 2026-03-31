@@ -2,11 +2,16 @@
 # FK Readability Analysis Tool
 # Built by Cian Gallagher - Datavant
 # ============================================
+# Architecture: Hybrid Python + Claude
+# Python handles FK calculation precisely
+# Claude handles recommendations and WCAG
+# ============================================
 
 import os
 import re
 import glob
 import urllib3
+import textstat
 from datetime import datetime
 from dotenv import load_dotenv
 import requests
@@ -21,22 +26,24 @@ ZENDESK_SUBDOMAIN = os.getenv("ZENDESK_SUBDOMAIN")
 ZENDESK_EMAIL = os.getenv("ZENDESK_EMAIL")
 ZENDESK_API_TOKEN = os.getenv("ZENDESK_API_TOKEN")
 
-FK_PROMPT = """
-You are a technical writing assistant that performs
-Flesch-Kincaid Grade Level (FKGL) readability assessments
-and WCAG 2.2 writing accessibility checks
-on Zendesk help content.
+ANALYSIS_PROMPT = """
+You are a technical writing assistant helping a technical writing
+team improve their Zendesk help centre documentation.
 
-You help a technical writing team ensure their documentation
-is clear, accessible and easy to understand.
+You have been given:
+1. The cleaned prose text of a Zendesk article
+   (headings, lists, code blocks and images have already been removed)
+2. A pre-calculated Flesch-Kincaid Grade Level score
+   calculated by Python using the textstat library
 
-## What is Flesch-Kincaid Grade Level
-The Flesch-Kincaid Grade Level formula measures how easy or
-hard text is to read. It looks at average sentence length and
-average number of syllables per word. The result maps to a US
-school grade level.
+Your job is to:
+1. Accept the pre-calculated FK score as the official score
+   Do not recalculate it yourself
+2. Explain what the score means in plain English
+3. Give specific FK readability recommendations
+4. Give WCAG 2.2 writing accessibility notes
 
-Reading level guide:
+## Reading Level Guide
 - Grade 1 to 6 = Elementary, very easy to read
 - Grade 7 to 8 = Middle School, easy and ideal for most audiences
 - Grade 9 to 10 = High School, moderate complexity
@@ -45,28 +52,7 @@ Reading level guide:
 
 Technical writing should ideally target Grade 12 or below.
 
-The formula is:
-(0.39 x average words per sentence) +
-(11.8 x average syllables per word) - 15.59
-
-## EXCLUSION CRITERIA
-Remove all of the following before scoring:
-- Titles, headings, and subheadings
-- Bullet points and numbered lists
-- Code blocks and programming syntax
-- Images and media references
-- URLs and web addresses
-- Technical identifiers and CamelCase words
-- Product and team names like Tokenization
-
-## Sentence Eligibility Rule
-Only include text that:
-1. Appears in paragraph form
-2. Contains complete grammatical sentences
-3. Uses natural language syntax
-4. Is intended for reader comprehension
-
-## How to Present Results
+## How to Present Your Response
 Use this exact format every time:
 
 ---
@@ -74,40 +60,26 @@ FLESCH-KINCAID GRADE LEVEL ANALYSIS
 
 Article Title: [title]
 
-SCORE: [number]
-Reading Level: [level]
-Target Audience: [description]
+SCORE: [use the pre-calculated score provided to you]
+Reading Level: [level based on score]
+Target Audience: [description of who can read this comfortably]
 
-Summary: [one sentence explanation]
-
-SCORE BREAKDOWN:
-- Eligible sentences analysed: [number]
-- Eligible words analysed: [number]
-- Eligible syllables analysed: [number]
-- Average words per sentence: [number]
-- Average syllables per word: [number]
-- Formula applied: [show the calculation]
-
-CONTENT EXCLUDED FROM SCORING:
-- Headings: [yes/no and count]
-- Lists: [yes/no and count]
-- Code blocks: [yes/no and count]
-- Images: [yes/no and count]
-- Product names noted: [list any found]
+Summary: [one clear sentence explaining what this score means]
 
 FK RECOMMENDATIONS:
-[If Grade 12 or below: confirm content meets target]
-[If above Grade 12: give 3 specific suggestions]
+[If Grade 12 or below: confirm content meets target and say well done]
+[If above Grade 12: give 3 very specific suggestions with actual
+examples from the article text provided]
 
 WCAG 2.2 WRITING ACCESSIBILITY NOTES:
 
-Plain Language: [Pass or flag with specific examples]
-Sentence Length: [Pass or flag sentences over 25 words]
-Jargon: [Pass or list unexplained terms found]
-Active Voice: [Pass or flag passive constructions]
-Heading Clarity: [Pass or suggestions]
-Link Text: [Pass or flag vague link text]
-Abbreviations: [Pass or list unexplained abbreviations]
+Plain Language: [Pass or flag with specific examples from the text]
+Sentence Length: [Pass or flag any sentences over 25 words]
+Jargon: [Pass or list unexplained technical terms found]
+Active Voice: [Pass or flag passive constructions with examples]
+Heading Clarity: [Pass or suggestions based on content]
+Link Text: [Pass or flag vague link text found]
+Abbreviations: [Pass or list unexplained abbreviations found]
 
 Overall WCAG Writing Score: [Good / Needs Attention / Needs Significant Work]
 ---
@@ -130,8 +102,127 @@ def get_zendesk_article(article_id):
     return title, clean_body
 
 
-def analyse_with_claude(title, content):
-    print(f"\nSending article to Claude for FK and WCAG analysis...")
+def clean_text_for_fk(text):
+    """
+    Strips all non-prose content before FK calculation
+    This is the Python pre-processor that removes:
+    - Code blocks
+    - URLs
+    - Numbers and identifiers
+    - Very short lines that are likely headings or labels
+    - Lines that are mostly symbols
+    Returns only eligible prose sentences
+    """
+    lines = text.split('\n')
+    clean_lines = []
+
+    for line in lines:
+        line = line.strip()
+
+        if not line:
+            continue
+
+        if len(line) < 20:
+            continue
+
+        if line.startswith('http'):
+            continue
+
+        if re.match(r'^[\d\s\.\-\*\#\>\|]+$', line):
+            continue
+
+        symbol_count = len(re.findall(r'[^a-zA-Z\s]', line))
+        if symbol_count > len(line) * 0.4:
+            continue
+
+        word_count = len(line.split())
+        if word_count < 4:
+            continue
+
+        clean_lines.append(line)
+
+    return ' '.join(clean_lines)
+
+
+def calculate_fk_score(clean_text):
+    """
+    Uses textstat library to calculate FK Grade Level
+    This is mathematically precise and never varies
+    Same text always produces the same score
+    """
+    if not clean_text or len(clean_text.split()) < 10:
+        return None
+
+    score = textstat.flesch_kincaid_grade(clean_text)
+    score = round(score, 1)
+
+    word_count = textstat.lexicon_count(clean_text)
+    sentence_count = textstat.sentence_count(clean_text)
+    syllable_count = textstat.syllable_count(clean_text)
+
+    print(f"FK Score calculated by Python: {score}")
+    print(f"Words: {word_count} | Sentences: {sentence_count} | Syllables: {syllable_count}")
+
+    return {
+        'score': score,
+        'word_count': word_count,
+        'sentence_count': sentence_count,
+        'syllable_count': syllable_count,
+        'avg_words_per_sentence': round(word_count / sentence_count, 1) if sentence_count > 0 else 0,
+        'avg_syllables_per_word': round(syllable_count / word_count, 2) if word_count > 0 else 0
+    }
+
+
+def get_reading_level(score):
+    if score <= 6:
+        return "Elementary"
+    elif score <= 8:
+        return "Middle School"
+    elif score <= 10:
+        return "High School"
+    elif score <= 12:
+        return "High School Advanced"
+    else:
+        return "College level"
+
+
+def analyse_with_claude(title, clean_text, fk_data):
+    """
+    Claude receives the pre-calculated score
+    and focuses only on recommendations and WCAG
+    It does not recalculate the score
+    """
+    print(f"\nSending to Claude for recommendations and WCAG analysis...")
+
+    score = fk_data['score']
+    reading_level = get_reading_level(score)
+
+    prompt_with_data = f"""
+{ANALYSIS_PROMPT}
+
+---
+ARTICLE INFORMATION:
+
+Title: {title}
+
+Pre-calculated FK Score: {score}
+Reading Level: {reading_level}
+
+Score Breakdown (calculated by Python textstat):
+- Eligible words analysed: {fk_data['word_count']}
+- Eligible sentences analysed: {fk_data['sentence_count']}
+- Eligible syllables analysed: {fk_data['syllable_count']}
+- Average words per sentence: {fk_data['avg_words_per_sentence']}
+- Average syllables per word: {fk_data['avg_syllables_per_word']}
+
+CLEANED PROSE TEXT FOR WCAG ANALYSIS:
+{clean_text[:3000]}
+---
+
+Please use the pre-calculated score of {score} as the official score.
+Do not recalculate. Focus your response on recommendations and WCAG notes.
+"""
+
     client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
     message = client.messages.create(
         model="claude-sonnet-4-5",
@@ -139,16 +230,16 @@ def analyse_with_claude(title, content):
         messages=[
             {
                 "role": "user",
-                "content": f"{FK_PROMPT}\n\nARTICLE TO ANALYSE:\n\nTitle: {title}\n\n{content}"
+                "content": prompt_with_data
             }
         ]
     )
     result = message.content[0].text
-    print("Analysis complete")
+    print("Claude analysis complete")
     return result
 
 
-def save_result(title, result):
+def save_result(title, result, fk_data):
     print(f"\nSaving result...")
     clean_title = re.sub(r'[^a-zA-Z0-9\s]', '', title)
     clean_title = clean_title.replace(' ', '-').lower()
@@ -157,7 +248,8 @@ def save_result(title, result):
     with open(filename, 'w') as f:
         f.write(f"# FK Analysis Result\n\n")
         f.write(f"**Article:** {title}\n")
-        f.write(f"**Date:** {datetime.now().strftime('%d %B %Y %H:%M')}\n\n")
+        f.write(f"**Date:** {datetime.now().strftime('%d %B %Y %H:%M')}\n")
+        f.write(f"**Calculated by:** Python textstat library\n\n")
         f.write(result)
     print(f"Result saved to: {filename}")
     return filename
@@ -329,7 +421,7 @@ def build_dashboard(results):
             <div class="reading-level">{r['level']}</div>
             <span class="status-pill {status}">{status_text}</span>
             <div class="summary-text">{r['summary']}</div>
-            <div class="card-meta">Tested: {r['date']}</div>
+            <div class="card-meta">Tested: {r['date']} · Score calculated by Python textstat</div>
             <button class="rec-toggle" onclick="toggleSection('fk-{i}', this)">
                 <span>📊 FK Recommendations</span><span>▼</span>
             </button>
@@ -349,7 +441,6 @@ def build_dashboard(results):
 
         history = r.get('history', [])
         improvement = r.get('improvement')
-        first_score = r.get('first_score')
 
         if improvement is not None:
             if improvement > 0:
@@ -489,6 +580,7 @@ def build_dashboard(results):
         .input-row button:hover {{ transform: translateY(-2px); box-shadow: 0 6px 20px rgba(15,52,96,0.4); }}
         .notice {{ margin-top: 16px; padding: 16px 20px; background: #f0f7ff; border-radius: 10px; border-left: 4px solid #3498db; font-size: 13px; color: #333; line-height: 1.8; }}
         .history-intro {{ background: white; border-radius: 12px; padding: 16px 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 24px; font-size: 13px; color: #666; display: none; border-left: 4px solid #8e44ad; }}
+        .python-badge {{ display: inline-block; background: #f0f7ff; color: #3498db; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 10px; margin-left: 6px; border: 1px solid #daeaf8; }}
         footer {{ text-align: center; padding: 24px; font-size: 12px; color: #bbb; border-top: 1px solid #eee; background: white; }}
         .hidden {{ display: none !important; }}
     </style>
@@ -554,10 +646,10 @@ def build_dashboard(results):
     <div class="last-updated">Last updated: {today}</div>
 
     <div class="filter-bar">
-        <button class="filter-btn active" onclick="filterCards('all', this)">All Articles</button>
-        <button class="filter-btn good-filter" onclick="filterCards('good', this)">✅ Meets Target</button>
-        <button class="filter-btn warning-filter" onclick="filterCards('warning', this)">⚠️ Needs Improvement</button>
-        <button class="filter-btn bad-filter" onclick="filterCards('bad', this)">🔴 Needs Significant Work</button>
+        <button class="filter-btn active" onclick="filterCards('all', this)">All Articles ({total})</button>
+        <button class="filter-btn good-filter" onclick="filterCards('good', this)">✅ Meets Target ({good_count})</button>
+        <button class="filter-btn warning-filter" onclick="filterCards('warning', this)">⚠️ Needs Improvement ({warning_count})</button>
+        <button class="filter-btn bad-filter" onclick="filterCards('bad', this)">🔴 Needs Significant Work ({bad_count})</button>
         <button class="filter-btn history-filter" onclick="filterCards('history', this)">📈 Score History</button>
     </div>
 
@@ -566,11 +658,13 @@ def build_dashboard(results):
         <div class="legend-item"><div class="legend-dot good"></div><span>12.0 or below = Meets Target</span></div>
         <div class="legend-item"><div class="legend-dot warning"></div><span>12.1 to 14.9 = Needs Improvement</span></div>
         <div class="legend-item"><div class="legend-dot bad"></div><span>15.0 and above = Needs Significant Work</span></div>
+        <div class="legend-item"><span class="python-badge">Python</span><span>Scores calculated by textstat library</span></div>
     </div>
 
     <div class="history-intro" id="history-intro">
         📈 <strong>Score History</strong> shows how each article has changed over time.
-        Articles that have only been tested once will show as tested once only.
+        Scores are calculated by the Python textstat library so changes here
+        reflect genuine article rewrites not AI variation.
         Re-run any article to start tracking its progression.
     </div>
 
@@ -687,6 +781,8 @@ def main():
     print("========================================")
     print("  FK Readability Analysis Tool")
     print("  Datavant Technical Writing Team")
+    print("  Scores: Python textstat library")
+    print("  Recommendations: Claude AI")
     print("========================================")
 
     article_id = input("\nEnter the Zendesk article ID: ").strip()
@@ -699,14 +795,25 @@ def main():
     if not title:
         return
 
-    result = analyse_with_claude(title, content)
-    filename = save_result(title, result)
+    print("\nPre-processing text for FK calculation...")
+    clean_text = clean_text_for_fk(content)
+
+    print("\nCalculating FK score with Python textstat...")
+    fk_data = calculate_fk_score(clean_text)
+
+    if not fk_data:
+        print("Not enough eligible prose content to calculate FK score")
+        return
+
+    result = analyse_with_claude(title, clean_text, fk_data)
+    filename = save_result(title, result, fk_data)
     all_results = read_all_results()
     build_dashboard(all_results)
     push_to_github(title)
 
     print("\n========================================")
     print("  ANALYSIS COMPLETE")
+    print(f"  FK Score: {fk_data['score']} (Python textstat)")
     print("========================================")
     print(result)
     print(f"\nResult saved to: {filename}")
