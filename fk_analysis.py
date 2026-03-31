@@ -264,38 +264,20 @@ def get_progress_width(score):
     return int((capped / 20) * 100)
 
 
-def build_history_html(history, first_score, improvement, current_score):
-    if not history:
-        return ''
-
-    trend_html = ''
-    if improvement is not None:
-        if improvement > 0:
-            trend_html = f'<span class="trend-good">↓ Improved by {improvement} points</span>'
-        elif improvement < 0:
-            trend_html = f'<span class="trend-bad">↑ Declined by {abs(improvement)} points</span>'
-        else:
-            trend_html = f'<span class="trend-neutral">→ No change</span>'
-
-    history_rows = ''
-    all_entries = history + [{'date': 'Current', 'score': current_score}]
-    for entry in reversed(history):
+def build_history_rows_html(history, current_score, current_date):
+    all_entries = history + [{'date': current_date, 'score': current_score}]
+    rows = ''
+    for entry in reversed(all_entries):
         h_status, _ = get_status(entry['score'])
-        history_rows += f"""
+        label = 'Latest' if entry['date'] == current_date else ''
+        rows += f"""
         <div class="history-row">
             <span class="history-date">{entry['date']}</span>
             <span class="history-score {h_status}">{entry['score']}</span>
+            {f'<span class="history-label">Latest</span>' if label else ''}
         </div>
         """
-
-    return f"""
-    <div class="progression-section">
-        <div class="progression-header">
-            📈 Score History {trend_html}
-        </div>
-        {history_rows}
-    </div>
-    """
+    return rows
 
 
 def build_dashboard(results):
@@ -310,6 +292,8 @@ def build_dashboard(results):
     today = datetime.now().strftime('%d %B %Y')
 
     cards_html = ""
+    history_cards_html = ""
+
     for i, r in enumerate(results):
         status, status_text = get_status(r['score'])
         progress = get_progress_width(r['score'])
@@ -333,13 +317,6 @@ def build_dashboard(results):
         if not wcag_html:
             wcag_html = "<p>Re-run this article to generate WCAG accessibility notes.</p>"
 
-        history_html = build_history_html(
-            r.get('history', []),
-            r.get('first_score'),
-            r.get('improvement'),
-            r['score']
-        )
-
         cards_html += f"""
         <div class="article-card {status}" data-status="{status}" style="animation-delay:{delay}s">
             <div class="card-header">
@@ -352,7 +329,6 @@ def build_dashboard(results):
             <div class="reading-level">{r['level']}</div>
             <span class="status-pill {status}">{status_text}</span>
             <div class="summary-text">{r['summary']}</div>
-            {history_html}
             <div class="card-meta">Tested: {r['date']}</div>
             <button class="rec-toggle" onclick="toggleSection('fk-{i}', this)">
                 <span>📊 FK Recommendations</span><span>▼</span>
@@ -367,6 +343,44 @@ def build_dashboard(results):
             <div class="recommendations wcag-rec" id="wcag-{i}">
                 <div class="rec-section-title">WCAG 2.2 Writing Accessibility</div>
                 {wcag_html}
+            </div>
+        </div>
+"""
+
+        history = r.get('history', [])
+        improvement = r.get('improvement')
+        first_score = r.get('first_score')
+
+        if improvement is not None:
+            if improvement > 0:
+                trend_class = 'trend-good'
+                trend_text = f'↓ Improved by {improvement} points'
+            elif improvement < 0:
+                trend_class = 'trend-bad'
+                trend_text = f'↑ Declined by {abs(improvement)} points'
+            else:
+                trend_class = 'trend-neutral'
+                trend_text = '→ No change'
+        else:
+            trend_class = 'trend-neutral'
+            trend_text = 'Only tested once'
+
+        history_rows = build_history_rows_html(
+            history, r['score'], r['date']
+        )
+
+        history_cards_html += f"""
+        <div class="history-card {status}" style="animation-delay:{delay}s">
+            <div class="history-card-header">
+                <div class="article-title">{r['title']}</div>
+                <div class="score-badge {status}">{r['score']}</div>
+            </div>
+            <div class="progress-bar-wrap">
+                <div class="progress-bar {status}" style="width:{progress}%"></div>
+            </div>
+            <div class="trend-badge {trend_class}">{trend_text}</div>
+            <div class="history-entries">
+                {history_rows}
             </div>
         </div>
 """
@@ -403,6 +417,7 @@ def build_dashboard(results):
         .filter-btn.good-filter.active {{ background: #27ae60; border-color: #27ae60; }}
         .filter-btn.warning-filter.active {{ background: #f39c12; border-color: #f39c12; }}
         .filter-btn.bad-filter.active {{ background: #e74c3c; border-color: #e74c3c; }}
+        .filter-btn.history-filter.active {{ background: #8e44ad; border-color: #8e44ad; }}
         .legend {{ background: white; border-radius: 12px; padding: 16px 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 24px; display: flex; gap: 24px; flex-wrap: wrap; align-items: center; }}
         .legend-title {{ font-size: 12px; font-weight: 700; color: #1a1a2e; text-transform: uppercase; letter-spacing: 0.5px; }}
         .legend-item {{ display: flex; align-items: center; gap: 8px; font-size: 12px; color: #555; }}
@@ -416,6 +431,25 @@ def build_dashboard(results):
         .article-card.good {{ border-left-color: #27ae60; }}
         .article-card.warning {{ border-left-color: #f39c12; }}
         .article-card.bad {{ border-left-color: #e74c3c; }}
+        .history-card {{ background: white; border-radius: 14px; padding: 22px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); border-left: 5px solid #ccc; transition: transform 0.25s ease, box-shadow 0.25s ease; opacity: 0; animation: fadeInUp 0.5s ease forwards; display: none; }}
+        .history-card:hover {{ transform: translateY(-4px); box-shadow: 0 8px 30px rgba(0,0,0,0.12); }}
+        .history-card.good {{ border-left-color: #27ae60; }}
+        .history-card.warning {{ border-left-color: #f39c12; }}
+        .history-card.bad {{ border-left-color: #e74c3c; }}
+        .history-card-header {{ display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }}
+        .trend-badge {{ display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; margin: 8px 0 12px; }}
+        .trend-good {{ background: #eafaf1; color: #27ae60; }}
+        .trend-bad {{ background: #fdf0ed; color: #e74c3c; }}
+        .trend-neutral {{ background: #f8f9fa; color: #999; }}
+        .history-entries {{ margin-top: 8px; }}
+        .history-row {{ display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #f5f5f5; font-size: 12px; }}
+        .history-row:last-child {{ border-bottom: none; }}
+        .history-date {{ color: #999; }}
+        .history-score {{ font-weight: 800; font-size: 14px; }}
+        .history-score.good {{ color: #27ae60; }}
+        .history-score.warning {{ color: #f39c12; }}
+        .history-score.bad {{ color: #e74c3c; }}
+        .history-label {{ background: #1a1a2e; color: white; font-size: 9px; padding: 2px 6px; border-radius: 10px; font-weight: 700; text-transform: uppercase; }}
         @keyframes fadeInUp {{ from {{ opacity: 0; transform: translateY(20px); }} to {{ opacity: 1; transform: translateY(0); }} }}
         .card-header {{ display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }}
         .article-title {{ font-size: 14px; font-weight: 700; color: #1a1a2e; flex: 1; margin-right: 12px; line-height: 1.4; }}
@@ -434,18 +468,6 @@ def build_dashboard(results):
         .status-pill.warning {{ background: #fef9e7; color: #f39c12; }}
         .status-pill.bad {{ background: #fdf0ed; color: #e74c3c; }}
         .summary-text {{ font-size: 12px; color: #666; margin-bottom: 10px; line-height: 1.6; }}
-        .progression-section {{ background: #f8f9fa; border-radius: 8px; padding: 12px; margin-bottom: 10px; border-left: 3px solid #6c757d; }}
-        .progression-header {{ font-size: 12px; font-weight: 700; color: #555; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 4px; }}
-        .trend-good {{ color: #27ae60; font-size: 11px; font-weight: 700; }}
-        .trend-bad {{ color: #e74c3c; font-size: 11px; font-weight: 700; }}
-        .trend-neutral {{ color: #999; font-size: 11px; font-weight: 700; }}
-        .history-row {{ display: flex; justify-content: space-between; align-items: center; padding: 4px 0; border-bottom: 1px solid #eee; font-size: 11px; }}
-        .history-row:last-child {{ border-bottom: none; }}
-        .history-date {{ color: #999; }}
-        .history-score {{ font-weight: 700; }}
-        .history-score.good {{ color: #27ae60; }}
-        .history-score.warning {{ color: #f39c12; }}
-        .history-score.bad {{ color: #e74c3c; }}
         .card-meta {{ font-size: 11px; color: #bbb; border-top: 1px solid #f5f5f5; padding-top: 10px; margin-top: 4px; margin-bottom: 10px; }}
         .rec-toggle {{ width: 100%; padding: 9px 12px; background: #f8f9fa; border: 1px solid #eee; border-radius: 8px; font-size: 12px; cursor: pointer; text-align: left; color: #1a1a2e; font-weight: 600; transition: all 0.2s; display: flex; justify-content: space-between; align-items: center; }}
         .rec-toggle:hover {{ background: #e9ecef; border-color: #ddd; }}
@@ -466,6 +488,7 @@ def build_dashboard(results):
         .input-row button {{ padding: 12px 28px; background: linear-gradient(135deg, #1a1a2e, #0f3460); color: white; border: none; border-radius: 10px; font-size: 14px; cursor: pointer; font-weight: 700; transition: all 0.2s; letter-spacing: 0.3px; }}
         .input-row button:hover {{ transform: translateY(-2px); box-shadow: 0 6px 20px rgba(15,52,96,0.4); }}
         .notice {{ margin-top: 16px; padding: 16px 20px; background: #f0f7ff; border-radius: 10px; border-left: 4px solid #3498db; font-size: 13px; color: #333; line-height: 1.8; }}
+        .history-intro {{ background: white; border-radius: 12px; padding: 16px 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 24px; font-size: 13px; color: #666; display: none; border-left: 4px solid #8e44ad; }}
         footer {{ text-align: center; padding: 24px; font-size: 12px; color: #bbb; border-top: 1px solid #eee; background: white; }}
         .hidden {{ display: none !important; }}
     </style>
@@ -535,18 +558,30 @@ def build_dashboard(results):
         <button class="filter-btn good-filter" onclick="filterCards('good', this)">✅ Meets Target</button>
         <button class="filter-btn warning-filter" onclick="filterCards('warning', this)">⚠️ Needs Improvement</button>
         <button class="filter-btn bad-filter" onclick="filterCards('bad', this)">🔴 Needs Significant Work</button>
+        <button class="filter-btn history-filter" onclick="filterCards('history', this)">📈 Score History</button>
     </div>
 
-    <div class="legend">
+    <div class="legend" id="legend-bar">
         <span class="legend-title">Score Guide:</span>
         <div class="legend-item"><div class="legend-dot good"></div><span>12.0 or below = Meets Target</span></div>
         <div class="legend-item"><div class="legend-dot warning"></div><span>12.1 to 14.9 = Needs Improvement</span></div>
         <div class="legend-item"><div class="legend-dot bad"></div><span>15.0 and above = Needs Significant Work</span></div>
     </div>
 
+    <div class="history-intro" id="history-intro">
+        📈 <strong>Score History</strong> shows how each article has changed over time.
+        Articles that have only been tested once will show as tested once only.
+        Re-run any article to start tracking its progression.
+    </div>
+
     <div class="articles-grid" id="articles-grid">
         {cards_html}
     </div>
+
+    <div class="articles-grid" id="history-grid" style="display:none">
+        {history_cards_html}
+    </div>
+
 </div>
 
 <footer>
@@ -569,13 +604,33 @@ function toggleSection(id, btn) {{
 function filterCards(status, btn) {{
     document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
-    document.querySelectorAll('.article-card').forEach(card => {{
-        if (status === 'all' || card.dataset.status === status) {{
-            card.classList.remove('hidden');
-        }} else {{
-            card.classList.add('hidden');
-        }}
-    }});
+
+    const articlesGrid = document.getElementById('articles-grid');
+    const historyGrid = document.getElementById('history-grid');
+    const legendBar = document.getElementById('legend-bar');
+    const historyIntro = document.getElementById('history-intro');
+
+    if (status === 'history') {{
+        articlesGrid.style.display = 'none';
+        historyGrid.style.display = 'grid';
+        legendBar.style.display = 'none';
+        historyIntro.style.display = 'block';
+        document.querySelectorAll('.history-card').forEach(card => {{
+            card.style.display = 'block';
+        }});
+    }} else {{
+        articlesGrid.style.display = 'grid';
+        historyGrid.style.display = 'none';
+        legendBar.style.display = 'flex';
+        historyIntro.style.display = 'none';
+        document.querySelectorAll('.article-card').forEach(card => {{
+            if (status === 'all' || card.dataset.status === status) {{
+                card.classList.remove('hidden');
+            }} else {{
+                card.classList.add('hidden');
+            }}
+        }});
+    }}
 }}
 
 function analyseArticle() {{
