@@ -4,7 +4,8 @@
 # Architecture: Hybrid Python + Claude
 # Python handles FK calculation precisely
 # Claude handles recommendations and WCAG
-# Google Sheets handles article ID queue
+# Google Sheets handles article queue
+# Supports full URLs or just article IDs
 # ============================================
 
 import os
@@ -37,13 +38,11 @@ team improve their Zendesk help centre documentation.
 
 You have been given:
 1. The cleaned prose text of a Zendesk article
-   (headings, lists, code blocks and images have already been removed)
 2. A pre-calculated Flesch-Kincaid Grade Level score
    calculated by Python using the textstat library
 
 Your job is to:
 1. Accept the pre-calculated FK score as the official score
-   Do not recalculate it yourself
 2. Explain what the score means in plain English
 3. Give specific FK readability recommendations
 4. Give WCAG 2.2 writing accessibility notes
@@ -91,6 +90,40 @@ Overall WCAG Writing Score: [Good / Needs Attention / Needs Significant Work]
 """
 
 
+def extract_id_from_input(input_value):
+    """
+    Accepts either a full Zendesk URL or just an article ID
+    Returns the article ID and a name hint from the URL if available
+
+    Examples:
+    Input: https://support.datavant.com/hc/en-us/articles/26609721445140-Datavant-ID
+    Output: ('26609721445140', 'Datavant ID')
+
+    Input: 26609721445140
+    Output: ('26609721445140', None)
+    """
+    input_value = input_value.strip()
+    input_value = input_value.strip('"').strip("'")
+
+    if 'http' in input_value or 'zendesk' in input_value or 'datavant.com' in input_value:
+        id_match = re.search(r'/articles/(\d+)', input_value)
+        if id_match:
+            article_id = id_match.group(1)
+            name_match = re.search(r'/articles/\d+-(.+?)(?:\?|$)', input_value)
+            if name_match:
+                name_hint = name_match.group(1).replace('-', ' ').title()
+            else:
+                name_hint = None
+            return article_id, name_hint
+        return None, None
+
+    clean_id = re.sub(r'[^0-9]', '', input_value)
+    if clean_id and clean_id.isdigit():
+        return clean_id, None
+
+    return None, None
+
+
 def get_google_sheet():
     print("\nConnecting to Google Sheets...")
     try:
@@ -123,17 +156,32 @@ def get_pending_articles(worksheet):
                 continue
             if not row or not row[0]:
                 continue
-            article_id = row[0].strip()
+            raw_input = row[0].strip()
             article_name = row[1].strip() if len(row) > 1 else ''
             status = row[2].strip() if len(row) > 2 else ''
-            if not article_id.isdigit():
+
+            if not raw_input:
                 continue
-            if status.lower() != 'done':
-                pending.append({
-                    'row': i + 1,
-                    'article_id': article_id,
-                    'article_name': article_name
-                })
+
+            if status.lower() == 'done' or status.lower() == 'n/a':
+                continue
+
+            article_id, name_hint = extract_id_from_input(raw_input)
+
+            if not article_id:
+                print(f"Could not extract ID from row {i+1}: {raw_input}")
+                continue
+
+            if not article_name and name_hint:
+                article_name = name_hint
+
+            pending.append({
+                'row': i + 1,
+                'article_id': article_id,
+                'article_name': article_name,
+                'raw_input': raw_input
+            })
+
         print(f"Found {len(pending)} pending articles")
         return pending
     except Exception as e:
@@ -630,20 +678,21 @@ def build_dashboard(results):
     <div class="analyse-section">
         <h2>Analyse a New Article</h2>
         <p>
-            To analyse a new article simply add the Zendesk article ID
-            to the FK Articles Google Sheet and it will be analysed
-            automatically within the next scheduled run.
+            To analyse a new article simply paste the full Zendesk article URL
+            into the Google Sheet and it will be analysed automatically.
+            You can also paste just the article ID if you prefer.
         </p>
         <a class="sheets-link" href="https://docs.google.com/spreadsheets/d/{GOOGLE_SHEET_ID}" target="_blank">
             📊 Open FK Articles Google Sheet
         </a>
         <div class="sheets-info">
             <strong>How to add a new article:</strong><br>
-            1. Click the button above to open the Google Sheet<br>
-            2. Add the article ID in column A<br>
-            3. Add the article name in column B<br>
-            4. Leave column C blank<br>
-            5. The analysis will run automatically and update this dashboard
+            1. Open the article in Zendesk<br>
+            2. Copy the full URL from your browser<br>
+            3. Click the button above to open the Google Sheet<br>
+            4. Paste the URL in column A of a new row<br>
+            5. Leave column C blank<br>
+            6. The analysis will run automatically and update this dashboard
         </div>
     </div>
 
@@ -827,13 +876,15 @@ def main():
     print("  Recommendations: Claude AI")
     print("========================================")
 
-    article_id = input("\nEnter the Zendesk article ID: ").strip()
+    article_id = input("\nEnter the Zendesk article ID or URL: ").strip()
 
-    if not article_id.isdigit():
-        print("Error: Please enter a valid article ID number")
+    extracted_id, name_hint = extract_id_from_input(article_id)
+
+    if not extracted_id:
+        print("Error: Please enter a valid article ID or Zendesk URL")
         return
 
-    title, content = get_zendesk_article(article_id)
+    title, content = get_zendesk_article(extracted_id)
     if not title:
         return
 
