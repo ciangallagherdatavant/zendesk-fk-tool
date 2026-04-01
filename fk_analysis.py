@@ -767,8 +767,20 @@ def push_to_github(article_title):
     print("\nPushing to GitHub...")
     try:
         import subprocess
+        subprocess.run(['git', 'config', '--global',
+            'user.email', 'action@github.com'], check=True)
+        subprocess.run(['git', 'config', '--global',
+            'user.name', 'GitHub Action'], check=True)
         subprocess.run(['git', 'add', '.'], check=True)
         subprocess.run(['git', 'commit', '-m',
+            f'FK analysis: {article_title} - {datetime.now().strftime("%d %b %Y")}'],
+            check=True)
+        subprocess.run(['git', 'push'], check=True)
+        print("Successfully pushed to GitHub")
+        print("Dashboard will update in about 2 minutes")
+    except Exception as e:
+        print(f"Could not auto push: {e}")
+        print("Please push manually using GitHub Desktop")
             f'FK analysis: {article_title} - {datetime.now().strftime("%d %b %Y")}'],
             check=True)
         subprocess.run(['git', 'push'], check=True)
