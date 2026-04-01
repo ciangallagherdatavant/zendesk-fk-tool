@@ -1,17 +1,20 @@
 # ============================================
 # FK Readability Analysis Tool
 # Built by Cian Gallagher - Datavant
-# ============================================
 # Architecture: Hybrid Python + Claude
 # Python handles FK calculation precisely
 # Claude handles recommendations and WCAG
+# Google Sheets handles article ID queue
 # ============================================
 
 import os
 import re
 import glob
+import json
 import urllib3
 import textstat
+import gspread
+from google.oauth2.service_account import Credentials
 from datetime import datetime
 from dotenv import load_dotenv
 import requests
@@ -25,6 +28,8 @@ ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
 ZENDESK_SUBDOMAIN = os.getenv("ZENDESK_SUBDOMAIN")
 ZENDESK_EMAIL = os.getenv("ZENDESK_EMAIL")
 ZENDESK_API_TOKEN = os.getenv("ZENDESK_API_TOKEN")
+GOOGLE_SHEET_ID = os.getenv("GOOGLE_SHEET_ID")
+GOOGLE_SHEETS_CREDENTIALS = os.getenv("GOOGLE_SHEETS_CREDENTIALS")
 
 ANALYSIS_PROMPT = """
 You are a technical writing assistant helping a technical writing
@@ -86,6 +91,93 @@ Overall WCAG Writing Score: [Good / Needs Attention / Needs Significant Work]
 """
 
 
+def get_google_sheet():
+    """
+    Connects to Google Sheets using service account credentials
+    Returns the worksheet object
+    """
+    print("\nConnecting to Google Sheets...")
+    try:
+        creds_json = GOOGLE_SHEETS_CREDENTIALS
+        if not creds_json:
+            print("No Google Sheets credentials found")
+            return None
+
+        creds_dict = json.loads(creds_json)
+        scopes = [
+            'https://www.googleapis.com/auth/spreadsheets'
+        ]
+        creds = Credentials.from_service_account_info(
+            creds_dict,
+            scopes=scopes
+        )
+        client = gspread.authorize(creds)
+        sheet = client.open_by_key(GOOGLE_SHEET_ID)
+        worksheet = sheet.get_worksheet(0)
+        print("Connected to Google Sheets successfully")
+        return worksheet
+    except Exception as e:
+        print(f"Could not connect to Google Sheets: {e}")
+        return None
+
+
+def get_pending_articles(worksheet):
+    """
+    Reads the Google Sheet and returns articles
+    that have not been analysed yet
+    Column A = Article ID
+    Column B = Article Name
+    Column C = Status (blank = pending, Done = complete)
+    """
+    print("\nChecking for pending articles in Google Sheet...")
+    try:
+        all_rows = worksheet.get_all_values()
+        pending = []
+
+        for i, row in enumerate(all_rows):
+            if i == 0:
+                continue
+
+            if not row or not row[0]:
+                continue
+
+            article_id = row[0].strip()
+            article_name = row[1].strip() if len(row) > 1 else ''
+            status = row[2].strip() if len(row) > 2 else ''
+
+            if not article_id.isdigit():
+                continue
+
+            if status.lower() != 'done':
+                pending.append({
+                    'row': i + 1,
+                    'article_id': article_id,
+                    'article_name': article_name
+                })
+
+        print(f"Found {len(pending)} pending articles")
+        return pending
+    except Exception as e:
+        print(f"Error reading sheet: {e}")
+        return []
+
+
+def update_sheet_status(worksheet, row_number, article_name, score):
+    """
+    Updates the Google Sheet after analysis is complete
+    Sets status to Done and adds the date and score
+    """
+    try:
+        today = datetime.now().strftime('%d %B %Y %H:%M')
+        worksheet.update_cell(row_number, 2, article_name)
+        worksheet.update_cell(row_number, 3, 'Done')
+        worksheet.update_cell(row_number, 4, today)
+        worksheet.update_cell(row_number, 5, str(score))
+        print(f"Sheet updated for row {row_number}")
+    except Exception as e:
+        print(f"Could not update sheet: {e}")
+
+
 def get_zendesk_article(article_id):
     print(f"\nFetching article {article_id} from Zendesk...")
     url = f"https://{ZENDESK_SUBDOMAIN}.zendesk.com/api/v2/help_center/articles/{article_id}"
@@ -103,66 +195,38 @@ def get_zendesk_article(article_id):
 
 
 def clean_text_for_fk(text):
-    """
-    Strips all non-prose content before FK calculation
-    This is the Python pre-processor that removes:
-    - Code blocks
-    - URLs
-    - Numbers and identifiers
-    - Very short lines that are likely headings or labels
-    - Lines that are mostly symbols
-    Returns only eligible prose sentences
-    """
     lines = text.split('\n')
     clean_lines = []
-
     for line in lines:
         line = line.strip()
-
         if not line:
             continue
-
         if len(line) < 20:
             continue
-
         if line.startswith('http'):
             continue
-
         if re.match(r'^[\d\s\.\-\*\#\>\|]+$', line):
             continue
-
         symbol_count = len(re.findall(r'[^a-zA-Z\s]', line))
         if symbol_count > len(line) * 0.4:
             continue
-
         word_count = len(line.split())
         if word_count < 4:
             continue
-
         clean_lines.append(line)
-
     return ' '.join(clean_lines)
 
 
 def calculate_fk_score(clean_text):
-    """
-    Uses textstat library to calculate FK Grade Level
-    This is mathematically precise and never varies
-    Same text always produces the same score
-    """
     if not clean_text or len(clean_text.split()) < 10:
         return None
-
     score = textstat.flesch_kincaid_grade(clean_text)
     score = round(score, 1)
-
     word_count = textstat.lexicon_count(clean_text)
     sentence_count = textstat.sentence_count(clean_text)
     syllable_count = textstat.syllable_count(clean_text)
-
     print(f"FK Score calculated by Python: {score}")
     print(f"Words: {word_count} | Sentences: {sentence_count} | Syllables: {syllable_count}")
-
     return {
         'score': score,
         'word_count': word_count,
@@ -187,16 +251,9 @@ def get_reading_level(score):
 
 
 def analyse_with_claude(title, clean_text, fk_data):
-    """
-    Claude receives the pre-calculated score
-    and focuses only on recommendations and WCAG
-    It does not recalculate the score
-    """
     print(f"\nSending to Claude for recommendations and WCAG analysis...")
-
     score = fk_data['score']
     reading_level = get_reading_level(score)
-
     prompt_with_data = f"""
 {ANALYSIS_PROMPT}
 
@@ -222,17 +279,11 @@ CLEANED PROSE TEXT FOR WCAG ANALYSIS:
 Please use the pre-calculated score of {score} as the official score.
 Do not recalculate. Focus your response on recommendations and WCAG notes.
 """
-
     client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
     message = client.messages.create(
         model="claude-sonnet-4-5",
         max_tokens=3000,
-        messages=[
-            {
-                "role": "user",
-                "content": prompt_with_data
-            }
-        ]
+        messages=[{"role": "user", "content": prompt_with_data}]
     )
     result = message.content[0].text
     print("Claude analysis complete")
@@ -260,37 +311,28 @@ def read_all_results():
     result_files = glob.glob('results/*.md')
     result_files = [f for f in result_files if '.gitkeep' not in f]
     result_files = [f for f in result_files if 'sample-article' not in f]
-
     all_by_title = {}
-
     for filepath in result_files:
         with open(filepath, 'r') as f:
             content = f.read()
-
         title_match = re.search(r'\*\*Article:\*\* (.+)', content)
         title = title_match.group(1).strip() if title_match else 'Unknown Article'
-
         date_match = re.search(r'\*\*Date:\*\* (.+)', content)
         date = date_match.group(1).strip() if date_match else 'Unknown Date'
-
         score_match = re.search(r'\*?\*?SCORE:\*?\*?\s*\*?\*?(\d+\.?\d*)', content)
         score = float(score_match.group(1)) if score_match else 0
-
         level_match = re.search(r'Reading Level:\s*\*?\*?(.+)', content)
         level = level_match.group(1).strip() if level_match else 'Unknown'
         level = re.sub(r'\*', '', level).strip()
-
         summary_match = re.search(r'Summary:\s*\*?\*?(.+)', content)
         summary = summary_match.group(1).strip() if summary_match else ''
         summary = re.sub(r'\*', '', summary).strip()
-
         fk_rec_match = re.search(
             r'FK RECOMMENDATIONS:\s*\n(.*?)(?=WCAG 2\.2 WRITING|---|$)',
             content, re.DOTALL
         )
         fk_recommendations = fk_rec_match.group(1).strip() if fk_rec_match else ''
         fk_recommendations = re.sub(r'\*\*', '', fk_recommendations)
-
         if not fk_recommendations:
             rec_match = re.search(
                 r'RECOMMENDATIONS:\s*\n(.*?)(?=WCAG|---|$)',
@@ -298,14 +340,12 @@ def read_all_results():
             )
             fk_recommendations = rec_match.group(1).strip() if rec_match else ''
             fk_recommendations = re.sub(r'\*\*', '', fk_recommendations)
-
         wcag_match = re.search(
             r'WCAG 2\.2 WRITING ACCESSIBILITY NOTES:\s*\n(.*?)(?=---|$)',
             content, re.DOTALL
         )
         wcag_notes = wcag_match.group(1).strip() if wcag_match else ''
         wcag_notes = re.sub(r'\*\*', '', wcag_notes)
-
         entry = {
             'title': title,
             'date': date,
@@ -316,27 +356,22 @@ def read_all_results():
             'wcag_notes': wcag_notes,
             'filepath': filepath
         }
-
         if title not in all_by_title:
             all_by_title[title] = []
         all_by_title[title].append(entry)
-
     results = []
     for title, entries in all_by_title.items():
         entries.sort(key=lambda x: x['date'])
         latest = entries[-1]
         history = entries[:-1]
-
         first_score = entries[0]['score'] if len(entries) > 1 else None
         improvement = None
         if first_score and first_score != latest['score']:
             improvement = round(first_score - latest['score'], 1)
-
         latest['history'] = history
         latest['first_score'] = first_score
         latest['improvement'] = improvement
         results.append(latest)
-
     results.sort(key=lambda x: x['score'], reverse=True)
     print(f"Found {len(results)} unique articles")
     return results
@@ -572,13 +607,10 @@ def build_dashboard(results):
         .recommendations p:last-child {{ margin-bottom: 0; }}
         .analyse-section {{ background: white; border-radius: 14px; padding: 30px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); margin-bottom: 30px; }}
         .analyse-section h2 {{ font-size: 18px; font-weight: 700; margin-bottom: 6px; color: #1a1a2e; }}
-        .analyse-section p {{ font-size: 13px; color: #999; margin-bottom: 18px; }}
-        .input-row {{ display: flex; gap: 10px; flex-wrap: wrap; }}
-        .input-row input {{ flex: 1; padding: 12px 18px; border: 2px solid #eee; border-radius: 10px; font-size: 14px; min-width: 200px; transition: border-color 0.2s; outline: none; }}
-        .input-row input:focus {{ border-color: #1a1a2e; }}
-        .input-row button {{ padding: 12px 28px; background: linear-gradient(135deg, #1a1a2e, #0f3460); color: white; border: none; border-radius: 10px; font-size: 14px; cursor: pointer; font-weight: 700; transition: all 0.2s; letter-spacing: 0.3px; }}
-        .input-row button:hover {{ transform: translateY(-2px); box-shadow: 0 6px 20px rgba(15,52,96,0.4); }}
-        .notice {{ margin-top: 16px; padding: 16px 20px; background: #f0f7ff; border-radius: 10px; border-left: 4px solid #3498db; font-size: 13px; color: #333; line-height: 1.8; }}
+        .analyse-section p {{ font-size: 13px; color: #999; margin-bottom: 18px; line-height: 1.6; }}
+        .sheets-link {{ display: inline-flex; align-items: center; gap: 8px; padding: 12px 24px; background: #27ae60; color: white; border-radius: 10px; font-size: 14px; font-weight: 700; text-decoration: none; transition: all 0.2s; margin-top: 4px; }}
+        .sheets-link:hover {{ background: #219a52; transform: translateY(-2px); box-shadow: 0 6px 20px rgba(39,174,96,0.4); }}
+        .sheets-info {{ background: #f0fff4; border-radius: 10px; padding: 16px 20px; border-left: 4px solid #27ae60; font-size: 13px; color: #333; line-height: 1.8; margin-top: 16px; }}
         .history-intro {{ background: white; border-radius: 12px; padding: 16px 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 24px; font-size: 13px; color: #666; display: none; border-left: 4px solid #8e44ad; }}
         .python-badge {{ display: inline-block; background: #f0f7ff; color: #3498db; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 10px; margin-left: 6px; border: 1px solid #daeaf8; }}
         footer {{ text-align: center; padding: 24px; font-size: 12px; color: #bbb; border-top: 1px solid #eee; background: white; }}
@@ -622,23 +654,21 @@ def build_dashboard(results):
 
     <div class="analyse-section">
         <h2>Analyse a New Article</h2>
-        <p>Enter a Zendesk article ID below and click Analyse Article to run a new FK and WCAG readability analysis</p>
-        <div class="input-row">
-            <input type="text" id="articleId" placeholder="Enter Zendesk Article ID e.g. 26609721445140" />
-            <button onclick="analyseArticle()">Analyse Article →</button>
-        </div>
-        <div class="notice" id="instructions" style="display:none">
-            <strong>GitHub Actions is opening in a new tab</strong><br><br>
-            Your article ID has been copied to your clipboard. Follow these steps:<br><br>
-            <ol style="margin-left:16px;margin-top:8px;">
-                <li style="margin-bottom:6px;">In the new tab click the green <strong>Run workflow</strong> button</li>
-                <li style="margin-bottom:6px;">Paste your article ID into the box</li>
-                <li style="margin-bottom:6px;">Click the green <strong>Run workflow</strong> button</li>
-                <li style="margin-bottom:6px;">Wait about 30 seconds for it to complete</li>
-                <li style="margin-bottom:6px;">Come back to this page and refresh</li>
-                <li style="margin-bottom:6px;">Your new score will appear automatically</li>
-                <li style="margin-bottom:6px;color:#856404;"><strong>Note:</strong> The dashboard can take 2 to 3 minutes to update after the action completes. If you do not see your result yet simply refresh the page again.</li>
-            </ol>
+        <p>
+            To analyse a new article simply add the Zendesk article ID
+            to the FK Articles Google Sheet and it will be analysed
+            automatically within the next scheduled run.
+        </p>
+        <a class="sheets-link" href="https://docs.google.com/spreadsheets/d/{GOOGLE_SHEET_ID}" target="_blank">
+            📊 Open FK Articles Google Sheet
+        </a>
+        <div class="sheets-info">
+            <strong>How to add a new article:</strong><br>
+            1. Click the button above to open the Google Sheet<br>
+            2. Add the article ID in column A<br>
+            3. Add the article name in column B<br>
+            4. Leave column C blank<br>
+            5. The analysis will run automatically and update this dashboard
         </div>
     </div>
 
@@ -665,7 +695,6 @@ def build_dashboard(results):
         📈 <strong>Score History</strong> shows how each article has changed over time.
         Scores are calculated by the Python textstat library so changes here
         reflect genuine article rewrites not AI variation.
-        Re-run any article to start tracking its progression.
     </div>
 
     <div class="articles-grid" id="articles-grid">
@@ -698,12 +727,10 @@ function toggleSection(id, btn) {{
 function filterCards(status, btn) {{
     document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
-
     const articlesGrid = document.getElementById('articles-grid');
     const historyGrid = document.getElementById('history-grid');
     const legendBar = document.getElementById('legend-bar');
     const historyIntro = document.getElementById('history-intro');
-
     if (status === 'history') {{
         articlesGrid.style.display = 'none';
         historyGrid.style.display = 'grid';
@@ -725,31 +752,6 @@ function filterCards(status, btn) {{
             }}
         }});
     }}
-}}
-
-function analyseArticle() {{
-    const id = document.getElementById('articleId').value.trim();
-    if (!id) {{
-        alert('Please enter a Zendesk Article ID first');
-        return;
-    }}
-    navigator.clipboard.writeText(id).then(function() {{
-        document.getElementById('instructions').style.display = 'block';
-        setTimeout(function() {{
-            window.open(
-                'https://github.com/ciangallagherdatavant/zendesk-fk-tool/actions/workflows/analyse.yml',
-                '_blank'
-            );
-        }}, 1000);
-    }}).catch(function() {{
-        document.getElementById('instructions').style.display = 'block';
-        setTimeout(function() {{
-            window.open(
-                'https://github.com/ciangallagherdatavant/zendesk-fk-tool/actions/workflows/analyse.yml',
-                '_blank'
-            );
-        }}, 1000);
-    }});
 }}
 </script>
 
@@ -775,6 +777,67 @@ def push_to_github(article_title):
     except Exception as e:
         print(f"Could not auto push: {e}")
         print("Please push manually using GitHub Desktop")
+
+
+def run_sheets_mode():
+    """
+    Runs in Google Sheets mode
+    Reads pending articles from the sheet
+    Analyses each one automatically
+    Updates the sheet when done
+    """
+    print("========================================")
+    print("  FK Readability Analysis Tool")
+    print("  Running in Google Sheets mode")
+    print("========================================")
+
+    worksheet = get_google_sheet()
+    if not worksheet:
+        print("Could not connect to Google Sheets")
+        return
+
+    pending = get_pending_articles(worksheet)
+
+    if not pending:
+        print("No pending articles found in Google Sheet")
+        print("Rebuilding dashboard with existing results...")
+        all_results = read_all_results()
+        build_dashboard(all_results)
+        push_to_github("scheduled update")
+        return
+
+    print(f"\nProcessing {len(pending)} pending articles...")
+
+    for item in pending:
+        article_id = item['article_id']
+        row = item['row']
+
+        print(f"\nProcessing article ID: {article_id}")
+
+        title, content = get_zendesk_article(article_id)
+        if not title:
+            print(f"Could not fetch article {article_id}")
+            continue
+
+        clean_text = clean_text_for_fk(content)
+        fk_data = calculate_fk_score(clean_text)
+
+        if not fk_data:
+            print(f"Not enough content in article {article_id}")
+            continue
+
+        result = analyse_with_claude(title, clean_text, fk_data)
+        save_result(title, result, fk_data)
+        update_sheet_status(worksheet, row, title, fk_data['score'])
+
+        print(f"Completed: {title} - Score: {fk_data['score']}")
+
+    print("\nAll pending articles processed")
+    print("Rebuilding dashboard...")
+    all_results = read_all_results()
+    build_dashboard(all_results)
+    push_to_github("Google Sheets batch analysis")
+    print("\nDone! Dashboard updated.")
 
 
 def main():
@@ -821,4 +884,8 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    import sys
+    if len(sys.argv) > 1 and sys.argv[1] == '--sheets':
+        run_sheets_mode()
+    else:
+        main()

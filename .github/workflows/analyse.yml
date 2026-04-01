@@ -4,9 +4,11 @@ on:
   workflow_dispatch:
     inputs:
       article_id:
-        description: 'Zendesk Article ID'
-        required: true
+        description: 'Zendesk Article ID (leave blank to run from Google Sheet)'
+        required: false
         type: string
+  schedule:
+    - cron: '0 8 * * 1'
 
 jobs:
   analyse:
@@ -23,7 +25,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install anthropic requests python-dotenv gitpython textstat
+          pip install anthropic requests python-dotenv gitpython textstat gspread google-auth
 
       - name: Run FK Analysis
         env:
@@ -31,8 +33,11 @@ jobs:
           ZENDESK_SUBDOMAIN: ${{ secrets.ZENDESK_SUBDOMAIN }}
           ZENDESK_EMAIL: ${{ secrets.ZENDESK_EMAIL }}
           ZENDESK_API_TOKEN: ${{ secrets.ZENDESK_API_TOKEN }}
+          GOOGLE_SHEET_ID: ${{ secrets.GOOGLE_SHEET_ID }}
+          GOOGLE_SHEETS_CREDENTIALS: ${{ secrets.GOOGLE_SHEETS_CREDENTIALS }}
         run: |
-          python3 -c "
+          if [ -n "${{ github.event.inputs.article_id }}" ]; then
+            python3 -c "
           import os
           from fk_analysis import get_zendesk_article, clean_text_for_fk, calculate_fk_score, analyse_with_claude, save_result, read_all_results, build_dashboard
           title, content = get_zendesk_article('${{ github.event.inputs.article_id }}')
@@ -45,6 +50,9 @@ jobs:
                   results = read_all_results()
                   build_dashboard(results)
           "
+          else
+            python3 fk_analysis.py --sheets
+          fi
 
       - name: Commit and push results
         run: |
