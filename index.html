@@ -142,20 +142,21 @@
     <div class="analyse-section">
         <h2>Analyse a New Article</h2>
         <p>
-            To analyse a new article simply add the Zendesk article ID
-            to the FK Articles Google Sheet and it will be analysed
-            automatically within the next scheduled run.
+            To analyse a new article simply paste the full Zendesk article URL
+            into the Google Sheet and it will be analysed automatically.
+            You can also paste just the article ID if you prefer.
         </p>
         <a class="sheets-link" href="https://docs.google.com/spreadsheets/d/13W7pCKLVsyYVgkVNhPH2kykKNwOO_GIprKC_EF2ndhw" target="_blank">
             📊 Open FK Articles Google Sheet
         </a>
         <div class="sheets-info">
             <strong>How to add a new article:</strong><br>
-            1. Click the button above to open the Google Sheet<br>
-            2. Add the article ID in column A<br>
-            3. Add the article name in column B<br>
-            4. Leave column C blank<br>
-            5. The analysis will run automatically and update this dashboard
+            1. Open the article in Zendesk<br>
+            2. Copy the full URL from your browser<br>
+            3. Click the button above to open the Google Sheet<br>
+            4. Paste the URL in column A of a new row<br>
+            5. Leave column C blank<br>
+            6. The analysis will run automatically and update this dashboard
         </div>
     </div>
 
@@ -216,7 +217,7 @@
 
         <div class="article-card warning" data-status="warning" style="animation-delay:0.2s">
             <div class="card-header">
-                <div class="article-title">Datavant Partner Program</div>
+                <div class="article-title">Trial Tokenization Project Dashboard</div>
                 <div class="score-badge warning">14.3</div>
             </div>
             <div class="progress-bar-wrap">
@@ -224,14 +225,14 @@
             </div>
             <div class="reading-level">College level</div>
             <span class="status-pill warning">⚠️ Needs Improvement</span>
-            <div class="summary-text">This content requires a college-level reading ability, which is above the recommended Grade 8 target for technical documentation.</div>
-            <div class="card-meta">Tested: 23 March 2026 15:32 · Score calculated by Python textstat</div>
+            <div class="summary-text">This content exceeds the recommended Grade 8 target and requires significant simplification to improve accessibility for a broader audience.</div>
+            <div class="card-meta">Tested: 23 March 2026 14:31 · Score calculated by Python textstat</div>
             <button class="rec-toggle" onclick="toggleSection('fk-1', this)">
                 <span>📊 FK Recommendations</span><span>▼</span>
             </button>
             <div class="recommendations" id="fk-1">
                 <div class="rec-section-title">Flesch-Kincaid Recommendations</div>
-                <p>1. Break down complex sentences: The opening sentence under "What is the Datavant Partner Program?" is 24 words long with multiple clauses. Split it into two sentences: "The Datavant Partner Program elevates organizations who are most active in our ecosystem. It increases their status and visibility."</p><p>2. Simplify multi-syllable words: Replace complex vocabulary with simpler alternatives:</p><p>- "attained" → "earned" or "reached"</p><p>- "proactive" → "active" or "ready"</p><p>- "enhanced visibility" → "more visibility" or "greater visibility"</p><p>3. Reduce sentence complexity in "How it Works": The sentence "Partner status is attained through a points system based on a combination of three factors" (15 words, complex structure) could become: "Partners earn their status through points. Points come from three factors."</p>
+                <p>1. Break down long, complex sentences - Many sentences exceed 20 words and contain multiple clauses. For example: "A trial tokenization project is created whenever a sponsor uses the Datavant Trials Web Portal or Datavant Trials Desktop Application" could become: "You create a trial tokenization project when you use the Web Portal or Desktop Application."</p><p>2. Replace multi-syllable words with simpler alternatives - Use "use" instead of "utilize," "show" instead of "display," "track" instead of "monitor," "check" instead of "evaluate," and "ready" instead of "readiness." Replace "reconciliation" with "matching" and "associated" with "linked to."</p><p>3. Simplify technical phrases and reduce prepositional phrases - Phrases like "view tokenization counts based on" could be "count by," "designated as admins" could be "who are admins," and "placed in an approval queue for review" could be "sent for approval."</p>
             </div>
             <button class="rec-toggle wcag-toggle" onclick="toggleSection('wcag-1', this)">
                 <span>♿ WCAG Accessibility Notes</span><span>▼</span>
@@ -244,7 +245,7 @@
 
         <div class="article-card warning" data-status="warning" style="animation-delay:0.3s">
             <div class="card-header">
-                <div class="article-title">Trial Tokenization Project Dashboard</div>
+                <div class="article-title">Datavant Partner Program</div>
                 <div class="score-badge warning">14.3</div>
             </div>
             <div class="progress-bar-wrap">
@@ -252,14 +253,14 @@
             </div>
             <div class="reading-level">College level</div>
             <span class="status-pill warning">⚠️ Needs Improvement</span>
-            <div class="summary-text">This content exceeds the recommended Grade 8 target and requires significant simplification to improve accessibility for a broader audience.</div>
-            <div class="card-meta">Tested: 23 March 2026 14:31 · Score calculated by Python textstat</div>
+            <div class="summary-text">This content requires a college-level reading ability, which is above the recommended Grade 8 target for technical documentation.</div>
+            <div class="card-meta">Tested: 23 March 2026 15:32 · Score calculated by Python textstat</div>
             <button class="rec-toggle" onclick="toggleSection('fk-2', this)">
                 <span>📊 FK Recommendations</span><span>▼</span>
             </button>
             <div class="recommendations" id="fk-2">
                 <div class="rec-section-title">Flesch-Kincaid Recommendations</div>
-                <p>1. Break down long, complex sentences - Many sentences exceed 20 words and contain multiple clauses. For example: "A trial tokenization project is created whenever a sponsor uses the Datavant Trials Web Portal or Datavant Trials Desktop Application" could become: "You create a trial tokenization project when you use the Web Portal or Desktop Application."</p><p>2. Replace multi-syllable words with simpler alternatives - Use "use" instead of "utilize," "show" instead of "display," "track" instead of "monitor," "check" instead of "evaluate," and "ready" instead of "readiness." Replace "reconciliation" with "matching" and "associated" with "linked to."</p><p>3. Simplify technical phrases and reduce prepositional phrases - Phrases like "view tokenization counts based on" could be "count by," "designated as admins" could be "who are admins," and "placed in an approval queue for review" could be "sent for approval."</p>
+                <p>1. Break down complex sentences: The opening sentence under "What is the Datavant Partner Program?" is 24 words long with multiple clauses. Split it into two sentences: "The Datavant Partner Program elevates organizations who are most active in our ecosystem. It increases their status and visibility."</p><p>2. Simplify multi-syllable words: Replace complex vocabulary with simpler alternatives:</p><p>- "attained" → "earned" or "reached"</p><p>- "proactive" → "active" or "ready"</p><p>- "enhanced visibility" → "more visibility" or "greater visibility"</p><p>3. Reduce sentence complexity in "How it Works": The sentence "Partner status is attained through a points system based on a combination of three factors" (15 words, complex structure) could become: "Partners earn their status through points. Points come from three factors."</p>
             </div>
             <button class="rec-toggle wcag-toggle" onclick="toggleSection('wcag-2', this)">
                 <span>♿ WCAG Accessibility Notes</span><span>▼</span>
@@ -336,21 +337,21 @@
             </div>
             <div class="reading-level">College level</div>
             <span class="status-pill warning">⚠️ Needs Improvement</span>
-            <div class="summary-text">This content requires a college-level reading ability, which exceeds the recommended Grade 12 target for technical documentation and may create barriers for some users.</div>
-            <div class="card-meta">Tested: 01 April 2026 13:50 · Score calculated by Python textstat</div>
+            <div class="summary-text">This article requires a college-level reading ability, which is slightly above the recommended Grade 12 target for technical documentation.</div>
+            <div class="card-meta">Tested: 01 April 2026 14:20 · Score calculated by Python textstat</div>
             <button class="rec-toggle" onclick="toggleSection('fk-5', this)">
                 <span>📊 FK Recommendations</span><span>▼</span>
             </button>
             <div class="recommendations" id="fk-5">
                 <div class="rec-section-title">Flesch-Kincaid Recommendations</div>
-                <p>While the score is only slightly above target, the following improvements would help reach Grade 12 or below:</p><p>1. Simplify complex noun phrases: Replace phrases like "site-specific tokens into transit tokens, preparing them for secure transfer" with shorter constructions such as "site-specific tokens into transit tokens. This prepares them for secure transfer." Breaking compound phrases into separate sentences reduces cognitive load.</p><p>2. Reduce multi-syllable technical terminology density: Where possible, add brief explanations after terms. For example, "de-identification actions" could become "de-identification actions (methods that remove identifying information)" on first use, making concepts more accessible without oversimplifying.</p><p>3. Simplify video descriptions: Convert phrases like "demonstrates how to run the transform-tokens operation" to "shows how to run the transform-tokens operation" (using simpler synonyms consistently throughout).</p>
+                <p>While the score of 13.4 is only marginally above the Grade 12 target, here are three specific suggestions to improve readability:</p><p>1. Break down compound technical phrases: Replace complex noun strings like "site-specific tokens into transit tokens" with simpler constructions such as "tokens that are specific to your site into tokens for transit."</p><p>2. Simplify technical descriptors: The phrase "convert identified data into tokens" could be rewritten as "change identified data to tokens" or "turn identified data into tokens" to reduce syllable count.</p><p>3. Clarify specialized terminology: Phrases like "associate tables with a single data group" and "automatically create configurations from a data dictionary" use multiple technical terms in sequence. Consider breaking these into two shorter sentences or adding brief explanations.</p>
             </div>
             <button class="rec-toggle wcag-toggle" onclick="toggleSection('wcag-5', this)">
                 <span>♿ WCAG Accessibility Notes</span><span>▼</span>
             </button>
             <div class="recommendations wcag-rec" id="wcag-5">
                 <div class="rec-section-title">WCAG 2.2 Writing Accessibility</div>
-                <p>Plain Language: Needs Attention - Heavy use of technical compound phrases like "tokenized and de-identified data," "site-specific tokens into transit tokens," and "automatically create configurations from a data dictionary" without supporting definitions.</p><p>Sentence Length: Pass - Most sentences are under 25 words. The longest is 23 words: "It shows how to convert tokens received from a partner into your own site-specific tokens for use within your environment."</p><p>Jargon: Needs Attention - Multiple unexplained technical terms:</p><p>- tokenize/tokens/tokenized</p><p>- de-identification</p><p>- transit tokens</p><p>- site-specific tokens</p><p>- configurations</p><p>- data dictionary</p><p>- data group</p><p>- ingestion errors</p><p>Active Voice: Pass - Content uses active voice consistently (e.g., "This video demonstrates," "It shows").</p><p>Heading Clarity: Pass - Video titles clearly describe content and action (e.g., "Tokenize Data," "Transform Partner Tokens").</p><p>Link Text: Pass - Link text is descriptive (e.g., "Upgrade to Datavant v4," "Transform Tokens User Guide").</p><p>Abbreviations: Needs Attention - "CLI" and "V4" appear without first defining them as "Command Line Interface" and "Version 4."</p><p>Overall WCAG Writing Score: Needs Attention</p>
+                <p>Plain Language: Needs Attention - Heavy use of technical jargon including "tokenize," "de-identification," "site-specific tokens," "transit tokens," "configurations," and "data dictionary" without plain language alternatives or explanations.</p><p>Sentence Length: Pass - All sentences are well under 25 words. Average sentence length of 15.2 words is excellent.</p><p>Jargon: Needs Attention - Multiple unexplained technical terms:</p><p>- Tokenize/tokens/tokenizing</p><p>- De-identification/de-identified</p><p>- Site-specific tokens</p><p>- Transit tokens</p><p>- Configurations</p><p>- Data dictionary</p><p>- Data group</p><p>- Ingestion errors</p><p>- Expert Determinations</p><p>Active Voice: Pass - Most sentences use active voice appropriately ("demonstrates how to," "shows how to," "explains what").</p><p>Heading Clarity: Pass - Video titles are descriptive and action-oriented, clearly indicating the content of each tutorial.</p><p>Link Text: Pass - Link text appears descriptive (e.g., "Upgrade to Datavant v4," "Transform Tokens User Guide," "Configurations").</p><p>Abbreviations: Needs Attention - "CLI" and "V4" are used without first defining them as "Command Line Interface" and "Version 4."</p><p>Overall WCAG Writing Score: Needs Attention</p>
             </div>
         </div>
 
@@ -420,21 +421,21 @@
             </div>
             <div class="reading-level">High School Advanced (approaching College level)</div>
             <span class="status-pill warning">⚠️ Needs Improvement</span>
-            <div class="summary-text">This article is just above the Grade 12 target threshold for technical documentation, meaning it may challenge some readers and should be simplified where possible.</div>
-            <div class="card-meta">Tested: 01 April 2026 13:50 · Score calculated by Python textstat</div>
+            <div class="summary-text">This article requires a college-level reading ability, which is just slightly above the ideal target of Grade 12 or below for technical documentation.</div>
+            <div class="card-meta">Tested: 01 April 2026 14:19 · Score calculated by Python textstat</div>
             <button class="rec-toggle" onclick="toggleSection('fk-8', this)">
                 <span>📊 FK Recommendations</span><span>▼</span>
             </button>
             <div class="recommendations" id="fk-8">
                 <div class="rec-section-title">Flesch-Kincaid Recommendations</div>
-                <p>While this score is close to the target, it slightly exceeds the Grade 12 threshold. Here are three specific suggestions to improve readability:</p><p>1. Break down compound sentences with multiple clauses</p><p>- Example: "Creates transit tokens by transforming tokens from a site-specific encryption key into a transit encryption key that is unique to both the sender and the intended recipient."</p><p>- Suggestion: Split into two sentences: "Creates transit tokens by transforming tokens from a site-specific encryption key. The transit encryption key is unique to both the sender and the intended recipient."</p><p>2. Simplify technical phrases with too many modifiers</p><p>- Example: "Creates site-specific tokens using a site-specific encryption key derived from patient demographics."</p><p>- Suggestion: "Creates site tokens using an encryption key. This key is derived from patient demographics."</p><p>3. Use shorter alternative words where possible</p><p>- "enables organizations" → "helps organizations"</p><p>- "deployment methods available" → "deployment options"</p><p>- "best suited for your Tokenization Trials workflow" → "best for your workflow"</p>
+                <p>The article is very close to the target threshold (only 0.9 points above Grade 12), but could benefit from minor simplification to reach a broader technical audience. Here are three specific suggestions:</p><p>1. Break down complex noun phrases: Change "Creates site-specific tokens using a site-specific encryption key derived from patient demographics" to "Creates site-specific tokens. These tokens use an encryption key. The key is derived from patient demographics." This separates one complex idea into three simpler sentences.</p><p>2. Simplify purpose statements: The phrase "Applies de-identification operations to identified data, run by sites on their own first-party data" could become "Sites run this operation on their own first-party data to remove identifying information."</p><p>3. Use simpler connectors: Change "Creates transit tokens by transforming tokens from a site-specific encryption key into a transit encryption key that is unique to both the sender and the intended recipient" to "Creates transit tokens. It transforms tokens from a site-specific key to a transit key. This transit key is unique to the sender and recipient."</p>
             </div>
             <button class="rec-toggle wcag-toggle" onclick="toggleSection('wcag-8', this)">
                 <span>♿ WCAG Accessibility Notes</span><span>▼</span>
             </button>
             <div class="recommendations wcag-rec" id="wcag-8">
                 <div class="rec-section-title">WCAG 2.2 Writing Accessibility</div>
-                <p>Plain Language: Needs Attention</p><p>- Heavy use of technical compound phrases like "site-specific encryption key derived from patient demographics"</p><p>- Complex nested explanations: "Transform transit tokens or tokens generated for exchange by a partner to your site tokens"</p><p>- Consider defining terms progressively rather than embedding multiple concepts in single sentences</p><p>Sentence Length: Pass</p><p>- Average sentence length of 18.1 words is well within accessible guidelines</p><p>- No flagged sentences exceed 25 words in the provided text</p><p>Jargon: Needs Attention</p><p>- "tokens" - explained as "de-identified patient keys" (good)</p><p>- "site-specific encryption key" - not explained</p><p>- "transit tokens" - not explained before first use</p><p>- "transit encryption key" - not explained</p><p>- "first-party data" - not explained</p><p>- "PII" - abbreviation not defined (see below)</p><p>Active Voice: Pass</p><p>- Most sentences use active voice effectively</p><p>- Passive constructions are minimal and appropriate for technical context</p><p>Heading Clarity: Pass</p><p>- Headings appear logical based on content structure</p><p>- "Tokenize and transform" clearly introduces the core operations section</p><p>Link Text: Needs Attention</p><p>- "For more information, see the General Onboarding User Guide" - good, descriptive</p><p>- "For more information on supported de-identification operations, see Defining the Configuration Output Operations" - good, descriptive</p><p>- However, check that links exist for "support@datavant.com" references</p><p>Abbreviations: Needs Attention</p><p>- "PII" - used without definition (should be "personally identifiable information (PII)" on first use)</p><p>- "CLI" - defined as "CLI-specific" but full form not given (Command Line Interface)</p><p>Overall WCAG Writing Score: Needs Attention</p><p>The article has good structural elements (sentence length, active voice) but needs work on plain language, jargon explanation, and abbreviation definitions to meet WCAG 2.2 AAA accessibility standards for specialized content.</p>
+                <p>Plain Language: Needs Attention</p><p>- Heavy use of technical compound phrases: "site-specific encryption key," "de-identification operations," "transit encryption key"</p><p>- The phrase "The original underlying PII tokenized in your site are equal to the transform received tokens result in your site" is particularly unclear and grammatically awkward</p><p>- Consider adding a glossary or defining key terms inline</p><p>Sentence Length: Pass</p><p>- Most sentences are under 25 words</p><p>- Average of 18.1 words per sentence is good</p><p>- No problematic run-on sentences detected</p><p>Jargon: Needs Attention</p><p>Unexplained technical terms include:</p><p>- "tokens" (defined as "de-identified patient keys" but concept needs clearer explanation)</p><p>- "PII" (not spelled out as Personally Identifiable Information)</p><p>- "site-specific encryption key"</p><p>- "transit tokens" vs "site tokens"</p><p>- "first-party data"</p><p>- "Datavant Connect," "Assess," "Ecosystem Explorer," "Segment Builder" (product names used without context)</p><p>Active Voice: Needs Attention</p><p>Several passive constructions found:</p><p>- "is available on limited release"</p><p>- "is highlighted in purple callout boxes"</p><p>- "It's required for the following purposes"</p><p>- "are carried out through three core operations"</p><p>- "are used in a simple matching use case"</p><p>Heading Clarity: Pass</p><p>Headings are descriptive and hierarchical ("Overview," "About the Datavant Tokenization Software," "Tokenize and transform"). However, "Deployment Methods" section appears incomplete in the provided text.</p><p>Link Text: Needs Attention</p><p>- "see the General Onboarding User Guide" - acceptable but generic</p><p>- "see Defining the Configuration Output Operations" - acceptable</p><p>- The incomplete sentence at the end suggests there may be links missing from the cleaned text</p><p>Abbreviations: Needs Attention</p><p>- "PII" appears without being spelled out on first use</p><p>- "CLI" appears in the callout but is spelled out as "CLI-specific" without defining what CLI means (Command Line Interface)</p><p>Overall WCAG Writing Score: Needs Attention</p><p>The article has good sentence structure and organization but needs work on plain language, jargon explanation (especially PII and CLI), and reducing passive voice. The awkward sentence about "original underlying PII" should be rewritten for clarity and grammatical correctness.</p>
             </div>
         </div>
 
@@ -448,21 +449,21 @@
             </div>
             <div class="reading-level">High School Advanced</div>
             <span class="status-pill good">✅ Meets Target</span>
-            <div class="summary-text">This article sits at the upper boundary of acceptable technical documentation readability and is accessible to educated general audiences, though it contains some complex technical concepts.</div>
-            <div class="card-meta">Tested: 01 April 2026 13:35 · Score calculated by Python textstat</div>
+            <div class="summary-text">This article sits at the upper boundary of acceptable technical writing complexity and is suitable for educated professionals, though it may challenge general audiences.</div>
+            <div class="card-meta">Tested: 01 April 2026 14:19 · Score calculated by Python textstat</div>
             <button class="rec-toggle" onclick="toggleSection('fk-9', this)">
                 <span>📊 FK Recommendations</span><span>▼</span>
             </button>
             <div class="recommendations" id="fk-9">
                 <div class="rec-section-title">Flesch-Kincaid Recommendations</div>
-                <p>✓ Content meets target readability threshold (Grade 12 or below)</p><p>Well done! The article achieves a Grade 12 reading level, which is at the acceptable threshold for technical documentation. The writing balances technical accuracy with reasonable accessibility. The average sentence length of 15.6 words is excellent and contributes significantly to maintaining readability despite the technical subject matter.</p>
+                <p>✓ Content meets target - Well done!</p><p>The article achieves a Grade 12 reading level, which is at the acceptable threshold for technical documentation. The score reflects appropriate complexity for a security and data tokenization topic. The relatively modest average sentence length (15.6 words) and syllable count (1.82 per word) demonstrate good control of sentence structure while handling necessary technical concepts. Continue maintaining this balance of technical accuracy and readability.</p>
             </div>
             <button class="rec-toggle wcag-toggle" onclick="toggleSection('wcag-9', this)">
                 <span>♿ WCAG Accessibility Notes</span><span>▼</span>
             </button>
             <div class="recommendations wcag-rec" id="wcag-9">
                 <div class="rec-section-title">WCAG 2.2 Writing Accessibility</div>
-                <p>Plain Language: Needs Attention</p><p>- "Tokens are encrypted" - sentence ends abruptly at article conclusion</p><p>- "reverse-engineered" could be simplified to "decoded" or "converted back"</p><p>- "soundex" appears without explanation (technical algorithm term)</p><p>Sentence Length: Pass</p><p>All sentences appear to be under 25 words, with good average length of 15.6 words per sentence.</p><p>Jargon: Needs Attention</p><p>Unexplained technical terms:</p><p>- "soundex" (phonetic algorithm)</p><p>- "SHA-256" (cryptographic hash function - though context helps)</p><p>- "Master Token" (introduced but could benefit from earlier definition)</p><p>- "site-specific key" (cryptographic concept)</p><p>Abbreviations: Needs Attention</p><p>- "PII" - used extensively but never spelled out as "Personally Identifiable Information"</p><p>- "CLI" - used in callout but not defined (appears to mean Command Line Interface)</p><p>- "v4" and "v5" - version numbers used without spelling out "version"</p><p>Active Voice: Pass</p><p>Article predominantly uses active voice effectively ("Tokens allow organizations...", "Tokens are generated...", "a token generated from...")</p><p>Heading Clarity: Pass</p><p>Logical structure evident from content flow (Overview, What are tokens, Token format, Error tokens, Token generation process with steps)</p><p>Link Text: Good</p><p>References like "Token Error Log File" and "Required Data Pre-Processing" appear descriptive and contextual.</p><p>Overall WCAG Writing Score: Needs Attention</p><p>Primary issues: PII abbreviation never defined despite being central to the article; "soundex" unexplained; article text appears to end mid-sentence. Recommend defining PII on first use and adding brief explanations for technical terms like soundex.</p>
+                <p>Plain Language: Needs Attention - Some concepts could be simplified:</p><p>- "de-identified patient keys generated from combinations of PII elements" could be "patient identifiers created from personal information"</p><p>- "reverse-engineered to reveal" could be simplified to "decoded to show"</p><p>- "soundex" appears without explanation</p><p>Sentence Length: Pass - All sentences are well under 25 words. Good sentence control throughout.</p><p>Jargon: Needs Attention - Several unexplained technical terms:</p><p>- PII (later context helps, but not defined on first use)</p><p>- SHA-256</p><p>- soundex</p><p>- Master Token (explained but technical)</p><p>- hash function/hash value</p><p>Active Voice: Pass - Good use of active voice overall. Passive constructions found are appropriate: "Tokens are generated" (acceptable for process description), "structured PII is collected" (process-focused).</p><p>Heading Clarity: Pass - Headings are descriptive and logical: "What are Datavant tokens?", "Token format", "Error tokens", "The token generation process" with clear step labels.</p><p>Link Text: Needs Attention - Some link references are vague:</p><p>- "see: Token Error Log File" (lacks verb/context)</p><p>- "see Required Data Pre-Processing" (functional but could be more descriptive)</p><p>Abbreviations: Needs Attention:</p><p>- CLI (expanded on first use ✓)</p><p>- PII (never expanded - should be "Personally Identifiable Information (PII)")</p><p>- SHA-256 (not expanded)</p><p>Overall WCAG Writing Score: Needs Attention</p><p>The article demonstrates strong sentence structure and heading organization, but would benefit from expanding abbreviations on first use (especially PII) and adding brief explanations for technical terms like SHA-256 and soundex to improve accessibility for broader audiences.</p>
             </div>
         </div>
 
@@ -476,21 +477,21 @@
             </div>
             <div class="reading-level">High School Advanced</div>
             <span class="status-pill good">✅ Meets Target</span>
-            <div class="summary-text">This article requires a high school advanced reading level and is accessible to most technical audiences, falling just below the Grade 12 target threshold.</div>
-            <div class="card-meta">Tested: 01 April 2026 13:50 · Score calculated by Python textstat</div>
+            <div class="summary-text">This article sits just below the Grade 12 threshold with a score of 11.4, making it accessible to most professional audiences while maintaining necessary technical precision.</div>
+            <div class="card-meta">Tested: 01 April 2026 14:19 · Score calculated by Python textstat</div>
             <button class="rec-toggle" onclick="toggleSection('fk-10', this)">
                 <span>📊 FK Recommendations</span><span>▼</span>
             </button>
             <div class="recommendations" id="fk-10">
                 <div class="rec-section-title">Flesch-Kincaid Recommendations</div>
-                <p>✓ Content meets target readability goal (Grade 12 or below)</p><p>Well done! The article achieves good readability for technical documentation at Grade 11.4. The average sentence length of 14.9 words is excellent, and the content balances technical accuracy with accessibility. To maintain or further improve this score, continue using short sentences and defining technical terms on first use.</p>
+                <p>✓ Content meets target readability standards (Grade 12 or below)</p><p>The article achieves good readability for technical content with an average sentence length of 14.9 words and 1.8 syllables per word. This balance allows clear explanation of complex encryption concepts while remaining accessible. Well done maintaining concise sentences and clear structure throughout this technical topic.</p>
             </div>
             <button class="rec-toggle wcag-toggle" onclick="toggleSection('wcag-10', this)">
                 <span>♿ WCAG Accessibility Notes</span><span>▼</span>
             </button>
             <div class="recommendations wcag-rec" id="wcag-10">
                 <div class="rec-section-title">WCAG 2.2 Writing Accessibility</div>
-                <p>Plain Language: Needs Attention</p><p>- "Irreversible hashing" and "site-specific encryption" appear as standalone fragments without immediate plain language explanation</p><p>- "Linkability" is an abstract technical term that could use clarification (e.g., "linkability (the ability to connect data across sources)")</p><p>- Consider adding: "Re-encrypting tokens into a new encryption key" could be simplified to "converting tokens to use a different encryption key"</p><p>Sentence Length: Pass</p><p>No sentences exceed 25 words. Sentence structure is clear and concise throughout.</p><p>Jargon: Needs Attention</p><p>Unexplained technical terms include:</p><p>- PII (defined in parentheses - good practice)</p><p>- Master Token (used before clear definition)</p><p>- De-identification (not explained)</p><p>- Tokenization (referenced but assumes prior knowledge)</p><p>- Transit keys and connect keys (introduced but not defined)</p><p>Abbreviations: Pass</p><p>PII is expanded on first use. No other abbreviations require explanation.</p><p>Active Voice: Needs Attention</p><p>Passive constructions found:</p><p>- "encryption keys are provisioned" → "Datavant provisions encryption keys"</p><p>- "are not matchable" → "cannot match"</p><p>- "cannot be used" → needs active alternative</p><p>- "are exchanged" → "partners exchange"</p><p>- "Tokens are irreversible" → acceptable for emphasis</p><p>Heading Clarity: Pass</p><p>Content structure suggests clear, task-oriented headings (Overview, Why it matters, Verify your site key, etc.)</p><p>Link Text: Pass</p><p>Reference to "Introduction to Datavant Tokens" is descriptive and meaningful.</p><p>Overall WCAG Writing Score: Good</p><p>The article demonstrates strong readability with excellent sentence length control. Primary improvements should focus on defining specialized terms (Master Token, transit keys, connect keys, de-identification) on first use and converting passive voice to active where possible. The technical content is appropriate for the audience but would benefit from brief plain language definitions for key concepts.</p>
+                <p>Plain Language: Needs Attention</p><p>- "Provisions" used multiple times (e.g., "Datavant provisions site encryption keys") - consider "provides" or "supplies"</p><p>- "Linkability of its data" - abstract term, could clarify as "ability to link data records"</p><p>- "Participating organizations have granted contractual permission" - could simplify to "organizations have agreed"</p><p>Sentence Length: Pass</p><p>All sentences are well under 25 words. Longest sentence is approximately 22 words ("Token transformation is required whenever tokens are exchanged with a partner for linking").</p><p>Jargon: Needs Attention</p><p>- "PII" - defined on first use (good)</p><p>- "Master Token" - explained contextually (good)</p><p>- "de-identification" - used without definition</p><p>- "linkability" - technical term not explained</p><p>- "re-encrypting" - assumes understanding of encryption concepts</p><p>Active Voice: Pass</p><p>Predominantly active voice throughout. Examples: "This article provides," "Datavant provisions," "organizations use them." Minimal passive constructions found.</p><p>Heading Clarity: Pass</p><p>Clear, descriptive headings that guide users effectively: "Overview," "Site-specific token encryption," "Why it matters," "Verify your site key," "Transforming Token Encryption Keys."</p><p>Link Text: Needs Attention</p><p>- "Introduction to Datavant Tokens" - good descriptive link</p><p>- "support@datavant.com" - functional but present (acceptable for email)</p><p>- Instruction to "Go to the home page" implies navigation but no explicit link provided in text</p><p>Abbreviations: Pass</p><p>"PII" is properly expanded on first use: "PII (Personally Identifiable Information)"</p><p>Overall WCAG Writing Score: Good</p><p>The article demonstrates strong accessibility practices with clear structure, appropriate sentence length, and good use of active voice. Minor improvements in plain language and jargon explanation would enhance accessibility further.</p>
             </div>
         </div>
 
@@ -504,21 +505,21 @@
             </div>
             <div class="reading-level">High School (upper level)</div>
             <span class="status-pill good">✅ Meets Target</span>
-            <div class="summary-text">This article reads at a 10th-11th grade level, which is appropriate for technical documentation and falls within the recommended range for help centre content.</div>
-            <div class="card-meta">Tested: 01 April 2026 13:13 · Score calculated by Python textstat</div>
+            <div class="summary-text">This article reads at a Grade 10.7 level, which is appropriate for technical documentation and falls within the acceptable range for specialized software instruction.</div>
+            <div class="card-meta">Tested: 01 April 2026 14:19 · Score calculated by Python textstat</div>
             <button class="rec-toggle" onclick="toggleSection('fk-11', this)">
                 <span>📊 FK Recommendations</span><span>▼</span>
             </button>
             <div class="recommendations" id="fk-11">
                 <div class="rec-section-title">Flesch-Kincaid Recommendations</div>
-                <p>✓ Content meets target readability standards (Grade 12 or below)</p><p>This article performs well with an average of 14.9 words per sentence, which keeps sentences manageable. The technical nature of the content appropriately matches the audience (users implementing Datavant software). Well done maintaining readability while covering complex technical requirements.</p>
+                <p>✓ Content meets readability target (Grade 12 or below)</p><p>This article achieves a good balance for technical documentation. The score of 10.7 is well within acceptable parameters for software documentation targeting technical users. The average sentence length of 14.9 words is excellent and contributes positively to readability. Well done on maintaining clear, concise sentence structure throughout complex technical content.</p>
             </div>
             <button class="rec-toggle wcag-toggle" onclick="toggleSection('wcag-11', this)">
                 <span>♿ WCAG Accessibility Notes</span><span>▼</span>
             </button>
             <div class="recommendations wcag-rec" id="wcag-11">
                 <div class="rec-section-title">WCAG 2.2 Writing Accessibility</div>
-                <p>Plain Language: Needs Attention</p><p>- "Data hygiene requirements" could be simplified to "data quality requirements"</p><p>- "Formatting differences do not prevent tokens from linking across data tables" is unnecessarily complex; consider "formatting differences don't stop tokens from matching across tables"</p><p>- "Minimizes the risk of re-identification" could be clearer as "reduces the risk of identifying individuals"</p><p>Sentence Length: Pass</p><p>Most sentences are well under 25 words. The longest sentences remain manageable and clear.</p><p>Jargon: Needs Attention - Unexplained terms:</p><p>- "UTF-8 character encoding" (first mention needs brief explanation)</p><p>- "iso-8859-1" and "cp-1252" (encoding standards not explained)</p><p>- "Hadoop" (mentioned without context)</p><p>- "PII fields" (abbreviation used but not defined in provided text)</p><p>- "Flat file" (technical term not explained)</p><p>Active Voice: Pass</p><p>Most content uses active voice effectively ("Datavant does not apply," "The software standardizes," "Errors are flagged").</p><p>Heading Clarity: Pass</p><p>Headings like "Overview," "Input data format," and "Validation rules in tokenization" clearly indicate content topics.</p><p>Link Text: Needs Attention</p><p>- "see Onboarding Data Checks" (could be more descriptive: "see our guide to Onboarding Data Checks")</p><p>- "see Reviewing the Tokenization Software Output and Log files" (acceptable but could specify "see how to review...")</p><p>Abbreviations: Needs Attention</p><p>- "PII" appears undefined in the provided text</p><p>- "CLI" used without full expansion</p><p>Overall WCAG Writing Score: Needs Attention</p><p>Primary recommendations: Define technical abbreviations on first use (PII, CLI), briefly explain specialized terms (UTF-8, flat file), and consider simplifying 2-3 phrases for improved plain language compliance.</p>
+                <p>Plain Language: Needs Attention</p><p>- "Strict validation applies only to specific fields" could be simplified to "Only specific fields need strict validation"</p><p>- "data hygiene requirements" is jargon-heavy; consider "data preparation requirements" or "data quality requirements"</p><p>- "Ensure tokens are generated from input data that minimizes the risk of re-identification" is unnecessarily complex</p><p>Sentence Length: Pass</p><p>No sentences exceed 25 words. Excellent sentence control throughout.</p><p>Jargon: Needs Attention</p><p>Unexplained technical terms include:</p><p>- "tokens/tokenization" (used extensively but never defined)</p><p>- "UTF-8 character encoding" (no explanation provided)</p><p>- "iso-8859-1" and "cp-1252" (encoding standards not explained)</p><p>- "flat file" (technical term not defined)</p><p>- "PII fields" (acronym used without context)</p><p>- "Hadoop" (mentioned without explanation)</p><p>Abbreviations: Needs Attention</p><p>- "PII" appears without first being spelled out as "Personally Identifiable Information"</p><p>- "CLI" appears without being defined as "Command Line Interface"</p><p>Active Voice: Needs Attention</p><p>Passive constructions found:</p><p>- "Errors are flagged in log files"</p><p>- "Some automatic transformations are applied"</p><p>- "Data stored in systems such as Hadoop"</p><p>- "the data quality log, which is generated as part of the tokenize output"</p><p>Heading Clarity: Pass</p><p>Headings are clear and descriptive: "Overview," "Input data format," and "Validation rules in tokenization" effectively organize content.</p><p>Link Text: Good</p><p>Link text is descriptive: "Onboarding Data Checks," "Reviewing the Tokenization Software Output and Log files." No vague "click here" or "learn more" links detected.</p><p>Overall WCAG Writing Score: Needs Attention</p><p>The article performs well on sentence length and heading structure but needs work on plain language, defining jargon and abbreviations, and converting passive voice to active voice. Priority should be given to defining "tokenization" early and explaining key technical terms on first use.</p>
             </div>
         </div>
 
@@ -534,7 +535,7 @@
             <div class="progress-bar-wrap">
                 <div class="progress-bar warning" style="width:71%"></div>
             </div>
-            <div class="trend-badge trend-neutral">Only tested once</div>
+            <div class="trend-badge trend-bad">↑ Declined by 4.9 points</div>
             <div class="history-entries">
                 
         <div class="history-row">
@@ -543,10 +544,42 @@
             <span class="history-label">Latest</span>
         </div>
         
+        <div class="history-row">
+            <span class="history-date">01 April 2026 14:18</span>
+            <span class="history-score good">9.4</span>
+            
+        </div>
+        
             </div>
         </div>
 
         <div class="history-card warning" style="animation-delay:0.2s">
+            <div class="history-card-header">
+                <div class="article-title">Trial Tokenization Project Dashboard</div>
+                <div class="score-badge warning">14.3</div>
+            </div>
+            <div class="progress-bar-wrap">
+                <div class="progress-bar warning" style="width:71%"></div>
+            </div>
+            <div class="trend-badge trend-bad">↑ Declined by 4.0 points</div>
+            <div class="history-entries">
+                
+        <div class="history-row">
+            <span class="history-date">23 March 2026 14:31</span>
+            <span class="history-score warning">14.3</span>
+            <span class="history-label">Latest</span>
+        </div>
+        
+        <div class="history-row">
+            <span class="history-date">01 April 2026 14:17</span>
+            <span class="history-score good">10.3</span>
+            
+        </div>
+        
+            </div>
+        </div>
+
+        <div class="history-card warning" style="animation-delay:0.3s">
             <div class="history-card-header">
                 <div class="article-title">Datavant Partner Program</div>
                 <div class="score-badge warning">14.3</div>
@@ -554,7 +587,7 @@
             <div class="progress-bar-wrap">
                 <div class="progress-bar warning" style="width:71%"></div>
             </div>
-            <div class="trend-badge trend-neutral">Only tested once</div>
+            <div class="trend-badge trend-bad">↑ Declined by 1.1 points</div>
             <div class="history-entries">
                 
         <div class="history-row">
@@ -563,24 +596,10 @@
             <span class="history-label">Latest</span>
         </div>
         
-            </div>
-        </div>
-
-        <div class="history-card warning" style="animation-delay:0.3s">
-            <div class="history-card-header">
-                <div class="article-title">Trial Tokenization Project Dashboard</div>
-                <div class="score-badge warning">14.3</div>
-            </div>
-            <div class="progress-bar-wrap">
-                <div class="progress-bar warning" style="width:71%"></div>
-            </div>
-            <div class="trend-badge trend-neutral">Only tested once</div>
-            <div class="history-entries">
-                
         <div class="history-row">
-            <span class="history-date">23 March 2026 14:31</span>
-            <span class="history-score warning">14.3</span>
-            <span class="history-label">Latest</span>
+            <span class="history-date">01 April 2026 14:18</span>
+            <span class="history-score warning">13.2</span>
+            
         </div>
         
             </div>
@@ -594,13 +613,19 @@
             <div class="progress-bar-wrap">
                 <div class="progress-bar warning" style="width:71%"></div>
             </div>
-            <div class="trend-badge trend-neutral">Only tested once</div>
+            <div class="trend-badge trend-bad">↑ Declined by 4.1 points</div>
             <div class="history-entries">
                 
         <div class="history-row">
             <span class="history-date">23 March 2026 09:07</span>
             <span class="history-score warning">14.3</span>
             <span class="history-label">Latest</span>
+        </div>
+        
+        <div class="history-row">
+            <span class="history-date">01 April 2026 14:17</span>
+            <span class="history-score good">10.2</span>
+            
         </div>
         
             </div>
@@ -614,13 +639,19 @@
             <div class="progress-bar-wrap">
                 <div class="progress-bar warning" style="width:69%"></div>
             </div>
-            <div class="trend-badge trend-neutral">Only tested once</div>
+            <div class="trend-badge trend-bad">↑ Declined by 3.7 points</div>
             <div class="history-entries">
                 
         <div class="history-row">
             <span class="history-date">23 March 2026 14:32</span>
             <span class="history-score warning">13.8</span>
             <span class="history-label">Latest</span>
+        </div>
+        
+        <div class="history-row">
+            <span class="history-date">01 April 2026 14:17</span>
+            <span class="history-score good">10.1</span>
+            
         </div>
         
             </div>
@@ -638,9 +669,15 @@
             <div class="history-entries">
                 
         <div class="history-row">
-            <span class="history-date">01 April 2026 13:50</span>
+            <span class="history-date">01 April 2026 14:20</span>
             <span class="history-score warning">13.4</span>
             <span class="history-label">Latest</span>
+        </div>
+        
+        <div class="history-row">
+            <span class="history-date">01 April 2026 13:50</span>
+            <span class="history-score warning">13.4</span>
+            
         </div>
         
             </div>
@@ -654,13 +691,19 @@
             <div class="progress-bar-wrap">
                 <div class="progress-bar warning" style="width:65%"></div>
             </div>
-            <div class="trend-badge trend-neutral">Only tested once</div>
+            <div class="trend-badge trend-bad">↑ Declined by 3.6 points</div>
             <div class="history-entries">
                 
         <div class="history-row">
             <span class="history-date">23 March 2026 14:30</span>
             <span class="history-score warning">13.2</span>
             <span class="history-label">Latest</span>
+        </div>
+        
+        <div class="history-row">
+            <span class="history-date">01 April 2026 14:17</span>
+            <span class="history-score good">9.6</span>
+            
         </div>
         
             </div>
@@ -674,13 +717,19 @@
             <div class="progress-bar-wrap">
                 <div class="progress-bar warning" style="width:65%"></div>
             </div>
-            <div class="trend-badge trend-neutral">Only tested once</div>
+            <div class="trend-badge trend-good">↓ Improved by 1.3 points</div>
             <div class="history-entries">
                 
         <div class="history-row">
             <span class="history-date">30 March 2026 10:25</span>
             <span class="history-score warning">13.2</span>
             <span class="history-label">Latest</span>
+        </div>
+        
+        <div class="history-row">
+            <span class="history-date">01 April 2026 14:18</span>
+            <span class="history-score warning">14.5</span>
+            
         </div>
         
             </div>
@@ -698,9 +747,15 @@
             <div class="history-entries">
                 
         <div class="history-row">
-            <span class="history-date">01 April 2026 13:50</span>
+            <span class="history-date">01 April 2026 14:19</span>
             <span class="history-score warning">12.9</span>
             <span class="history-label">Latest</span>
+        </div>
+        
+        <div class="history-row">
+            <span class="history-date">01 April 2026 13:50</span>
+            <span class="history-score warning">12.9</span>
+            
         </div>
         
             </div>
@@ -718,9 +773,15 @@
             <div class="history-entries">
                 
         <div class="history-row">
-            <span class="history-date">01 April 2026 13:35</span>
+            <span class="history-date">01 April 2026 14:19</span>
             <span class="history-score good">12.0</span>
             <span class="history-label">Latest</span>
+        </div>
+        
+        <div class="history-row">
+            <span class="history-date">01 April 2026 13:35</span>
+            <span class="history-score good">12.0</span>
+            
         </div>
         
             </div>
@@ -738,9 +799,15 @@
             <div class="history-entries">
                 
         <div class="history-row">
-            <span class="history-date">01 April 2026 13:50</span>
+            <span class="history-date">01 April 2026 14:19</span>
             <span class="history-score good">11.4</span>
             <span class="history-label">Latest</span>
+        </div>
+        
+        <div class="history-row">
+            <span class="history-date">01 April 2026 13:50</span>
+            <span class="history-score good">11.4</span>
+            
         </div>
         
             </div>
@@ -758,9 +825,15 @@
             <div class="history-entries">
                 
         <div class="history-row">
-            <span class="history-date">01 April 2026 13:13</span>
+            <span class="history-date">01 April 2026 14:19</span>
             <span class="history-score good">10.7</span>
             <span class="history-label">Latest</span>
+        </div>
+        
+        <div class="history-row">
+            <span class="history-date">01 April 2026 13:13</span>
+            <span class="history-score good">10.7</span>
+            
         </div>
         
         <div class="history-row">
