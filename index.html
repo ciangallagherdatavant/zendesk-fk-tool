@@ -116,11 +116,11 @@
 
 <div class="stats-bar">
     <div class="stat">
-        <div class="stat-number">8</div>
+        <div class="stat-number">9</div>
         <div class="stat-label">Total Tested</div>
     </div>
     <div class="stat">
-        <div class="stat-number good">1</div>
+        <div class="stat-number good">2</div>
         <div class="stat-label">Meets Target</div>
     </div>
     <div class="stat">
@@ -132,7 +132,7 @@
         <div class="stat-label">Needs Significant Work</div>
     </div>
     <div class="stat">
-        <div class="stat-number">13.5</div>
+        <div class="stat-number">13.3</div>
         <div class="stat-label">Average Score</div>
     </div>
 </div>
@@ -163,8 +163,8 @@
     <div class="last-updated">Last updated: 01 April 2026</div>
 
     <div class="filter-bar">
-        <button class="filter-btn active" onclick="filterCards('all', this)">All Articles (8)</button>
-        <button class="filter-btn good-filter" onclick="filterCards('good', this)">✅ Meets Target (1)</button>
+        <button class="filter-btn active" onclick="filterCards('all', this)">All Articles (9)</button>
+        <button class="filter-btn good-filter" onclick="filterCards('good', this)">✅ Meets Target (2)</button>
         <button class="filter-btn warning-filter" onclick="filterCards('warning', this)">⚠️ Needs Improvement (7)</button>
         <button class="filter-btn bad-filter" onclick="filterCards('bad', this)">🔴 Needs Significant Work (0)</button>
         <button class="filter-btn history-filter" onclick="filterCards('history', this)">📈 Score History</button>
@@ -384,6 +384,34 @@
 
         <div class="article-card good" data-status="good" style="animation-delay:0.8s">
             <div class="card-header">
+                <div class="article-title">Introduction to Datavant Tokens</div>
+                <div class="score-badge good">12.0</div>
+            </div>
+            <div class="progress-bar-wrap">
+                <div class="progress-bar good" style="width:60%"></div>
+            </div>
+            <div class="reading-level">High School Advanced</div>
+            <span class="status-pill good">✅ Meets Target</span>
+            <div class="summary-text">This article sits at the upper boundary of acceptable technical documentation readability and is accessible to educated general audiences, though it contains some complex technical concepts.</div>
+            <div class="card-meta">Tested: 01 April 2026 13:35 · Score calculated by Python textstat</div>
+            <button class="rec-toggle" onclick="toggleSection('fk-7', this)">
+                <span>📊 FK Recommendations</span><span>▼</span>
+            </button>
+            <div class="recommendations" id="fk-7">
+                <div class="rec-section-title">Flesch-Kincaid Recommendations</div>
+                <p>✓ Content meets target readability threshold (Grade 12 or below)</p><p>Well done! The article achieves a Grade 12 reading level, which is at the acceptable threshold for technical documentation. The writing balances technical accuracy with reasonable accessibility. The average sentence length of 15.6 words is excellent and contributes significantly to maintaining readability despite the technical subject matter.</p>
+            </div>
+            <button class="rec-toggle wcag-toggle" onclick="toggleSection('wcag-7', this)">
+                <span>♿ WCAG Accessibility Notes</span><span>▼</span>
+            </button>
+            <div class="recommendations wcag-rec" id="wcag-7">
+                <div class="rec-section-title">WCAG 2.2 Writing Accessibility</div>
+                <p>Plain Language: Needs Attention</p><p>- "Tokens are encrypted" - sentence ends abruptly at article conclusion</p><p>- "reverse-engineered" could be simplified to "decoded" or "converted back"</p><p>- "soundex" appears without explanation (technical algorithm term)</p><p>Sentence Length: Pass</p><p>All sentences appear to be under 25 words, with good average length of 15.6 words per sentence.</p><p>Jargon: Needs Attention</p><p>Unexplained technical terms:</p><p>- "soundex" (phonetic algorithm)</p><p>- "SHA-256" (cryptographic hash function - though context helps)</p><p>- "Master Token" (introduced but could benefit from earlier definition)</p><p>- "site-specific key" (cryptographic concept)</p><p>Abbreviations: Needs Attention</p><p>- "PII" - used extensively but never spelled out as "Personally Identifiable Information"</p><p>- "CLI" - used in callout but not defined (appears to mean Command Line Interface)</p><p>- "v4" and "v5" - version numbers used without spelling out "version"</p><p>Active Voice: Pass</p><p>Article predominantly uses active voice effectively ("Tokens allow organizations...", "Tokens are generated...", "a token generated from...")</p><p>Heading Clarity: Pass</p><p>Logical structure evident from content flow (Overview, What are tokens, Token format, Error tokens, Token generation process with steps)</p><p>Link Text: Good</p><p>References like "Token Error Log File" and "Required Data Pre-Processing" appear descriptive and contextual.</p><p>Overall WCAG Writing Score: Needs Attention</p><p>Primary issues: PII abbreviation never defined despite being central to the article; "soundex" unexplained; article text appears to end mid-sentence. Recommend defining PII on first use and adding brief explanations for technical terms like soundex.</p>
+            </div>
+        </div>
+
+        <div class="article-card good" data-status="good" style="animation-delay:0.9s">
+            <div class="card-header">
                 <div class="article-title">Required Data Pre-Processing</div>
                 <div class="score-badge good">10.7</div>
             </div>
@@ -394,17 +422,17 @@
             <span class="status-pill good">✅ Meets Target</span>
             <div class="summary-text">This article reads at a 10th-11th grade level, which is appropriate for technical documentation and falls within the recommended range for help centre content.</div>
             <div class="card-meta">Tested: 01 April 2026 13:13 · Score calculated by Python textstat</div>
-            <button class="rec-toggle" onclick="toggleSection('fk-7', this)">
+            <button class="rec-toggle" onclick="toggleSection('fk-8', this)">
                 <span>📊 FK Recommendations</span><span>▼</span>
             </button>
-            <div class="recommendations" id="fk-7">
+            <div class="recommendations" id="fk-8">
                 <div class="rec-section-title">Flesch-Kincaid Recommendations</div>
                 <p>✓ Content meets target readability standards (Grade 12 or below)</p><p>This article performs well with an average of 14.9 words per sentence, which keeps sentences manageable. The technical nature of the content appropriately matches the audience (users implementing Datavant software). Well done maintaining readability while covering complex technical requirements.</p>
             </div>
-            <button class="rec-toggle wcag-toggle" onclick="toggleSection('wcag-7', this)">
+            <button class="rec-toggle wcag-toggle" onclick="toggleSection('wcag-8', this)">
                 <span>♿ WCAG Accessibility Notes</span><span>▼</span>
             </button>
-            <div class="recommendations wcag-rec" id="wcag-7">
+            <div class="recommendations wcag-rec" id="wcag-8">
                 <div class="rec-section-title">WCAG 2.2 Writing Accessibility</div>
                 <p>Plain Language: Needs Attention</p><p>- "Data hygiene requirements" could be simplified to "data quality requirements"</p><p>- "Formatting differences do not prevent tokens from linking across data tables" is unnecessarily complex; consider "formatting differences don't stop tokens from matching across tables"</p><p>- "Minimizes the risk of re-identification" could be clearer as "reduces the risk of identifying individuals"</p><p>Sentence Length: Pass</p><p>Most sentences are well under 25 words. The longest sentences remain manageable and clear.</p><p>Jargon: Needs Attention - Unexplained terms:</p><p>- "UTF-8 character encoding" (first mention needs brief explanation)</p><p>- "iso-8859-1" and "cp-1252" (encoding standards not explained)</p><p>- "Hadoop" (mentioned without context)</p><p>- "PII fields" (abbreviation used but not defined in provided text)</p><p>- "Flat file" (technical term not explained)</p><p>Active Voice: Pass</p><p>Most content uses active voice effectively ("Datavant does not apply," "The software standardizes," "Errors are flagged").</p><p>Heading Clarity: Pass</p><p>Headings like "Overview," "Input data format," and "Validation rules in tokenization" clearly indicate content topics.</p><p>Link Text: Needs Attention</p><p>- "see Onboarding Data Checks" (could be more descriptive: "see our guide to Onboarding Data Checks")</p><p>- "see Reviewing the Tokenization Software Output and Log files" (acceptable but could specify "see how to review...")</p><p>Abbreviations: Needs Attention</p><p>- "PII" appears undefined in the provided text</p><p>- "CLI" used without full expansion</p><p>Overall WCAG Writing Score: Needs Attention</p><p>Primary recommendations: Define technical abbreviations on first use (PII, CLI), briefly explain specialized terms (UTF-8, flat file), and consider simplifying 2-3 phrases for improved plain language compliance.</p>
             </div>
@@ -555,6 +583,26 @@
         </div>
 
         <div class="history-card good" style="animation-delay:0.8s">
+            <div class="history-card-header">
+                <div class="article-title">Introduction to Datavant Tokens</div>
+                <div class="score-badge good">12.0</div>
+            </div>
+            <div class="progress-bar-wrap">
+                <div class="progress-bar good" style="width:60%"></div>
+            </div>
+            <div class="trend-badge trend-neutral">Only tested once</div>
+            <div class="history-entries">
+                
+        <div class="history-row">
+            <span class="history-date">01 April 2026 13:35</span>
+            <span class="history-score good">12.0</span>
+            <span class="history-label">Latest</span>
+        </div>
+        
+            </div>
+        </div>
+
+        <div class="history-card good" style="animation-delay:0.9s">
             <div class="history-card-header">
                 <div class="article-title">Required Data Pre-Processing</div>
                 <div class="score-badge good">10.7</div>
