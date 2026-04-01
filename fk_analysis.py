@@ -92,24 +92,16 @@ Overall WCAG Writing Score: [Good / Needs Attention / Needs Significant Work]
 
 
 def get_google_sheet():
-    """
-    Connects to Google Sheets using service account credentials
-    Returns the worksheet object
-    """
     print("\nConnecting to Google Sheets...")
     try:
         creds_json = GOOGLE_SHEETS_CREDENTIALS
         if not creds_json:
             print("No Google Sheets credentials found")
             return None
-
         creds_dict = json.loads(creds_json)
-        scopes = [
-            'https://www.googleapis.com/auth/spreadsheets'
-        ]
+        scopes = ['https://www.googleapis.com/auth/spreadsheets']
         creds = Credentials.from_service_account_info(
-            creds_dict,
-            scopes=scopes
+            creds_dict, scopes=scopes
         )
         client = gspread.authorize(creds)
         sheet = client.open_by_key(GOOGLE_SHEET_ID)
@@ -122,39 +114,26 @@ def get_google_sheet():
 
 
 def get_pending_articles(worksheet):
-    """
-    Reads the Google Sheet and returns articles
-    that have not been analysed yet
-    Column A = Article ID
-    Column B = Article Name
-    Column C = Status (blank = pending, Done = complete)
-    """
     print("\nChecking for pending articles in Google Sheet...")
     try:
         all_rows = worksheet.get_all_values()
         pending = []
-
         for i, row in enumerate(all_rows):
             if i == 0:
                 continue
-
             if not row or not row[0]:
                 continue
-
             article_id = row[0].strip()
             article_name = row[1].strip() if len(row) > 1 else ''
             status = row[2].strip() if len(row) > 2 else ''
-
             if not article_id.isdigit():
                 continue
-
             if status.lower() != 'done':
                 pending.append({
                     'row': i + 1,
                     'article_id': article_id,
                     'article_name': article_name
                 })
-
         print(f"Found {len(pending)} pending articles")
         return pending
     except Exception as e:
@@ -163,10 +142,6 @@ def get_pending_articles(worksheet):
 
 
 def update_sheet_status(worksheet, row_number, article_name, score):
-    """
-    Updates the Google Sheet after analysis is complete
-    Sets status to Done and adds the date and score
-    """
     try:
         today = datetime.now().strftime('%d %B %Y %H:%M')
         worksheet.update_cell(row_number, 2, article_name)
@@ -767,22 +742,20 @@ def push_to_github(article_title):
     print("\nPushing to GitHub...")
     try:
         import subprocess
-        subprocess.run(['git', 'config', '--global',
-            'user.email', 'action@github.com'], check=True)
-        subprocess.run(['git', 'config', '--global',
-            'user.name', 'GitHub Action'], check=True)
+        subprocess.run(
+            ['git', 'config', '--global', 'user.email', 'action@github.com'],
+            check=True
+        )
+        subprocess.run(
+            ['git', 'config', '--global', 'user.name', 'GitHub Action'],
+            check=True
+        )
         subprocess.run(['git', 'add', '.'], check=True)
-        subprocess.run(['git', 'commit', '-m',
-            f'FK analysis: {article_title} - {datetime.now().strftime("%d %b %Y")}'],
-            check=True)
-        subprocess.run(['git', 'push'], check=True)
-        print("Successfully pushed to GitHub")
-        print("Dashboard will update in about 2 minutes")
-    except Exception as e:
-        print(f"Could not auto push: {e}")
-        print("Please push manually using GitHub Desktop")
-            f'FK analysis: {article_title} - {datetime.now().strftime("%d %b %Y")}'],
-            check=True)
+        subprocess.run(
+            ['git', 'commit', '-m',
+             f'FK analysis: {article_title} - {datetime.now().strftime("%d %b %Y")}'],
+            check=True
+        )
         subprocess.run(['git', 'push'], check=True)
         print("Successfully pushed to GitHub")
         print("Dashboard will update in about 2 minutes")
@@ -792,12 +765,6 @@ def push_to_github(article_title):
 
 
 def run_sheets_mode():
-    """
-    Runs in Google Sheets mode
-    Reads pending articles from the sheet
-    Analyses each one automatically
-    Updates the sheet when done
-    """
     print("========================================")
     print("  FK Readability Analysis Tool")
     print("  Running in Google Sheets mode")
