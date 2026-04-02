@@ -23,6 +23,16 @@
         .main { padding: 30px 40px; }
         .section-title { font-size: 18px; font-weight: 700; margin-bottom: 8px; color: #1a1a2e; }
         .last-updated { font-size: 11px; color: #aaa; margin-bottom: 20px; }
+        .controls-bar { display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; align-items: center; }
+        .search-wrap { flex: 1; min-width: 200px; position: relative; }
+        .search-wrap input { width: 100%; padding: 10px 16px 10px 40px; border: 2px solid #eee; border-radius: 10px; font-size: 14px; outline: none; transition: border-color 0.2s; background: white; }
+        .search-wrap input:focus { border-color: #1a1a2e; }
+        .search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); font-size: 16px; color: #aaa; }
+        .search-count { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); font-size: 11px; color: #aaa; font-weight: 600; }
+        .sort-wrap { display: flex; gap: 6px; flex-wrap: wrap; }
+        .sort-btn { padding: 8px 14px; border-radius: 8px; border: 2px solid #e0e0e0; background: white; font-size: 11px; font-weight: 600; cursor: pointer; transition: all 0.2s; color: #666; white-space: nowrap; }
+        .sort-btn:hover { border-color: #1a1a2e; color: #1a1a2e; }
+        .sort-btn.active { background: #1a1a2e; color: white; border-color: #1a1a2e; }
         .filter-bar { display: flex; gap: 8px; margin-bottom: 24px; flex-wrap: wrap; }
         .filter-btn { padding: 8px 18px; border-radius: 20px; border: 2px solid #e0e0e0; background: white; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s; color: #666; }
         .filter-btn:hover { border-color: #1a1a2e; color: #1a1a2e; }
@@ -38,6 +48,8 @@
         .legend-dot.good { background: #27ae60; }
         .legend-dot.warning { background: #f39c12; }
         .legend-dot.bad { background: #e74c3c; }
+        .no-results { text-align: center; padding: 60px 20px; color: #aaa; font-size: 16px; display: none; }
+        .no-results-icon { font-size: 48px; margin-bottom: 12px; }
         .articles-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 20px; margin-bottom: 40px; }
         .article-card { background: white; border-radius: 14px; padding: 22px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); border-left: 5px solid #ccc; transition: transform 0.25s ease, box-shadow 0.25s ease; opacity: 0; animation: fadeInUp 0.5s ease forwards; }
         .article-card:hover { transform: translateY(-4px); box-shadow: 0 8px 30px rgba(0,0,0,0.12); }
@@ -161,7 +173,22 @@
     </div>
 
     <div class="section-title">All Article Results</div>
-    <div class="last-updated">Last updated: 01 April 2026</div>
+    <div class="last-updated">Last updated: 02 April 2026</div>
+
+    <div class="controls-bar" id="controls-bar">
+        <div class="search-wrap">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="searchInput" placeholder="Search articles by name..." oninput="handleSearch()" />
+            <span class="search-count" id="searchCount"></span>
+        </div>
+        <div class="sort-wrap">
+            <button class="sort-btn active" onclick="sortCards('score-high', this)">Score ↓</button>
+            <button class="sort-btn" onclick="sortCards('score-low', this)">Score ↑</button>
+            <button class="sort-btn" onclick="sortCards('date-new', this)">Newest</button>
+            <button class="sort-btn" onclick="sortCards('date-old', this)">Oldest</button>
+            <button class="sort-btn" onclick="sortCards('alpha', this)">A → Z</button>
+        </div>
+    </div>
 
     <div class="filter-bar">
         <button class="filter-btn active" onclick="filterCards('all', this)">All Articles (118)</button>
@@ -185,9 +212,14 @@
         reflect genuine article rewrites not AI variation.
     </div>
 
+    <div class="no-results" id="no-results">
+        <div class="no-results-icon">🔍</div>
+        <div>No articles found matching your search</div>
+    </div>
+
     <div class="articles-grid" id="articles-grid">
         
-        <div class="article-card bad" data-status="bad" style="animation-delay:0.1s">
+        <div class="article-card bad" data-status="bad" data-title="snowflake: initial setup examples" data-score="21.7" data-date="01 April 2026 15:10" style="animation-delay:0.1s">
             <div class="card-header">
                 <div class="article-title">Snowflake: Initial Setup Examples</div>
                 <div class="score-badge bad">21.7</div>
@@ -215,7 +247,7 @@
             </div>
         </div>
 
-        <div class="article-card bad" data-status="bad" style="animation-delay:0.2s">
+        <div class="article-card bad" data-status="bad" data-title="snowflake: reference management examples" data-score="20.0" data-date="01 April 2026 15:09" style="animation-delay:0.15s">
             <div class="card-header">
                 <div class="article-title">Snowflake: Reference Management Examples</div>
                 <div class="score-badge bad">20.0</div>
@@ -243,7 +275,7 @@
             </div>
         </div>
 
-        <div class="article-card bad" data-status="bad" style="animation-delay:0.3s">
+        <div class="article-card bad" data-status="bad" data-title="performance benchmarking for desktop" data-score="18.7" data-date="01 April 2026 15:14" style="animation-delay:0.2s">
             <div class="card-header">
                 <div class="article-title">Performance Benchmarking for Desktop</div>
                 <div class="score-badge bad">18.7</div>
@@ -271,7 +303,7 @@
             </div>
         </div>
 
-        <div class="article-card bad" data-status="bad" style="animation-delay:0.4s">
+        <div class="article-card bad" data-status="bad" data-title="manage users for your company" data-score="17.7" data-date="01 April 2026 15:23" style="animation-delay:0.25s">
             <div class="card-header">
                 <div class="article-title">Manage Users For Your Company</div>
                 <div class="score-badge bad">17.7</div>
@@ -299,7 +331,7 @@
             </div>
         </div>
 
-        <div class="article-card bad" data-status="bad" style="animation-delay:0.5s">
+        <div class="article-card bad" data-status="bad" data-title="expert determination deliverables" data-score="17.5" data-date="01 April 2026 15:30" style="animation-delay:0.3s">
             <div class="card-header">
                 <div class="article-title">Expert Determination Deliverables</div>
                 <div class="score-badge bad">17.5</div>
@@ -327,7 +359,7 @@
             </div>
         </div>
 
-        <div class="article-card bad" data-status="bad" style="animation-delay:0.6s">
+        <div class="article-card bad" data-status="bad" data-title="snowflake: how to tokenize data examples" data-score="17.3" data-date="01 April 2026 15:10" style="animation-delay:0.35s">
             <div class="card-header">
                 <div class="article-title">Snowflake: How to Tokenize Data Examples</div>
                 <div class="score-badge bad">17.3</div>
@@ -355,7 +387,7 @@
             </div>
         </div>
 
-        <div class="article-card bad" data-status="bad" style="animation-delay:0.7s">
+        <div class="article-card bad" data-status="bad" data-title="snowflake functions and parameters" data-score="17.2" data-date="01 April 2026 15:11" style="animation-delay:0.4s">
             <div class="card-header">
                 <div class="article-title">Snowflake Functions and Parameters</div>
                 <div class="score-badge bad">17.2</div>
@@ -383,7 +415,7 @@
             </div>
         </div>
 
-        <div class="article-card bad" data-status="bad" style="animation-delay:0.8s">
+        <div class="article-card bad" data-status="bad" data-title="create a data group for general onboarding" data-score="16.7" data-date="01 April 2026 15:29" style="animation-delay:0.45s">
             <div class="card-header">
                 <div class="article-title">Create a Data Group for General Onboarding</div>
                 <div class="score-badge bad">16.7</div>
@@ -411,7 +443,7 @@
             </div>
         </div>
 
-        <div class="article-card bad" data-status="bad" style="animation-delay:0.9s">
+        <div class="article-card bad" data-status="bad" data-title="view software activity logs" data-score="16.6" data-date="01 April 2026 15:23" style="animation-delay:0.5s">
             <div class="card-header">
                 <div class="article-title">View Software Activity Logs</div>
                 <div class="score-badge bad">16.6</div>
@@ -439,7 +471,7 @@
             </div>
         </div>
 
-        <div class="article-card bad" data-status="bad" style="animation-delay:1.0s">
+        <div class="article-card bad" data-status="bad" data-title="deliver data to privacy solutions" data-score="15.9" data-date="01 April 2026 15:31" style="animation-delay:0.55s">
             <div class="card-header">
                 <div class="article-title">Deliver Data to Privacy Solutions</div>
                 <div class="score-badge bad">15.9</div>
@@ -467,7 +499,7 @@
             </div>
         </div>
 
-        <div class="article-card bad" data-status="bad" style="animation-delay:1.1s">
+        <div class="article-card bad" data-status="bad" data-title="upgrade to datavant cli v4" data-score="15.8" data-date="01 April 2026 15:15" style="animation-delay:0.6s">
             <div class="card-header">
                 <div class="article-title">Upgrade to Datavant CLI v4</div>
                 <div class="score-badge bad">15.8</div>
@@ -495,7 +527,7 @@
             </div>
         </div>
 
-        <div class="article-card bad" data-status="bad" style="animation-delay:1.2s">
+        <div class="article-card bad" data-status="bad" data-title="understanding the ecosystem explorer" data-score="15.3" data-date="01 April 2026 15:22" style="animation-delay:0.65s">
             <div class="card-header">
                 <div class="article-title">Understanding the Ecosystem Explorer</div>
                 <div class="score-badge bad">15.3</div>
@@ -523,7 +555,7 @@
             </div>
         </div>
 
-        <div class="article-card bad" data-status="bad" style="animation-delay:1.3s">
+        <div class="article-card bad" data-status="bad" data-title="snowflake references helper" data-score="15.3" data-date="01 April 2026 15:07" style="animation-delay:0.7s">
             <div class="card-header">
                 <div class="article-title">Snowflake References Helper</div>
                 <div class="score-badge bad">15.3</div>
@@ -551,7 +583,7 @@
             </div>
         </div>
 
-        <div class="article-card bad" data-status="bad" style="animation-delay:1.4s">
+        <div class="article-card bad" data-status="bad" data-title="enable multiple instances of snowflake" data-score="15.2" data-date="01 April 2026 15:11" style="animation-delay:0.75s">
             <div class="card-header">
                 <div class="article-title">Enable Multiple Instances of Snowflake</div>
                 <div class="score-badge bad">15.2</div>
@@ -579,7 +611,7 @@
             </div>
         </div>
 
-        <div class="article-card bad" data-status="bad" style="animation-delay:1.5s">
+        <div class="article-card bad" data-status="bad" data-title="work with a partner in assess" data-score="15.2" data-date="01 April 2026 15:16" style="animation-delay:0.8s">
             <div class="card-header">
                 <div class="article-title">Work with a Partner in Assess</div>
                 <div class="score-badge bad">15.2</div>
@@ -607,7 +639,7 @@
             </div>
         </div>
 
-        <div class="article-card bad" data-status="bad" style="animation-delay:1.6s">
+        <div class="article-card bad" data-status="bad" data-title="understanding assess" data-score="15.0" data-date="01 April 2026 15:16" style="animation-delay:0.85s">
             <div class="card-header">
                 <div class="article-title">Understanding Assess</div>
                 <div class="score-badge bad">15.0</div>
@@ -635,7 +667,7 @@
             </div>
         </div>
 
-        <div class="article-card warning" data-status="warning" style="animation-delay:1.7s">
+        <div class="article-card warning" data-status="warning" data-title="manage configurations" data-score="14.9" data-date="01 April 2026 15:21" style="animation-delay:0.9s">
             <div class="card-header">
                 <div class="article-title">Manage Configurations</div>
                 <div class="score-badge warning">14.9</div>
@@ -663,7 +695,7 @@
             </div>
         </div>
 
-        <div class="article-card warning" data-status="warning" style="animation-delay:1.8s">
+        <div class="article-card warning" data-status="warning" data-title="understanding distributions" data-score="14.8" data-date="01 April 2026 15:18" style="animation-delay:0.95s">
             <div class="card-header">
                 <div class="article-title">Understanding Distributions</div>
                 <div class="score-badge warning">14.8</div>
@@ -691,7 +723,7 @@
             </div>
         </div>
 
-        <div class="article-card warning" data-status="warning" style="animation-delay:1.9s">
+        <div class="article-card warning" data-status="warning" data-title="data dictionary requirements" data-score="14.7" data-date="01 April 2026 15:32" style="animation-delay:1.0s">
             <div class="card-header">
                 <div class="article-title">Data Dictionary Requirements</div>
                 <div class="score-badge warning">14.7</div>
@@ -719,7 +751,7 @@
             </div>
         </div>
 
-        <div class="article-card warning" data-status="warning" style="animation-delay:2.0s">
+        <div class="article-card warning" data-status="warning" data-title="sampling guidelines" data-score="14.7" data-date="01 April 2026 15:32" style="animation-delay:1.05s">
             <div class="card-header">
                 <div class="article-title">Sampling Guidelines</div>
                 <div class="score-badge warning">14.7</div>
@@ -747,7 +779,7 @@
             </div>
         </div>
 
-        <div class="article-card warning" data-status="warning" style="animation-delay:2.1s">
+        <div class="article-card warning" data-status="warning" data-title="data utility" data-score="14.5" data-date="01 April 2026 15:30" style="animation-delay:1.1s">
             <div class="card-header">
                 <div class="article-title">Data Utility</div>
                 <div class="score-badge warning">14.5</div>
@@ -775,7 +807,7 @@
             </div>
         </div>
 
-        <div class="article-card warning" data-status="warning" style="animation-delay:2.2s">
+        <div class="article-card warning" data-status="warning" data-title="configure an iam role and permissions for discovery cloud" data-score="14.3" data-date="23 March 2026 14:33" style="animation-delay:1.15s">
             <div class="card-header">
                 <div class="article-title">Configure an IAM Role and Permissions for Discovery Cloud</div>
                 <div class="score-badge warning">14.3</div>
@@ -803,7 +835,7 @@
             </div>
         </div>
 
-        <div class="article-card warning" data-status="warning" style="animation-delay:2.3s">
+        <div class="article-card warning" data-status="warning" data-title="trial tokenization project dashboard" data-score="14.3" data-date="23 March 2026 14:31" style="animation-delay:1.2s">
             <div class="card-header">
                 <div class="article-title">Trial Tokenization Project Dashboard</div>
                 <div class="score-badge warning">14.3</div>
@@ -831,7 +863,7 @@
             </div>
         </div>
 
-        <div class="article-card warning" data-status="warning" style="animation-delay:2.4s">
+        <div class="article-card warning" data-status="warning" data-title="datavant partner program" data-score="14.3" data-date="23 March 2026 15:32" style="animation-delay:1.25s">
             <div class="card-header">
                 <div class="article-title">Datavant Partner Program</div>
                 <div class="score-badge warning">14.3</div>
@@ -859,7 +891,7 @@
             </div>
         </div>
 
-        <div class="article-card warning" data-status="warning" style="animation-delay:2.5s">
+        <div class="article-card warning" data-status="warning" data-title="datavant id (dvid) change management" data-score="14.3" data-date="23 March 2026 09:07" style="animation-delay:1.3s">
             <div class="card-header">
                 <div class="article-title">Datavant ID (DVID) Change Management</div>
                 <div class="score-badge warning">14.3</div>
@@ -887,7 +919,7 @@
             </div>
         </div>
 
-        <div class="article-card warning" data-status="warning" style="animation-delay:2.6s">
+        <div class="article-card warning" data-status="warning" data-title="manage your company profile in explore" data-score="14.1" data-date="01 April 2026 15:22" style="animation-delay:1.35s">
             <div class="card-header">
                 <div class="article-title">Manage your Company Profile in Explore</div>
                 <div class="score-badge warning">14.1</div>
@@ -915,7 +947,7 @@
             </div>
         </div>
 
-        <div class="article-card warning" data-status="warning" style="animation-delay:2.7s">
+        <div class="article-card warning" data-status="warning" data-title="privacy solutions overview" data-score="14.1" data-date="01 April 2026 15:30" style="animation-delay:1.4s">
             <div class="card-header">
                 <div class="article-title">Privacy Solutions Overview</div>
                 <div class="score-badge warning">14.1</div>
@@ -943,7 +975,7 @@
             </div>
         </div>
 
-        <div class="article-card warning" data-status="warning" style="animation-delay:2.8s">
+        <div class="article-card warning" data-status="warning" data-title="international tokenization guide" data-score="13.8" data-date="23 March 2026 14:32" style="animation-delay:1.45s">
             <div class="card-header">
                 <div class="article-title">International Tokenization Guide</div>
                 <div class="score-badge warning">13.8</div>
@@ -971,7 +1003,7 @@
             </div>
         </div>
 
-        <div class="article-card warning" data-status="warning" style="animation-delay:2.9s">
+        <div class="article-card warning" data-status="warning" data-title="datavant video tutorials" data-score="13.4" data-date="01 April 2026 14:20" style="animation-delay:1.5s">
             <div class="card-header">
                 <div class="article-title">Datavant Video Tutorials</div>
                 <div class="score-badge warning">13.4</div>
@@ -999,7 +1031,7 @@
             </div>
         </div>
 
-        <div class="article-card warning" data-status="warning" style="animation-delay:3.0s">
+        <div class="article-card warning" data-status="warning" data-title="snowflake warehouse selection and performance considerations (<1.1.0)" data-score="13.3" data-date="01 April 2026 15:13" style="animation-delay:1.55s">
             <div class="card-header">
                 <div class="article-title">Snowflake Warehouse Selection and Performance Considerations (<1.1.0)</div>
                 <div class="score-badge warning">13.3</div>
@@ -1027,7 +1059,7 @@
             </div>
         </div>
 
-        <div class="article-card warning" data-status="warning" style="animation-delay:3.1s">
+        <div class="article-card warning" data-status="warning" data-title="register a table with aws" data-score="13.2" data-date="23 March 2026 14:30" style="animation-delay:1.6s">
             <div class="card-header">
                 <div class="article-title">Register a Table with AWS</div>
                 <div class="score-badge warning">13.2</div>
@@ -1055,7 +1087,7 @@
             </div>
         </div>
 
-        <div class="article-card warning" data-status="warning" style="animation-delay:3.2s">
+        <div class="article-card warning" data-status="warning" data-title="snowflake: how to transform tokens examples" data-score="13.2" data-date="01 April 2026 15:10" style="animation-delay:1.65s">
             <div class="card-header">
                 <div class="article-title">Snowflake: How to Transform Tokens Examples</div>
                 <div class="score-badge warning">13.2</div>
@@ -1083,7 +1115,7 @@
             </div>
         </div>
 
-        <div class="article-card warning" data-status="warning" style="animation-delay:3.3s">
+        <div class="article-card warning" data-status="warning" data-title="run a stack report of overlapping patients" data-score="13.2" data-date="01 April 2026 15:17" style="animation-delay:1.7s">
             <div class="card-header">
                 <div class="article-title">Run a Stack Report of Overlapping Patients</div>
                 <div class="score-badge warning">13.2</div>
@@ -1111,7 +1143,7 @@
             </div>
         </div>
 
-        <div class="article-card warning" data-status="warning" style="animation-delay:3.4s">
+        <div class="article-card warning" data-status="warning" data-title="token selection rationale" data-score="13.2" data-date="30 March 2026 10:25" style="animation-delay:1.75s">
             <div class="card-header">
                 <div class="article-title">Token Selection Rationale</div>
                 <div class="score-badge warning">13.2</div>
@@ -1139,7 +1171,7 @@
             </div>
         </div>
 
-        <div class="article-card warning" data-status="warning" style="animation-delay:3.5s">
+        <div class="article-card warning" data-status="warning" data-title="privacy solutions dataset requirements" data-score="13.1" data-date="01 April 2026 15:31" style="animation-delay:1.8s">
             <div class="card-header">
                 <div class="article-title">Privacy Solutions Dataset Requirements</div>
                 <div class="score-badge warning">13.1</div>
@@ -1167,7 +1199,7 @@
             </div>
         </div>
 
-        <div class="article-card warning" data-status="warning" style="animation-delay:3.6s">
+        <div class="article-card warning" data-status="warning" data-title="share a table or segment" data-score="13.1" data-date="01 April 2026 15:28" style="animation-delay:1.85s">
             <div class="card-header">
                 <div class="article-title">Share a Table or Segment</div>
                 <div class="score-badge warning">13.1</div>
@@ -1195,7 +1227,7 @@
             </div>
         </div>
 
-        <div class="article-card warning" data-status="warning" style="animation-delay:3.7s">
+        <div class="article-card warning" data-status="warning" data-title="technical requirements for the datavant cli and datavant desktop" data-score="13.1" data-date="01 April 2026 15:06" style="animation-delay:1.9s">
             <div class="card-header">
                 <div class="article-title">Technical Requirements for the Datavant CLI and Datavant Desktop</div>
                 <div class="score-badge warning">13.1</div>
@@ -1223,7 +1255,7 @@
             </div>
         </div>
 
-        <div class="article-card warning" data-status="warning" style="animation-delay:3.8s">
+        <div class="article-card warning" data-status="warning" data-title="privacy solutions faqs" data-score="13.0" data-date="01 April 2026 15:31" style="animation-delay:1.95s">
             <div class="card-header">
                 <div class="article-title">Privacy Solutions FAQs</div>
                 <div class="score-badge warning">13.0</div>
@@ -1251,7 +1283,7 @@
             </div>
         </div>
 
-        <div class="article-card warning" data-status="warning" style="animation-delay:3.9s">
+        <div class="article-card warning" data-status="warning" data-title="the datavant tokenization software" data-score="12.9" data-date="01 April 2026 14:19" style="animation-delay:2.0s">
             <div class="card-header">
                 <div class="article-title">The Datavant Tokenization Software</div>
                 <div class="score-badge warning">12.9</div>
@@ -1279,7 +1311,7 @@
             </div>
         </div>
 
-        <div class="article-card warning" data-status="warning" style="animation-delay:4.0s">
+        <div class="article-card warning" data-status="warning" data-title="manage tables registered with aws" data-score="12.8" data-date="01 April 2026 15:27" style="animation-delay:2.05s">
             <div class="card-header">
                 <div class="article-title">Manage Tables Registered with AWS</div>
                 <div class="score-badge warning">12.8</div>
@@ -1307,7 +1339,7 @@
             </div>
         </div>
 
-        <div class="article-card warning" data-status="warning" style="animation-delay:4.1s">
+        <div class="article-card warning" data-status="warning" data-title="datavant cli commands and optional arguments" data-score="12.8" data-date="01 April 2026 15:06" style="animation-delay:2.1s">
             <div class="card-header">
                 <div class="article-title">Datavant CLI Commands and Optional Arguments</div>
                 <div class="score-badge warning">12.8</div>
@@ -1335,7 +1367,7 @@
             </div>
         </div>
 
-        <div class="article-card warning" data-status="warning" style="animation-delay:4.2s">
+        <div class="article-card warning" data-status="warning" data-title="testing datavant" data-score="12.8" data-date="01 April 2026 15:07" style="animation-delay:2.15s">
             <div class="card-header">
                 <div class="article-title">Testing Datavant</div>
                 <div class="score-badge warning">12.8</div>
@@ -1363,7 +1395,7 @@
             </div>
         </div>
 
-        <div class="article-card warning" data-status="warning" style="animation-delay:4.3s">
+        <div class="article-card warning" data-status="warning" data-title="project dashboard overview" data-score="12.7" data-date="01 April 2026 15:27" style="animation-delay:2.2s">
             <div class="card-header">
                 <div class="article-title">Project Dashboard Overview</div>
                 <div class="score-badge warning">12.7</div>
@@ -1391,7 +1423,7 @@
             </div>
         </div>
 
-        <div class="article-card warning" data-status="warning" style="animation-delay:4.4s">
+        <div class="article-card warning" data-status="warning" data-title="defining the configuration output operations" data-score="12.7" data-date="01 April 2026 15:20" style="animation-delay:2.25s">
             <div class="card-header">
                 <div class="article-title">Defining the Configuration Output Operations</div>
                 <div class="score-badge warning">12.7</div>
@@ -1419,7 +1451,7 @@
             </div>
         </div>
 
-        <div class="article-card warning" data-status="warning" style="animation-delay:4.5s">
+        <div class="article-card warning" data-status="warning" data-title="understanding the profile model" data-score="12.7" data-date="01 April 2026 15:18" style="animation-delay:2.3s">
             <div class="card-header">
                 <div class="article-title">Understanding the Profile Model</div>
                 <div class="score-badge warning">12.7</div>
@@ -1447,7 +1479,7 @@
             </div>
         </div>
 
-        <div class="article-card warning" data-status="warning" style="animation-delay:4.6s">
+        <div class="article-card warning" data-status="warning" data-title="snowflake warehouse selection and performance considerations (1.1.0+)" data-score="12.6" data-date="01 April 2026 15:13" style="animation-delay:2.35s">
             <div class="card-header">
                 <div class="article-title">Snowflake Warehouse Selection and Performance Considerations (1.1.0+)</div>
                 <div class="score-badge warning">12.6</div>
@@ -1475,7 +1507,7 @@
             </div>
         </div>
 
-        <div class="article-card warning" data-status="warning" style="animation-delay:4.7s">
+        <div class="article-card warning" data-status="warning" data-title="transform tokens user guide" data-score="12.6" data-date="01 April 2026 14:56" style="animation-delay:2.4s">
             <div class="card-header">
                 <div class="article-title">Transform Tokens User Guide</div>
                 <div class="score-badge warning">12.6</div>
@@ -1503,7 +1535,7 @@
             </div>
         </div>
 
-        <div class="article-card warning" data-status="warning" style="animation-delay:4.8s">
+        <div class="article-card warning" data-status="warning" data-title="network errors and diagnostic mode" data-score="12.5" data-date="01 April 2026 15:08" style="animation-delay:2.45s">
             <div class="card-header">
                 <div class="article-title">Network Errors and Diagnostic Mode</div>
                 <div class="score-badge warning">12.5</div>
@@ -1531,7 +1563,7 @@
             </div>
         </div>
 
-        <div class="article-card warning" data-status="warning" style="animation-delay:4.9s">
+        <div class="article-card warning" data-status="warning" data-title="create configurations in bulk" data-score="12.3" data-date="01 April 2026 15:21" style="animation-delay:2.5s">
             <div class="card-header">
                 <div class="article-title">Create Configurations in Bulk</div>
                 <div class="score-badge warning">12.3</div>
@@ -1559,7 +1591,7 @@
             </div>
         </div>
 
-        <div class="article-card warning" data-status="warning" style="animation-delay:5.0s">
+        <div class="article-card warning" data-status="warning" data-title="use datavant natively on snowflake" data-score="12.2" data-date="01 April 2026 15:09" style="animation-delay:2.55s">
             <div class="card-header">
                 <div class="article-title">Use Datavant Natively on Snowflake</div>
                 <div class="score-badge warning">12.2</div>
@@ -1587,7 +1619,7 @@
             </div>
         </div>
 
-        <div class="article-card warning" data-status="warning" style="animation-delay:5.1s">
+        <div class="article-card warning" data-status="warning" data-title="send distributed data to a partner" data-score="12.2" data-date="01 April 2026 15:19" style="animation-delay:2.6s">
             <div class="card-header">
                 <div class="article-title">Send Distributed Data to a Partner</div>
                 <div class="score-badge warning">12.2</div>
@@ -1615,7 +1647,7 @@
             </div>
         </div>
 
-        <div class="article-card warning" data-status="warning" style="animation-delay:5.2s">
+        <div class="article-card warning" data-status="warning" data-title="manage standardly onboarded tables" data-score="12.2" data-date="01 April 2026 15:28" style="animation-delay:2.65s">
             <div class="card-header">
                 <div class="article-title">Manage Standardly Onboarded Tables</div>
                 <div class="score-badge warning">12.2</div>
@@ -1643,7 +1675,7 @@
             </div>
         </div>
 
-        <div class="article-card warning" data-status="warning" style="animation-delay:5.3s">
+        <div class="article-card warning" data-status="warning" data-title="understanding match" data-score="12.1" data-date="01 April 2026 15:26" style="animation-delay:2.7s">
             <div class="card-header">
                 <div class="article-title">Understanding Match</div>
                 <div class="score-badge warning">12.1</div>
@@ -1671,7 +1703,7 @@
             </div>
         </div>
 
-        <div class="article-card warning" data-status="warning" style="animation-delay:5.4s">
+        <div class="article-card warning" data-status="warning" data-title="understanding data inquiries" data-score="12.1" data-date="01 April 2026 15:22" style="animation-delay:2.75s">
             <div class="card-header">
                 <div class="article-title">Understanding Data Inquiries</div>
                 <div class="score-badge warning">12.1</div>
@@ -1699,7 +1731,7 @@
             </div>
         </div>
 
-        <div class="article-card warning" data-status="warning" style="animation-delay:5.5s">
+        <div class="article-card warning" data-status="warning" data-title="use datavant natively on aws ec2" data-score="12.1" data-date="01 April 2026 15:12" style="animation-delay:2.8s">
             <div class="card-header">
                 <div class="article-title">Use Datavant Natively on AWS EC2</div>
                 <div class="score-badge warning">12.1</div>
@@ -1727,7 +1759,7 @@
             </div>
         </div>
 
-        <div class="article-card warning" data-status="warning" style="animation-delay:5.6s">
+        <div class="article-card warning" data-status="warning" data-title="onboarding data checks" data-score="12.1" data-date="01 April 2026 15:26" style="animation-delay:2.85s">
             <div class="card-header">
                 <div class="article-title">Onboarding Data Checks</div>
                 <div class="score-badge warning">12.1</div>
@@ -1755,7 +1787,7 @@
             </div>
         </div>
 
-        <div class="article-card warning" data-status="warning" style="animation-delay:5.7s">
+        <div class="article-card warning" data-status="warning" data-title="what is a table, segment, and data group?" data-score="12.1" data-date="01 April 2026 15:29" style="animation-delay:2.9s">
             <div class="card-header">
                 <div class="article-title">What is a Table, Segment, and Data Group?</div>
                 <div class="score-badge warning">12.1</div>
@@ -1783,7 +1815,7 @@
             </div>
         </div>
 
-        <div class="article-card good" data-status="good" style="animation-delay:5.8s">
+        <div class="article-card good" data-status="good" data-title="general onboarding user guide" data-score="12.0" data-date="01 April 2026 15:24" style="animation-delay:2.95s">
             <div class="card-header">
                 <div class="article-title">General Onboarding User Guide</div>
                 <div class="score-badge good">12.0</div>
@@ -1811,7 +1843,7 @@
             </div>
         </div>
 
-        <div class="article-card good" data-status="good" style="animation-delay:5.9s">
+        <div class="article-card good" data-status="good" data-title="introduction to datavant tokens" data-score="12.0" data-date="01 April 2026 14:19" style="animation-delay:3.0s">
             <div class="card-header">
                 <div class="article-title">Introduction to Datavant Tokens</div>
                 <div class="score-badge good">12.0</div>
@@ -1839,7 +1871,7 @@
             </div>
         </div>
 
-        <div class="article-card good" data-status="good" style="animation-delay:6.0s">
+        <div class="article-card good" data-status="good" data-title="configure datavant cli in an automated pipeline" data-score="11.9" data-date="01 April 2026 14:56" style="animation-delay:3.05s">
             <div class="card-header">
                 <div class="article-title">Configure Datavant CLI in an Automated Pipeline</div>
                 <div class="score-badge good">11.9</div>
@@ -1867,7 +1899,7 @@
             </div>
         </div>
 
-        <div class="article-card good" data-status="good" style="animation-delay:6.1s">
+        <div class="article-card good" data-status="good" data-title="aggregated overlap user guide" data-score="11.9" data-date="01 April 2026 15:19" style="animation-delay:3.1s">
             <div class="card-header">
                 <div class="article-title">Aggregated Overlap User Guide</div>
                 <div class="score-badge good">11.9</div>
@@ -1895,7 +1927,7 @@
             </div>
         </div>
 
-        <div class="article-card good" data-status="good" style="animation-delay:6.2s">
+        <div class="article-card good" data-status="good" data-title="use datavant natively on aws ecs" data-score="11.8" data-date="01 April 2026 15:11" style="animation-delay:3.15s">
             <div class="card-header">
                 <div class="article-title">Use Datavant Natively on AWS ECS</div>
                 <div class="score-badge good">11.8</div>
@@ -1923,7 +1955,7 @@
             </div>
         </div>
 
-        <div class="article-card good" data-status="good" style="animation-delay:6.3s">
+        <div class="article-card good" data-status="good" data-title="create a single configuration" data-score="11.8" data-date="01 April 2026 15:21" style="animation-delay:3.2s">
             <div class="card-header">
                 <div class="article-title">Create a Single Configuration</div>
                 <div class="score-badge good">11.8</div>
@@ -1951,7 +1983,7 @@
             </div>
         </div>
 
-        <div class="article-card good" data-status="good" style="animation-delay:6.4s">
+        <div class="article-card good" data-status="good" data-title="key improvements with the datavant cli v4" data-score="11.8" data-date="01 April 2026 15:15" style="animation-delay:3.25s">
             <div class="card-header">
                 <div class="article-title">Key Improvements with the Datavant CLI v4</div>
                 <div class="score-badge good">11.8</div>
@@ -1979,7 +2011,7 @@
             </div>
         </div>
 
-        <div class="article-card good" data-status="good" style="animation-delay:6.5s">
+        <div class="article-card good" data-status="good" data-title="pick up distributed data" data-score="11.8" data-date="01 April 2026 15:18" style="animation-delay:3.3s">
             <div class="card-header">
                 <div class="article-title">Pick Up Distributed Data</div>
                 <div class="score-badge good">11.8</div>
@@ -2007,7 +2039,7 @@
             </div>
         </div>
 
-        <div class="article-card good" data-status="good" style="animation-delay:6.6s">
+        <div class="article-card good" data-status="good" data-title="use datavant via cloud provider native applications" data-score="11.7" data-date="01 April 2026 15:11" style="animation-delay:3.35s">
             <div class="card-header">
                 <div class="article-title">Use Datavant via Cloud Provider Native Applications</div>
                 <div class="score-badge good">11.7</div>
@@ -2035,7 +2067,7 @@
             </div>
         </div>
 
-        <div class="article-card good" data-status="good" style="animation-delay:6.7s">
+        <div class="article-card good" data-status="good" data-title="client versions and support policy" data-score="11.6" data-date="01 April 2026 15:14" style="animation-delay:3.4s">
             <div class="card-header">
                 <div class="article-title">Client Versions and Support Policy</div>
                 <div class="score-badge good">11.6</div>
@@ -2063,7 +2095,7 @@
             </div>
         </div>
 
-        <div class="article-card good" data-status="good" style="animation-delay:6.8s">
+        <div class="article-card good" data-status="good" data-title="use datavant cli in streaming mode" data-score="11.5" data-date="01 April 2026 14:55" style="animation-delay:3.45s">
             <div class="card-header">
                 <div class="article-title">Use Datavant CLI in Streaming Mode</div>
                 <div class="score-badge good">11.5</div>
@@ -2091,7 +2123,7 @@
             </div>
         </div>
 
-        <div class="article-card good" data-status="good" style="animation-delay:6.9s">
+        <div class="article-card good" data-status="good" data-title="run a profile report" data-score="11.5" data-date="01 April 2026 15:16" style="animation-delay:3.5s">
             <div class="card-header">
                 <div class="article-title">Run a Profile Report</div>
                 <div class="score-badge good">11.5</div>
@@ -2119,7 +2151,7 @@
             </div>
         </div>
 
-        <div class="article-card good" data-status="good" style="animation-delay:7.0s">
+        <div class="article-card good" data-status="good" data-title="linking schemas" data-score="11.4" data-date="01 April 2026 15:32" style="animation-delay:3.55s">
             <div class="card-header">
                 <div class="article-title">Linking Schemas</div>
                 <div class="score-badge good">11.4</div>
@@ -2147,7 +2179,7 @@
             </div>
         </div>
 
-        <div class="article-card good" data-status="good" style="animation-delay:7.1s">
+        <div class="article-card good" data-status="good" data-title="introduction to encryption keys" data-score="11.4" data-date="01 April 2026 14:19" style="animation-delay:3.6s">
             <div class="card-header">
                 <div class="article-title">Introduction to Encryption Keys</div>
                 <div class="score-badge good">11.4</div>
@@ -2175,7 +2207,7 @@
             </div>
         </div>
 
-        <div class="article-card good" data-status="good" style="animation-delay:7.2s">
+        <div class="article-card good" data-status="good" data-title="understanding the my data pages" data-score="11.3" data-date="01 April 2026 15:29" style="animation-delay:3.65s">
             <div class="card-header">
                 <div class="article-title">Understanding the My Data Pages</div>
                 <div class="score-badge good">11.3</div>
@@ -2203,7 +2235,7 @@
             </div>
         </div>
 
-        <div class="article-card good" data-status="good" style="animation-delay:7.3s">
+        <div class="article-card good" data-status="good" data-title="run an overlap report" data-score="11.3" data-date="01 April 2026 15:16" style="animation-delay:3.7s">
             <div class="card-header">
                 <div class="article-title">Run an Overlap Report</div>
                 <div class="score-badge good">11.3</div>
@@ -2231,7 +2263,7 @@
             </div>
         </div>
 
-        <div class="article-card good" data-status="good" style="animation-delay:7.4s">
+        <div class="article-card good" data-status="good" data-title="manage passthrough ids" data-score="11.2" data-date="01 April 2026 15:21" style="animation-delay:3.75s">
             <div class="card-header">
                 <div class="article-title">Manage Passthrough IDs</div>
                 <div class="score-badge good">11.2</div>
@@ -2259,7 +2291,7 @@
             </div>
         </div>
 
-        <div class="article-card good" data-status="good" style="animation-delay:7.5s">
+        <div class="article-card good" data-status="good" data-title="use datavant cli in server mode" data-score="11.1" data-date="01 April 2026 14:55" style="animation-delay:3.8s">
             <div class="card-header">
                 <div class="article-title">Use Datavant CLI in Server Mode</div>
                 <div class="score-badge good">11.1</div>
@@ -2287,7 +2319,7 @@
             </div>
         </div>
 
-        <div class="article-card good" data-status="good" style="animation-delay:7.6s">
+        <div class="article-card good" data-status="good" data-title="run an overlap comparison report" data-score="11.1" data-date="01 April 2026 15:16" style="animation-delay:3.85s">
             <div class="card-header">
                 <div class="article-title">Run an Overlap Comparison Report</div>
                 <div class="score-badge good">11.1</div>
@@ -2315,7 +2347,7 @@
             </div>
         </div>
 
-        <div class="article-card good" data-status="good" style="animation-delay:7.7s">
+        <div class="article-card good" data-status="good" data-title="use datavant cli in batch mode" data-score="10.9" data-date="01 April 2026 15:07" style="animation-delay:3.9s">
             <div class="card-header">
                 <div class="article-title">Use Datavant CLI in Batch Mode</div>
                 <div class="score-badge good">10.9</div>
@@ -2343,7 +2375,7 @@
             </div>
         </div>
 
-        <div class="article-card good" data-status="good" style="animation-delay:7.8s">
+        <div class="article-card good" data-status="good" data-title="create a segment using segment builder" data-score="10.9" data-date="01 April 2026 15:29" style="animation-delay:3.95s">
             <div class="card-header">
                 <div class="article-title">Create a Segment using Segment Builder</div>
                 <div class="score-badge good">10.9</div>
@@ -2371,7 +2403,7 @@
             </div>
         </div>
 
-        <div class="article-card good" data-status="good" style="animation-delay:7.9s">
+        <div class="article-card good" data-status="good" data-title="datavant tokenization on databricks user guide (v1)" data-score="10.9" data-date="01 April 2026 15:12" style="animation-delay:4.0s">
             <div class="card-header">
                 <div class="article-title">Datavant Tokenization on Databricks User Guide (v1)</div>
                 <div class="score-badge good">10.9</div>
@@ -2399,7 +2431,7 @@
             </div>
         </div>
 
-        <div class="article-card good" data-status="good" style="animation-delay:8.0s">
+        <div class="article-card good" data-status="good" data-title="security architecture and amazon's secrets managers service" data-score="10.9" data-date="01 April 2026 15:09" style="animation-delay:4.05s">
             <div class="card-header">
                 <div class="article-title">Security Architecture and Amazon's Secrets Managers Service</div>
                 <div class="score-badge good">10.9</div>
@@ -2427,7 +2459,7 @@
             </div>
         </div>
 
-        <div class="article-card good" data-status="good" style="animation-delay:8.1s">
+        <div class="article-card good" data-status="good" data-title="run a stack report" data-score="10.9" data-date="01 April 2026 15:17" style="animation-delay:4.1s">
             <div class="card-header">
                 <div class="article-title">Run a Stack Report</div>
                 <div class="score-badge good">10.9</div>
@@ -2455,7 +2487,7 @@
             </div>
         </div>
 
-        <div class="article-card good" data-status="good" style="animation-delay:8.2s">
+        <div class="article-card good" data-status="good" data-title="international transform tokens user guide" data-score="10.8" data-date="01 April 2026 15:19" style="animation-delay:4.15s">
             <div class="card-header">
                 <div class="article-title">International Transform Tokens User Guide</div>
                 <div class="score-badge good">10.8</div>
@@ -2483,7 +2515,7 @@
             </div>
         </div>
 
-        <div class="article-card good" data-status="good" style="animation-delay:8.3s">
+        <div class="article-card good" data-status="good" data-title="required data pre-processing" data-score="10.7" data-date="01 April 2026 14:19" style="animation-delay:4.2s">
             <div class="card-header">
                 <div class="article-title">Required Data Pre-Processing</div>
                 <div class="score-badge good">10.7</div>
@@ -2511,7 +2543,7 @@
             </div>
         </div>
 
-        <div class="article-card good" data-status="good" style="animation-delay:8.4s">
+        <div class="article-card good" data-status="good" data-title="tokenization faqs" data-score="10.7" data-date="01 April 2026 15:09" style="animation-delay:4.25s">
             <div class="card-header">
                 <div class="article-title">Tokenization FAQs</div>
                 <div class="score-badge good">10.7</div>
@@ -2539,7 +2571,7 @@
             </div>
         </div>
 
-        <div class="article-card good" data-status="good" style="animation-delay:8.5s">
+        <div class="article-card good" data-status="good" data-title="troubleshooting datavant cli & desktop - error messages" data-score="10.7" data-date="01 April 2026 15:08" style="animation-delay:4.3s">
             <div class="card-header">
                 <div class="article-title">Troubleshooting Datavant CLI & Desktop - Error Messages</div>
                 <div class="score-badge good">10.7</div>
@@ -2567,7 +2599,7 @@
             </div>
         </div>
 
-        <div class="article-card good" data-status="good" style="animation-delay:8.6s">
+        <div class="article-card good" data-status="good" data-title="checklist for datavant desktop" data-score="10.7" data-date="01 April 2026 15:13" style="animation-delay:4.35s">
             <div class="card-header">
                 <div class="article-title">Checklist for Datavant Desktop</div>
                 <div class="score-badge good">10.7</div>
@@ -2595,7 +2627,7 @@
             </div>
         </div>
 
-        <div class="article-card good" data-status="good" style="animation-delay:8.7s">
+        <div class="article-card good" data-status="good" data-title="use datavant natively on aws eks" data-score="10.3" data-date="01 April 2026 15:12" style="animation-delay:4.4s">
             <div class="card-header">
                 <div class="article-title">Use Datavant Natively on AWS EKS</div>
                 <div class="score-badge good">10.3</div>
@@ -2623,7 +2655,7 @@
             </div>
         </div>
 
-        <div class="article-card good" data-status="good" style="animation-delay:8.8s">
+        <div class="article-card good" data-status="good" data-title="run match" data-score="10.3" data-date="01 April 2026 15:27" style="animation-delay:4.45s">
             <div class="card-header">
                 <div class="article-title">Run Match</div>
                 <div class="score-badge good">10.3</div>
@@ -2651,7 +2683,7 @@
             </div>
         </div>
 
-        <div class="article-card good" data-status="good" style="animation-delay:8.9s">
+        <div class="article-card good" data-status="good" data-title="performance benchmarks: cli" data-score="10.3" data-date="01 April 2026 14:56" style="animation-delay:4.5s">
             <div class="card-header">
                 <div class="article-title">Performance Benchmarks: CLI</div>
                 <div class="score-badge good">10.3</div>
@@ -2679,7 +2711,7 @@
             </div>
         </div>
 
-        <div class="article-card good" data-status="good" style="animation-delay:9.0s">
+        <div class="article-card good" data-status="good" data-title="upgrade to datavant cli v5" data-score="10.3" data-date="01 April 2026 15:14" style="animation-delay:4.55s">
             <div class="card-header">
                 <div class="article-title">Upgrade to Datavant CLI v5</div>
                 <div class="score-badge good">10.3</div>
@@ -2707,7 +2739,7 @@
             </div>
         </div>
 
-        <div class="article-card good" data-status="good" style="animation-delay:9.1s">
+        <div class="article-card good" data-status="good" data-title="understanding configurations" data-score="10.3" data-date="01 April 2026 15:20" style="animation-delay:4.6s">
             <div class="card-header">
                 <div class="article-title">Understanding Configurations</div>
                 <div class="score-badge good">10.3</div>
@@ -2735,7 +2767,7 @@
             </div>
         </div>
 
-        <div class="article-card good" data-status="good" style="animation-delay:9.2s">
+        <div class="article-card good" data-status="good" data-title="deliver data for portal expert determinations (uncommon)" data-score="10.1" data-date="01 April 2026 15:32" style="animation-delay:4.65s">
             <div class="card-header">
                 <div class="article-title">Deliver Data for Portal Expert Determinations (Uncommon)</div>
                 <div class="score-badge good">10.1</div>
@@ -2763,7 +2795,7 @@
             </div>
         </div>
 
-        <div class="article-card good" data-status="good" style="animation-delay:9.3s">
+        <div class="article-card good" data-status="good" data-title="checklist for cli in batch mode" data-score="10.1" data-date="01 April 2026 15:06" style="animation-delay:4.7s">
             <div class="card-header">
                 <div class="article-title">Checklist for CLI in Batch Mode</div>
                 <div class="score-badge good">10.1</div>
@@ -2791,7 +2823,7 @@
             </div>
         </div>
 
-        <div class="article-card good" data-status="good" style="animation-delay:9.4s">
+        <div class="article-card good" data-status="good" data-title="explore profile definitions" data-score="10.0" data-date="01 April 2026 15:22" style="animation-delay:4.75s">
             <div class="card-header">
                 <div class="article-title">Explore Profile Definitions</div>
                 <div class="score-badge good">10.0</div>
@@ -2819,7 +2851,7 @@
             </div>
         </div>
 
-        <div class="article-card good" data-status="good" style="animation-delay:9.5s">
+        <div class="article-card good" data-status="good" data-title="data onboarding method: snowflake transfer" data-score="9.9" data-date="01 April 2026 15:24" style="animation-delay:4.8s">
             <div class="card-header">
                 <div class="article-title">Data Onboarding Method: Snowflake Transfer</div>
                 <div class="score-badge good">9.9</div>
@@ -2847,7 +2879,7 @@
             </div>
         </div>
 
-        <div class="article-card good" data-status="good" style="animation-delay:9.6s">
+        <div class="article-card good" data-status="good" data-title="how to use datavant desktop" data-score="9.9" data-date="01 April 2026 15:13" style="animation-delay:4.85s">
             <div class="card-header">
                 <div class="article-title">How to Use Datavant Desktop</div>
                 <div class="score-badge good">9.9</div>
@@ -2875,7 +2907,7 @@
             </div>
         </div>
 
-        <div class="article-card good" data-status="good" style="animation-delay:9.7s">
+        <div class="article-card good" data-status="good" data-title="mortality user guide" data-score="9.9" data-date="01 April 2026 15:33" style="animation-delay:4.9s">
             <div class="card-header">
                 <div class="article-title">Mortality User Guide</div>
                 <div class="score-badge good">9.9</div>
@@ -2903,7 +2935,7 @@
             </div>
         </div>
 
-        <div class="article-card good" data-status="good" style="animation-delay:9.8s">
+        <div class="article-card good" data-status="good" data-title="establish an aws connection with datavant" data-score="9.8" data-date="01 April 2026 15:23" style="animation-delay:4.95s">
             <div class="card-header">
                 <div class="article-title">Establish an AWS Connection with Datavant</div>
                 <div class="score-badge good">9.8</div>
@@ -2931,7 +2963,7 @@
             </div>
         </div>
 
-        <div class="article-card good" data-status="good" style="animation-delay:9.9s">
+        <div class="article-card good" data-status="good" data-title="data onboarding method: onboard subcommand (v4.1)" data-score="9.8" data-date="01 April 2026 15:25" style="animation-delay:5.0s">
             <div class="card-header">
                 <div class="article-title">Data Onboarding Method: Onboard Subcommand (v4.1)</div>
                 <div class="score-badge good">9.8</div>
@@ -2959,7 +2991,7 @@
             </div>
         </div>
 
-        <div class="article-card good" data-status="good" style="animation-delay:10.0s">
+        <div class="article-card good" data-status="good" data-title="reviewing the tokenization software output and log files" data-score="9.7" data-date="01 April 2026 15:08" style="animation-delay:5.05s">
             <div class="card-header">
                 <div class="article-title">Reviewing the Tokenization Software Output and Log Files</div>
                 <div class="score-badge good">9.7</div>
@@ -2987,7 +3019,7 @@
             </div>
         </div>
 
-        <div class="article-card good" data-status="good" style="animation-delay:10.1s">
+        <div class="article-card good" data-status="good" data-title="best practices for data onboarding" data-score="9.7" data-date="01 April 2026 15:26" style="animation-delay:5.1s">
             <div class="card-header">
                 <div class="article-title">Best Practices for Data Onboarding</div>
                 <div class="score-badge good">9.7</div>
@@ -3015,7 +3047,7 @@
             </div>
         </div>
 
-        <div class="article-card good" data-status="good" style="animation-delay:10.2s">
+        <div class="article-card good" data-status="good" data-title="run a custom query report" data-score="9.7" data-date="01 April 2026 15:17" style="animation-delay:5.15s">
             <div class="card-header">
                 <div class="article-title">Run a Custom Query Report</div>
                 <div class="score-badge good">9.7</div>
@@ -3043,7 +3075,7 @@
             </div>
         </div>
 
-        <div class="article-card good" data-status="good" style="animation-delay:10.3s">
+        <div class="article-card good" data-status="good" data-title="data onboarding method: sftp transfer" data-score="9.5" data-date="01 April 2026 15:25" style="animation-delay:5.2s">
             <div class="card-header">
                 <div class="article-title">Data Onboarding Method: SFTP Transfer</div>
                 <div class="score-badge good">9.5</div>
@@ -3071,7 +3103,7 @@
             </div>
         </div>
 
-        <div class="article-card good" data-status="good" style="animation-delay:10.4s">
+        <div class="article-card good" data-status="good" data-title="request an external file push" data-score="9.4" data-date="01 April 2026 15:19" style="animation-delay:5.25s">
             <div class="card-header">
                 <div class="article-title">Request an External File Push</div>
                 <div class="score-badge good">9.4</div>
@@ -3099,7 +3131,7 @@
             </div>
         </div>
 
-        <div class="article-card good" data-status="good" style="animation-delay:10.5s">
+        <div class="article-card good" data-status="good" data-title="configure single sign on (sso)" data-score="9.4" data-date="01 April 2026 15:23" style="animation-delay:5.3s">
             <div class="card-header">
                 <div class="article-title">Configure Single Sign On (SSO)</div>
                 <div class="score-badge good">9.4</div>
@@ -3127,7 +3159,7 @@
             </div>
         </div>
 
-        <div class="article-card good" data-status="good" style="animation-delay:10.6s">
+        <div class="article-card good" data-status="good" data-title="data onboarding method: s3 transfer" data-score="9.3" data-date="01 April 2026 15:25" style="animation-delay:5.35s">
             <div class="card-header">
                 <div class="article-title">Data Onboarding Method: S3 Transfer</div>
                 <div class="score-badge good">9.3</div>
@@ -3155,7 +3187,7 @@
             </div>
         </div>
 
-        <div class="article-card good" data-status="good" style="animation-delay:10.7s">
+        <div class="article-card good" data-status="good" data-title="export tokens from assess" data-score="9.2" data-date="01 April 2026 15:17" style="animation-delay:5.4s">
             <div class="card-header">
                 <div class="article-title">Export Tokens from Assess</div>
                 <div class="score-badge good">9.2</div>
@@ -3183,7 +3215,7 @@
             </div>
         </div>
 
-        <div class="article-card good" data-status="good" style="animation-delay:10.8s">
+        <div class="article-card good" data-status="good" data-title="troubleshoot table ingestion errors" data-score="9.2" data-date="01 April 2026 15:26" style="animation-delay:5.45s">
             <div class="card-header">
                 <div class="article-title">Troubleshoot Table Ingestion Errors</div>
                 <div class="score-badge good">9.2</div>
@@ -3211,7 +3243,7 @@
             </div>
         </div>
 
-        <div class="article-card good" data-status="good" style="animation-delay:10.9s">
+        <div class="article-card good" data-status="good" data-title="generate datavant credentials" data-score="9.2" data-date="01 April 2026 14:55" style="animation-delay:5.5s">
             <div class="card-header">
                 <div class="article-title">Generate Datavant Credentials</div>
                 <div class="score-badge good">9.2</div>
@@ -3239,7 +3271,7 @@
             </div>
         </div>
 
-        <div class="article-card good" data-status="good" style="animation-delay:11.0s">
+        <div class="article-card good" data-status="good" data-title="cli v4 upgrade faqs" data-score="9.1" data-date="01 April 2026 15:15" style="animation-delay:5.55s">
             <div class="card-header">
                 <div class="article-title">CLI v4 Upgrade FAQs</div>
                 <div class="score-badge good">9.1</div>
@@ -3267,7 +3299,7 @@
             </div>
         </div>
 
-        <div class="article-card good" data-status="good" style="animation-delay:11.1s">
+        <div class="article-card good" data-status="good" data-title="data onboarding method: databricks transfer" data-score="9.0" data-date="01 April 2026 15:24" style="animation-delay:5.6s">
             <div class="card-header">
                 <div class="article-title">Data Onboarding Method: Databricks Transfer</div>
                 <div class="score-badge good">9.0</div>
@@ -3295,7 +3327,7 @@
             </div>
         </div>
 
-        <div class="article-card good" data-status="good" style="animation-delay:11.2s">
+        <div class="article-card good" data-status="good" data-title="retrieve datavant sftp credentials" data-score="8.8" data-date="01 April 2026 15:25" style="animation-delay:5.65s">
             <div class="card-header">
                 <div class="article-title">Retrieve Datavant SFTP Credentials</div>
                 <div class="score-badge good">8.8</div>
@@ -3323,7 +3355,7 @@
             </div>
         </div>
 
-        <div class="article-card good" data-status="good" style="animation-delay:11.3s">
+        <div class="article-card good" data-status="good" data-title="cli v5 upgrade faqs" data-score="8.6" data-date="01 April 2026 15:14" style="animation-delay:5.7s">
             <div class="card-header">
                 <div class="article-title">CLI v5 Upgrade FAQs</div>
                 <div class="score-badge good">8.6</div>
@@ -3351,7 +3383,7 @@
             </div>
         </div>
 
-        <div class="article-card good" data-status="good" style="animation-delay:11.4s">
+        <div class="article-card good" data-status="good" data-title="cli v5 message updates" data-score="8.5" data-date="01 April 2026 14:55" style="animation-delay:5.75s">
             <div class="card-header">
                 <div class="article-title">CLI v5 Message Updates</div>
                 <div class="score-badge good">8.5</div>
@@ -3379,7 +3411,7 @@
             </div>
         </div>
 
-        <div class="article-card good" data-status="good" style="animation-delay:11.5s">
+        <div class="article-card good" data-status="good" data-title="create glue tables" data-score="8.5" data-date="01 April 2026 15:28" style="animation-delay:5.8s">
             <div class="card-header">
                 <div class="article-title">Create Glue Tables</div>
                 <div class="score-badge good">8.5</div>
@@ -3407,7 +3439,7 @@
             </div>
         </div>
 
-        <div class="article-card good" data-status="good" style="animation-delay:11.6s">
+        <div class="article-card good" data-status="good" data-title="data connectivity project dashboard" data-score="8.4" data-date="01 April 2026 15:27" style="animation-delay:5.85s">
             <div class="card-header">
                 <div class="article-title">Data Connectivity Project Dashboard</div>
                 <div class="score-badge good">8.4</div>
@@ -3435,7 +3467,7 @@
             </div>
         </div>
 
-        <div class="article-card good" data-status="good" style="animation-delay:11.7s">
+        <div class="article-card good" data-status="good" data-title="defining the data types" data-score="8.3" data-date="01 April 2026 15:20" style="animation-delay:5.9s">
             <div class="card-header">
                 <div class="article-title">Defining the Data Types</div>
                 <div class="score-badge good">8.3</div>
@@ -3463,7 +3495,7 @@
             </div>
         </div>
 
-        <div class="article-card good" data-status="good" style="animation-delay:11.8s">
+        <div class="article-card good" data-status="good" data-title="error tokens" data-score="6.3" data-date="01 April 2026 15:08" style="animation-delay:5.95s">
             <div class="card-header">
                 <div class="article-title">Error Tokens</div>
                 <div class="score-badge good">6.3</div>
@@ -3515,7 +3547,7 @@
             </div>
         </div>
 
-        <div class="history-card bad" style="animation-delay:0.2s">
+        <div class="history-card bad" style="animation-delay:0.15s">
             <div class="history-card-header">
                 <div class="article-title">Snowflake: Reference Management Examples</div>
                 <div class="score-badge bad">20.0</div>
@@ -3535,7 +3567,7 @@
             </div>
         </div>
 
-        <div class="history-card bad" style="animation-delay:0.3s">
+        <div class="history-card bad" style="animation-delay:0.2s">
             <div class="history-card-header">
                 <div class="article-title">Performance Benchmarking for Desktop</div>
                 <div class="score-badge bad">18.7</div>
@@ -3555,7 +3587,7 @@
             </div>
         </div>
 
-        <div class="history-card bad" style="animation-delay:0.4s">
+        <div class="history-card bad" style="animation-delay:0.25s">
             <div class="history-card-header">
                 <div class="article-title">Manage Users For Your Company</div>
                 <div class="score-badge bad">17.7</div>
@@ -3575,7 +3607,7 @@
             </div>
         </div>
 
-        <div class="history-card bad" style="animation-delay:0.5s">
+        <div class="history-card bad" style="animation-delay:0.3s">
             <div class="history-card-header">
                 <div class="article-title">Expert Determination Deliverables</div>
                 <div class="score-badge bad">17.5</div>
@@ -3595,7 +3627,7 @@
             </div>
         </div>
 
-        <div class="history-card bad" style="animation-delay:0.6s">
+        <div class="history-card bad" style="animation-delay:0.35s">
             <div class="history-card-header">
                 <div class="article-title">Snowflake: How to Tokenize Data Examples</div>
                 <div class="score-badge bad">17.3</div>
@@ -3615,7 +3647,7 @@
             </div>
         </div>
 
-        <div class="history-card bad" style="animation-delay:0.7s">
+        <div class="history-card bad" style="animation-delay:0.4s">
             <div class="history-card-header">
                 <div class="article-title">Snowflake Functions and Parameters</div>
                 <div class="score-badge bad">17.2</div>
@@ -3635,7 +3667,7 @@
             </div>
         </div>
 
-        <div class="history-card bad" style="animation-delay:0.8s">
+        <div class="history-card bad" style="animation-delay:0.45s">
             <div class="history-card-header">
                 <div class="article-title">Create a Data Group for General Onboarding</div>
                 <div class="score-badge bad">16.7</div>
@@ -3655,7 +3687,7 @@
             </div>
         </div>
 
-        <div class="history-card bad" style="animation-delay:0.9s">
+        <div class="history-card bad" style="animation-delay:0.5s">
             <div class="history-card-header">
                 <div class="article-title">View Software Activity Logs</div>
                 <div class="score-badge bad">16.6</div>
@@ -3675,7 +3707,7 @@
             </div>
         </div>
 
-        <div class="history-card bad" style="animation-delay:1.0s">
+        <div class="history-card bad" style="animation-delay:0.55s">
             <div class="history-card-header">
                 <div class="article-title">Deliver Data to Privacy Solutions</div>
                 <div class="score-badge bad">15.9</div>
@@ -3695,7 +3727,7 @@
             </div>
         </div>
 
-        <div class="history-card bad" style="animation-delay:1.1s">
+        <div class="history-card bad" style="animation-delay:0.6s">
             <div class="history-card-header">
                 <div class="article-title">Upgrade to Datavant CLI v4</div>
                 <div class="score-badge bad">15.8</div>
@@ -3715,7 +3747,7 @@
             </div>
         </div>
 
-        <div class="history-card bad" style="animation-delay:1.2s">
+        <div class="history-card bad" style="animation-delay:0.65s">
             <div class="history-card-header">
                 <div class="article-title">Understanding the Ecosystem Explorer</div>
                 <div class="score-badge bad">15.3</div>
@@ -3735,7 +3767,7 @@
             </div>
         </div>
 
-        <div class="history-card bad" style="animation-delay:1.3s">
+        <div class="history-card bad" style="animation-delay:0.7s">
             <div class="history-card-header">
                 <div class="article-title">Snowflake References Helper</div>
                 <div class="score-badge bad">15.3</div>
@@ -3755,7 +3787,7 @@
             </div>
         </div>
 
-        <div class="history-card bad" style="animation-delay:1.4s">
+        <div class="history-card bad" style="animation-delay:0.75s">
             <div class="history-card-header">
                 <div class="article-title">Enable Multiple Instances of Snowflake</div>
                 <div class="score-badge bad">15.2</div>
@@ -3775,7 +3807,7 @@
             </div>
         </div>
 
-        <div class="history-card bad" style="animation-delay:1.5s">
+        <div class="history-card bad" style="animation-delay:0.8s">
             <div class="history-card-header">
                 <div class="article-title">Work with a Partner in Assess</div>
                 <div class="score-badge bad">15.2</div>
@@ -3795,7 +3827,7 @@
             </div>
         </div>
 
-        <div class="history-card bad" style="animation-delay:1.6s">
+        <div class="history-card bad" style="animation-delay:0.85s">
             <div class="history-card-header">
                 <div class="article-title">Understanding Assess</div>
                 <div class="score-badge bad">15.0</div>
@@ -3815,7 +3847,7 @@
             </div>
         </div>
 
-        <div class="history-card warning" style="animation-delay:1.7s">
+        <div class="history-card warning" style="animation-delay:0.9s">
             <div class="history-card-header">
                 <div class="article-title">Manage Configurations</div>
                 <div class="score-badge warning">14.9</div>
@@ -3835,7 +3867,7 @@
             </div>
         </div>
 
-        <div class="history-card warning" style="animation-delay:1.8s">
+        <div class="history-card warning" style="animation-delay:0.95s">
             <div class="history-card-header">
                 <div class="article-title">Understanding Distributions</div>
                 <div class="score-badge warning">14.8</div>
@@ -3855,7 +3887,7 @@
             </div>
         </div>
 
-        <div class="history-card warning" style="animation-delay:1.9s">
+        <div class="history-card warning" style="animation-delay:1.0s">
             <div class="history-card-header">
                 <div class="article-title">Data Dictionary Requirements</div>
                 <div class="score-badge warning">14.7</div>
@@ -3875,7 +3907,7 @@
             </div>
         </div>
 
-        <div class="history-card warning" style="animation-delay:2.0s">
+        <div class="history-card warning" style="animation-delay:1.05s">
             <div class="history-card-header">
                 <div class="article-title">Sampling Guidelines</div>
                 <div class="score-badge warning">14.7</div>
@@ -3895,7 +3927,7 @@
             </div>
         </div>
 
-        <div class="history-card warning" style="animation-delay:2.1s">
+        <div class="history-card warning" style="animation-delay:1.1s">
             <div class="history-card-header">
                 <div class="article-title">Data Utility</div>
                 <div class="score-badge warning">14.5</div>
@@ -3915,7 +3947,7 @@
             </div>
         </div>
 
-        <div class="history-card warning" style="animation-delay:2.2s">
+        <div class="history-card warning" style="animation-delay:1.15s">
             <div class="history-card-header">
                 <div class="article-title">Configure an IAM Role and Permissions for Discovery Cloud</div>
                 <div class="score-badge warning">14.3</div>
@@ -3941,7 +3973,7 @@
             </div>
         </div>
 
-        <div class="history-card warning" style="animation-delay:2.3s">
+        <div class="history-card warning" style="animation-delay:1.2s">
             <div class="history-card-header">
                 <div class="article-title">Trial Tokenization Project Dashboard</div>
                 <div class="score-badge warning">14.3</div>
@@ -3967,7 +3999,7 @@
             </div>
         </div>
 
-        <div class="history-card warning" style="animation-delay:2.4s">
+        <div class="history-card warning" style="animation-delay:1.25s">
             <div class="history-card-header">
                 <div class="article-title">Datavant Partner Program</div>
                 <div class="score-badge warning">14.3</div>
@@ -3993,7 +4025,7 @@
             </div>
         </div>
 
-        <div class="history-card warning" style="animation-delay:2.5s">
+        <div class="history-card warning" style="animation-delay:1.3s">
             <div class="history-card-header">
                 <div class="article-title">Datavant ID (DVID) Change Management</div>
                 <div class="score-badge warning">14.3</div>
@@ -4019,7 +4051,7 @@
             </div>
         </div>
 
-        <div class="history-card warning" style="animation-delay:2.6s">
+        <div class="history-card warning" style="animation-delay:1.35s">
             <div class="history-card-header">
                 <div class="article-title">Manage your Company Profile in Explore</div>
                 <div class="score-badge warning">14.1</div>
@@ -4039,7 +4071,7 @@
             </div>
         </div>
 
-        <div class="history-card warning" style="animation-delay:2.7s">
+        <div class="history-card warning" style="animation-delay:1.4s">
             <div class="history-card-header">
                 <div class="article-title">Privacy Solutions Overview</div>
                 <div class="score-badge warning">14.1</div>
@@ -4059,7 +4091,7 @@
             </div>
         </div>
 
-        <div class="history-card warning" style="animation-delay:2.8s">
+        <div class="history-card warning" style="animation-delay:1.45s">
             <div class="history-card-header">
                 <div class="article-title">International Tokenization Guide</div>
                 <div class="score-badge warning">13.8</div>
@@ -4085,7 +4117,7 @@
             </div>
         </div>
 
-        <div class="history-card warning" style="animation-delay:2.9s">
+        <div class="history-card warning" style="animation-delay:1.5s">
             <div class="history-card-header">
                 <div class="article-title">Datavant Video Tutorials</div>
                 <div class="score-badge warning">13.4</div>
@@ -4111,7 +4143,7 @@
             </div>
         </div>
 
-        <div class="history-card warning" style="animation-delay:3.0s">
+        <div class="history-card warning" style="animation-delay:1.55s">
             <div class="history-card-header">
                 <div class="article-title">Snowflake Warehouse Selection and Performance Considerations (<1.1.0)</div>
                 <div class="score-badge warning">13.3</div>
@@ -4131,7 +4163,7 @@
             </div>
         </div>
 
-        <div class="history-card warning" style="animation-delay:3.1s">
+        <div class="history-card warning" style="animation-delay:1.6s">
             <div class="history-card-header">
                 <div class="article-title">Register a Table with AWS</div>
                 <div class="score-badge warning">13.2</div>
@@ -4157,7 +4189,7 @@
             </div>
         </div>
 
-        <div class="history-card warning" style="animation-delay:3.2s">
+        <div class="history-card warning" style="animation-delay:1.65s">
             <div class="history-card-header">
                 <div class="article-title">Snowflake: How to Transform Tokens Examples</div>
                 <div class="score-badge warning">13.2</div>
@@ -4177,7 +4209,7 @@
             </div>
         </div>
 
-        <div class="history-card warning" style="animation-delay:3.3s">
+        <div class="history-card warning" style="animation-delay:1.7s">
             <div class="history-card-header">
                 <div class="article-title">Run a Stack Report of Overlapping Patients</div>
                 <div class="score-badge warning">13.2</div>
@@ -4197,7 +4229,7 @@
             </div>
         </div>
 
-        <div class="history-card warning" style="animation-delay:3.4s">
+        <div class="history-card warning" style="animation-delay:1.75s">
             <div class="history-card-header">
                 <div class="article-title">Token Selection Rationale</div>
                 <div class="score-badge warning">13.2</div>
@@ -4223,7 +4255,7 @@
             </div>
         </div>
 
-        <div class="history-card warning" style="animation-delay:3.5s">
+        <div class="history-card warning" style="animation-delay:1.8s">
             <div class="history-card-header">
                 <div class="article-title">Privacy Solutions Dataset Requirements</div>
                 <div class="score-badge warning">13.1</div>
@@ -4243,7 +4275,7 @@
             </div>
         </div>
 
-        <div class="history-card warning" style="animation-delay:3.6s">
+        <div class="history-card warning" style="animation-delay:1.85s">
             <div class="history-card-header">
                 <div class="article-title">Share a Table or Segment</div>
                 <div class="score-badge warning">13.1</div>
@@ -4263,7 +4295,7 @@
             </div>
         </div>
 
-        <div class="history-card warning" style="animation-delay:3.7s">
+        <div class="history-card warning" style="animation-delay:1.9s">
             <div class="history-card-header">
                 <div class="article-title">Technical Requirements for the Datavant CLI and Datavant Desktop</div>
                 <div class="score-badge warning">13.1</div>
@@ -4283,7 +4315,7 @@
             </div>
         </div>
 
-        <div class="history-card warning" style="animation-delay:3.8s">
+        <div class="history-card warning" style="animation-delay:1.95s">
             <div class="history-card-header">
                 <div class="article-title">Privacy Solutions FAQs</div>
                 <div class="score-badge warning">13.0</div>
@@ -4303,7 +4335,7 @@
             </div>
         </div>
 
-        <div class="history-card warning" style="animation-delay:3.9s">
+        <div class="history-card warning" style="animation-delay:2.0s">
             <div class="history-card-header">
                 <div class="article-title">The Datavant Tokenization Software</div>
                 <div class="score-badge warning">12.9</div>
@@ -4329,7 +4361,7 @@
             </div>
         </div>
 
-        <div class="history-card warning" style="animation-delay:4.0s">
+        <div class="history-card warning" style="animation-delay:2.05s">
             <div class="history-card-header">
                 <div class="article-title">Manage Tables Registered with AWS</div>
                 <div class="score-badge warning">12.8</div>
@@ -4349,7 +4381,7 @@
             </div>
         </div>
 
-        <div class="history-card warning" style="animation-delay:4.1s">
+        <div class="history-card warning" style="animation-delay:2.1s">
             <div class="history-card-header">
                 <div class="article-title">Datavant CLI Commands and Optional Arguments</div>
                 <div class="score-badge warning">12.8</div>
@@ -4369,7 +4401,7 @@
             </div>
         </div>
 
-        <div class="history-card warning" style="animation-delay:4.2s">
+        <div class="history-card warning" style="animation-delay:2.15s">
             <div class="history-card-header">
                 <div class="article-title">Testing Datavant</div>
                 <div class="score-badge warning">12.8</div>
@@ -4389,7 +4421,7 @@
             </div>
         </div>
 
-        <div class="history-card warning" style="animation-delay:4.3s">
+        <div class="history-card warning" style="animation-delay:2.2s">
             <div class="history-card-header">
                 <div class="article-title">Project Dashboard Overview</div>
                 <div class="score-badge warning">12.7</div>
@@ -4409,7 +4441,7 @@
             </div>
         </div>
 
-        <div class="history-card warning" style="animation-delay:4.4s">
+        <div class="history-card warning" style="animation-delay:2.25s">
             <div class="history-card-header">
                 <div class="article-title">Defining the Configuration Output Operations</div>
                 <div class="score-badge warning">12.7</div>
@@ -4429,7 +4461,7 @@
             </div>
         </div>
 
-        <div class="history-card warning" style="animation-delay:4.5s">
+        <div class="history-card warning" style="animation-delay:2.3s">
             <div class="history-card-header">
                 <div class="article-title">Understanding the Profile Model</div>
                 <div class="score-badge warning">12.7</div>
@@ -4449,7 +4481,7 @@
             </div>
         </div>
 
-        <div class="history-card warning" style="animation-delay:4.6s">
+        <div class="history-card warning" style="animation-delay:2.35s">
             <div class="history-card-header">
                 <div class="article-title">Snowflake Warehouse Selection and Performance Considerations (1.1.0+)</div>
                 <div class="score-badge warning">12.6</div>
@@ -4469,7 +4501,7 @@
             </div>
         </div>
 
-        <div class="history-card warning" style="animation-delay:4.7s">
+        <div class="history-card warning" style="animation-delay:2.4s">
             <div class="history-card-header">
                 <div class="article-title">Transform Tokens User Guide</div>
                 <div class="score-badge warning">12.6</div>
@@ -4489,7 +4521,7 @@
             </div>
         </div>
 
-        <div class="history-card warning" style="animation-delay:4.8s">
+        <div class="history-card warning" style="animation-delay:2.45s">
             <div class="history-card-header">
                 <div class="article-title">Network Errors and Diagnostic Mode</div>
                 <div class="score-badge warning">12.5</div>
@@ -4509,7 +4541,7 @@
             </div>
         </div>
 
-        <div class="history-card warning" style="animation-delay:4.9s">
+        <div class="history-card warning" style="animation-delay:2.5s">
             <div class="history-card-header">
                 <div class="article-title">Create Configurations in Bulk</div>
                 <div class="score-badge warning">12.3</div>
@@ -4529,7 +4561,7 @@
             </div>
         </div>
 
-        <div class="history-card warning" style="animation-delay:5.0s">
+        <div class="history-card warning" style="animation-delay:2.55s">
             <div class="history-card-header">
                 <div class="article-title">Use Datavant Natively on Snowflake</div>
                 <div class="score-badge warning">12.2</div>
@@ -4549,7 +4581,7 @@
             </div>
         </div>
 
-        <div class="history-card warning" style="animation-delay:5.1s">
+        <div class="history-card warning" style="animation-delay:2.6s">
             <div class="history-card-header">
                 <div class="article-title">Send Distributed Data to a Partner</div>
                 <div class="score-badge warning">12.2</div>
@@ -4569,7 +4601,7 @@
             </div>
         </div>
 
-        <div class="history-card warning" style="animation-delay:5.2s">
+        <div class="history-card warning" style="animation-delay:2.65s">
             <div class="history-card-header">
                 <div class="article-title">Manage Standardly Onboarded Tables</div>
                 <div class="score-badge warning">12.2</div>
@@ -4589,7 +4621,7 @@
             </div>
         </div>
 
-        <div class="history-card warning" style="animation-delay:5.3s">
+        <div class="history-card warning" style="animation-delay:2.7s">
             <div class="history-card-header">
                 <div class="article-title">Understanding Match</div>
                 <div class="score-badge warning">12.1</div>
@@ -4609,7 +4641,7 @@
             </div>
         </div>
 
-        <div class="history-card warning" style="animation-delay:5.4s">
+        <div class="history-card warning" style="animation-delay:2.75s">
             <div class="history-card-header">
                 <div class="article-title">Understanding Data Inquiries</div>
                 <div class="score-badge warning">12.1</div>
@@ -4629,7 +4661,7 @@
             </div>
         </div>
 
-        <div class="history-card warning" style="animation-delay:5.5s">
+        <div class="history-card warning" style="animation-delay:2.8s">
             <div class="history-card-header">
                 <div class="article-title">Use Datavant Natively on AWS EC2</div>
                 <div class="score-badge warning">12.1</div>
@@ -4649,7 +4681,7 @@
             </div>
         </div>
 
-        <div class="history-card warning" style="animation-delay:5.6s">
+        <div class="history-card warning" style="animation-delay:2.85s">
             <div class="history-card-header">
                 <div class="article-title">Onboarding Data Checks</div>
                 <div class="score-badge warning">12.1</div>
@@ -4669,7 +4701,7 @@
             </div>
         </div>
 
-        <div class="history-card warning" style="animation-delay:5.7s">
+        <div class="history-card warning" style="animation-delay:2.9s">
             <div class="history-card-header">
                 <div class="article-title">What is a Table, Segment, and Data Group?</div>
                 <div class="score-badge warning">12.1</div>
@@ -4689,7 +4721,7 @@
             </div>
         </div>
 
-        <div class="history-card good" style="animation-delay:5.8s">
+        <div class="history-card good" style="animation-delay:2.95s">
             <div class="history-card-header">
                 <div class="article-title">General Onboarding User Guide</div>
                 <div class="score-badge good">12.0</div>
@@ -4709,7 +4741,7 @@
             </div>
         </div>
 
-        <div class="history-card good" style="animation-delay:5.9s">
+        <div class="history-card good" style="animation-delay:3.0s">
             <div class="history-card-header">
                 <div class="article-title">Introduction to Datavant Tokens</div>
                 <div class="score-badge good">12.0</div>
@@ -4735,7 +4767,7 @@
             </div>
         </div>
 
-        <div class="history-card good" style="animation-delay:6.0s">
+        <div class="history-card good" style="animation-delay:3.05s">
             <div class="history-card-header">
                 <div class="article-title">Configure Datavant CLI in an Automated Pipeline</div>
                 <div class="score-badge good">11.9</div>
@@ -4755,7 +4787,7 @@
             </div>
         </div>
 
-        <div class="history-card good" style="animation-delay:6.1s">
+        <div class="history-card good" style="animation-delay:3.1s">
             <div class="history-card-header">
                 <div class="article-title">Aggregated Overlap User Guide</div>
                 <div class="score-badge good">11.9</div>
@@ -4775,7 +4807,7 @@
             </div>
         </div>
 
-        <div class="history-card good" style="animation-delay:6.2s">
+        <div class="history-card good" style="animation-delay:3.15s">
             <div class="history-card-header">
                 <div class="article-title">Use Datavant Natively on AWS ECS</div>
                 <div class="score-badge good">11.8</div>
@@ -4795,7 +4827,7 @@
             </div>
         </div>
 
-        <div class="history-card good" style="animation-delay:6.3s">
+        <div class="history-card good" style="animation-delay:3.2s">
             <div class="history-card-header">
                 <div class="article-title">Create a Single Configuration</div>
                 <div class="score-badge good">11.8</div>
@@ -4815,7 +4847,7 @@
             </div>
         </div>
 
-        <div class="history-card good" style="animation-delay:6.4s">
+        <div class="history-card good" style="animation-delay:3.25s">
             <div class="history-card-header">
                 <div class="article-title">Key Improvements with the Datavant CLI v4</div>
                 <div class="score-badge good">11.8</div>
@@ -4835,7 +4867,7 @@
             </div>
         </div>
 
-        <div class="history-card good" style="animation-delay:6.5s">
+        <div class="history-card good" style="animation-delay:3.3s">
             <div class="history-card-header">
                 <div class="article-title">Pick Up Distributed Data</div>
                 <div class="score-badge good">11.8</div>
@@ -4855,7 +4887,7 @@
             </div>
         </div>
 
-        <div class="history-card good" style="animation-delay:6.6s">
+        <div class="history-card good" style="animation-delay:3.35s">
             <div class="history-card-header">
                 <div class="article-title">Use Datavant via Cloud Provider Native Applications</div>
                 <div class="score-badge good">11.7</div>
@@ -4875,7 +4907,7 @@
             </div>
         </div>
 
-        <div class="history-card good" style="animation-delay:6.7s">
+        <div class="history-card good" style="animation-delay:3.4s">
             <div class="history-card-header">
                 <div class="article-title">Client Versions and Support Policy</div>
                 <div class="score-badge good">11.6</div>
@@ -4895,7 +4927,7 @@
             </div>
         </div>
 
-        <div class="history-card good" style="animation-delay:6.8s">
+        <div class="history-card good" style="animation-delay:3.45s">
             <div class="history-card-header">
                 <div class="article-title">Use Datavant CLI in Streaming Mode</div>
                 <div class="score-badge good">11.5</div>
@@ -4915,7 +4947,7 @@
             </div>
         </div>
 
-        <div class="history-card good" style="animation-delay:6.9s">
+        <div class="history-card good" style="animation-delay:3.5s">
             <div class="history-card-header">
                 <div class="article-title">Run a Profile Report</div>
                 <div class="score-badge good">11.5</div>
@@ -4935,7 +4967,7 @@
             </div>
         </div>
 
-        <div class="history-card good" style="animation-delay:7.0s">
+        <div class="history-card good" style="animation-delay:3.55s">
             <div class="history-card-header">
                 <div class="article-title">Linking Schemas</div>
                 <div class="score-badge good">11.4</div>
@@ -4955,7 +4987,7 @@
             </div>
         </div>
 
-        <div class="history-card good" style="animation-delay:7.1s">
+        <div class="history-card good" style="animation-delay:3.6s">
             <div class="history-card-header">
                 <div class="article-title">Introduction to Encryption Keys</div>
                 <div class="score-badge good">11.4</div>
@@ -4981,7 +5013,7 @@
             </div>
         </div>
 
-        <div class="history-card good" style="animation-delay:7.2s">
+        <div class="history-card good" style="animation-delay:3.65s">
             <div class="history-card-header">
                 <div class="article-title">Understanding the My Data Pages</div>
                 <div class="score-badge good">11.3</div>
@@ -5001,7 +5033,7 @@
             </div>
         </div>
 
-        <div class="history-card good" style="animation-delay:7.3s">
+        <div class="history-card good" style="animation-delay:3.7s">
             <div class="history-card-header">
                 <div class="article-title">Run an Overlap Report</div>
                 <div class="score-badge good">11.3</div>
@@ -5021,7 +5053,7 @@
             </div>
         </div>
 
-        <div class="history-card good" style="animation-delay:7.4s">
+        <div class="history-card good" style="animation-delay:3.75s">
             <div class="history-card-header">
                 <div class="article-title">Manage Passthrough IDs</div>
                 <div class="score-badge good">11.2</div>
@@ -5041,7 +5073,7 @@
             </div>
         </div>
 
-        <div class="history-card good" style="animation-delay:7.5s">
+        <div class="history-card good" style="animation-delay:3.8s">
             <div class="history-card-header">
                 <div class="article-title">Use Datavant CLI in Server Mode</div>
                 <div class="score-badge good">11.1</div>
@@ -5061,7 +5093,7 @@
             </div>
         </div>
 
-        <div class="history-card good" style="animation-delay:7.6s">
+        <div class="history-card good" style="animation-delay:3.85s">
             <div class="history-card-header">
                 <div class="article-title">Run an Overlap Comparison Report</div>
                 <div class="score-badge good">11.1</div>
@@ -5081,7 +5113,7 @@
             </div>
         </div>
 
-        <div class="history-card good" style="animation-delay:7.7s">
+        <div class="history-card good" style="animation-delay:3.9s">
             <div class="history-card-header">
                 <div class="article-title">Use Datavant CLI in Batch Mode</div>
                 <div class="score-badge good">10.9</div>
@@ -5101,7 +5133,7 @@
             </div>
         </div>
 
-        <div class="history-card good" style="animation-delay:7.8s">
+        <div class="history-card good" style="animation-delay:3.95s">
             <div class="history-card-header">
                 <div class="article-title">Create a Segment using Segment Builder</div>
                 <div class="score-badge good">10.9</div>
@@ -5121,7 +5153,7 @@
             </div>
         </div>
 
-        <div class="history-card good" style="animation-delay:7.9s">
+        <div class="history-card good" style="animation-delay:4.0s">
             <div class="history-card-header">
                 <div class="article-title">Datavant Tokenization on Databricks User Guide (v1)</div>
                 <div class="score-badge good">10.9</div>
@@ -5141,7 +5173,7 @@
             </div>
         </div>
 
-        <div class="history-card good" style="animation-delay:8.0s">
+        <div class="history-card good" style="animation-delay:4.05s">
             <div class="history-card-header">
                 <div class="article-title">Security Architecture and Amazon's Secrets Managers Service</div>
                 <div class="score-badge good">10.9</div>
@@ -5161,7 +5193,7 @@
             </div>
         </div>
 
-        <div class="history-card good" style="animation-delay:8.1s">
+        <div class="history-card good" style="animation-delay:4.1s">
             <div class="history-card-header">
                 <div class="article-title">Run a Stack Report</div>
                 <div class="score-badge good">10.9</div>
@@ -5181,7 +5213,7 @@
             </div>
         </div>
 
-        <div class="history-card good" style="animation-delay:8.2s">
+        <div class="history-card good" style="animation-delay:4.15s">
             <div class="history-card-header">
                 <div class="article-title">International Transform Tokens User Guide</div>
                 <div class="score-badge good">10.8</div>
@@ -5201,7 +5233,7 @@
             </div>
         </div>
 
-        <div class="history-card good" style="animation-delay:8.3s">
+        <div class="history-card good" style="animation-delay:4.2s">
             <div class="history-card-header">
                 <div class="article-title">Required Data Pre-Processing</div>
                 <div class="score-badge good">10.7</div>
@@ -5245,7 +5277,7 @@
             </div>
         </div>
 
-        <div class="history-card good" style="animation-delay:8.4s">
+        <div class="history-card good" style="animation-delay:4.25s">
             <div class="history-card-header">
                 <div class="article-title">Tokenization FAQs</div>
                 <div class="score-badge good">10.7</div>
@@ -5265,7 +5297,7 @@
             </div>
         </div>
 
-        <div class="history-card good" style="animation-delay:8.5s">
+        <div class="history-card good" style="animation-delay:4.3s">
             <div class="history-card-header">
                 <div class="article-title">Troubleshooting Datavant CLI & Desktop - Error Messages</div>
                 <div class="score-badge good">10.7</div>
@@ -5285,7 +5317,7 @@
             </div>
         </div>
 
-        <div class="history-card good" style="animation-delay:8.6s">
+        <div class="history-card good" style="animation-delay:4.35s">
             <div class="history-card-header">
                 <div class="article-title">Checklist for Datavant Desktop</div>
                 <div class="score-badge good">10.7</div>
@@ -5305,7 +5337,7 @@
             </div>
         </div>
 
-        <div class="history-card good" style="animation-delay:8.7s">
+        <div class="history-card good" style="animation-delay:4.4s">
             <div class="history-card-header">
                 <div class="article-title">Use Datavant Natively on AWS EKS</div>
                 <div class="score-badge good">10.3</div>
@@ -5325,7 +5357,7 @@
             </div>
         </div>
 
-        <div class="history-card good" style="animation-delay:8.8s">
+        <div class="history-card good" style="animation-delay:4.45s">
             <div class="history-card-header">
                 <div class="article-title">Run Match</div>
                 <div class="score-badge good">10.3</div>
@@ -5345,7 +5377,7 @@
             </div>
         </div>
 
-        <div class="history-card good" style="animation-delay:8.9s">
+        <div class="history-card good" style="animation-delay:4.5s">
             <div class="history-card-header">
                 <div class="article-title">Performance Benchmarks: CLI</div>
                 <div class="score-badge good">10.3</div>
@@ -5365,7 +5397,7 @@
             </div>
         </div>
 
-        <div class="history-card good" style="animation-delay:9.0s">
+        <div class="history-card good" style="animation-delay:4.55s">
             <div class="history-card-header">
                 <div class="article-title">Upgrade to Datavant CLI v5</div>
                 <div class="score-badge good">10.3</div>
@@ -5385,7 +5417,7 @@
             </div>
         </div>
 
-        <div class="history-card good" style="animation-delay:9.1s">
+        <div class="history-card good" style="animation-delay:4.6s">
             <div class="history-card-header">
                 <div class="article-title">Understanding Configurations</div>
                 <div class="score-badge good">10.3</div>
@@ -5405,7 +5437,7 @@
             </div>
         </div>
 
-        <div class="history-card good" style="animation-delay:9.2s">
+        <div class="history-card good" style="animation-delay:4.65s">
             <div class="history-card-header">
                 <div class="article-title">Deliver Data for Portal Expert Determinations (Uncommon)</div>
                 <div class="score-badge good">10.1</div>
@@ -5425,7 +5457,7 @@
             </div>
         </div>
 
-        <div class="history-card good" style="animation-delay:9.3s">
+        <div class="history-card good" style="animation-delay:4.7s">
             <div class="history-card-header">
                 <div class="article-title">Checklist for CLI in Batch Mode</div>
                 <div class="score-badge good">10.1</div>
@@ -5445,7 +5477,7 @@
             </div>
         </div>
 
-        <div class="history-card good" style="animation-delay:9.4s">
+        <div class="history-card good" style="animation-delay:4.75s">
             <div class="history-card-header">
                 <div class="article-title">Explore Profile Definitions</div>
                 <div class="score-badge good">10.0</div>
@@ -5465,7 +5497,7 @@
             </div>
         </div>
 
-        <div class="history-card good" style="animation-delay:9.5s">
+        <div class="history-card good" style="animation-delay:4.8s">
             <div class="history-card-header">
                 <div class="article-title">Data Onboarding Method: Snowflake Transfer</div>
                 <div class="score-badge good">9.9</div>
@@ -5485,7 +5517,7 @@
             </div>
         </div>
 
-        <div class="history-card good" style="animation-delay:9.6s">
+        <div class="history-card good" style="animation-delay:4.85s">
             <div class="history-card-header">
                 <div class="article-title">How to Use Datavant Desktop</div>
                 <div class="score-badge good">9.9</div>
@@ -5505,7 +5537,7 @@
             </div>
         </div>
 
-        <div class="history-card good" style="animation-delay:9.7s">
+        <div class="history-card good" style="animation-delay:4.9s">
             <div class="history-card-header">
                 <div class="article-title">Mortality User Guide</div>
                 <div class="score-badge good">9.9</div>
@@ -5525,7 +5557,7 @@
             </div>
         </div>
 
-        <div class="history-card good" style="animation-delay:9.8s">
+        <div class="history-card good" style="animation-delay:4.95s">
             <div class="history-card-header">
                 <div class="article-title">Establish an AWS Connection with Datavant</div>
                 <div class="score-badge good">9.8</div>
@@ -5545,7 +5577,7 @@
             </div>
         </div>
 
-        <div class="history-card good" style="animation-delay:9.9s">
+        <div class="history-card good" style="animation-delay:5.0s">
             <div class="history-card-header">
                 <div class="article-title">Data Onboarding Method: Onboard Subcommand (v4.1)</div>
                 <div class="score-badge good">9.8</div>
@@ -5565,7 +5597,7 @@
             </div>
         </div>
 
-        <div class="history-card good" style="animation-delay:10.0s">
+        <div class="history-card good" style="animation-delay:5.05s">
             <div class="history-card-header">
                 <div class="article-title">Reviewing the Tokenization Software Output and Log Files</div>
                 <div class="score-badge good">9.7</div>
@@ -5585,7 +5617,7 @@
             </div>
         </div>
 
-        <div class="history-card good" style="animation-delay:10.1s">
+        <div class="history-card good" style="animation-delay:5.1s">
             <div class="history-card-header">
                 <div class="article-title">Best Practices for Data Onboarding</div>
                 <div class="score-badge good">9.7</div>
@@ -5605,7 +5637,7 @@
             </div>
         </div>
 
-        <div class="history-card good" style="animation-delay:10.2s">
+        <div class="history-card good" style="animation-delay:5.15s">
             <div class="history-card-header">
                 <div class="article-title">Run a Custom Query Report</div>
                 <div class="score-badge good">9.7</div>
@@ -5625,7 +5657,7 @@
             </div>
         </div>
 
-        <div class="history-card good" style="animation-delay:10.3s">
+        <div class="history-card good" style="animation-delay:5.2s">
             <div class="history-card-header">
                 <div class="article-title">Data Onboarding Method: SFTP Transfer</div>
                 <div class="score-badge good">9.5</div>
@@ -5645,7 +5677,7 @@
             </div>
         </div>
 
-        <div class="history-card good" style="animation-delay:10.4s">
+        <div class="history-card good" style="animation-delay:5.25s">
             <div class="history-card-header">
                 <div class="article-title">Request an External File Push</div>
                 <div class="score-badge good">9.4</div>
@@ -5665,7 +5697,7 @@
             </div>
         </div>
 
-        <div class="history-card good" style="animation-delay:10.5s">
+        <div class="history-card good" style="animation-delay:5.3s">
             <div class="history-card-header">
                 <div class="article-title">Configure Single Sign On (SSO)</div>
                 <div class="score-badge good">9.4</div>
@@ -5685,7 +5717,7 @@
             </div>
         </div>
 
-        <div class="history-card good" style="animation-delay:10.6s">
+        <div class="history-card good" style="animation-delay:5.35s">
             <div class="history-card-header">
                 <div class="article-title">Data Onboarding Method: S3 Transfer</div>
                 <div class="score-badge good">9.3</div>
@@ -5705,7 +5737,7 @@
             </div>
         </div>
 
-        <div class="history-card good" style="animation-delay:10.7s">
+        <div class="history-card good" style="animation-delay:5.4s">
             <div class="history-card-header">
                 <div class="article-title">Export Tokens from Assess</div>
                 <div class="score-badge good">9.2</div>
@@ -5725,7 +5757,7 @@
             </div>
         </div>
 
-        <div class="history-card good" style="animation-delay:10.8s">
+        <div class="history-card good" style="animation-delay:5.45s">
             <div class="history-card-header">
                 <div class="article-title">Troubleshoot Table Ingestion Errors</div>
                 <div class="score-badge good">9.2</div>
@@ -5745,7 +5777,7 @@
             </div>
         </div>
 
-        <div class="history-card good" style="animation-delay:10.9s">
+        <div class="history-card good" style="animation-delay:5.5s">
             <div class="history-card-header">
                 <div class="article-title">Generate Datavant Credentials</div>
                 <div class="score-badge good">9.2</div>
@@ -5765,7 +5797,7 @@
             </div>
         </div>
 
-        <div class="history-card good" style="animation-delay:11.0s">
+        <div class="history-card good" style="animation-delay:5.55s">
             <div class="history-card-header">
                 <div class="article-title">CLI v4 Upgrade FAQs</div>
                 <div class="score-badge good">9.1</div>
@@ -5785,7 +5817,7 @@
             </div>
         </div>
 
-        <div class="history-card good" style="animation-delay:11.1s">
+        <div class="history-card good" style="animation-delay:5.6s">
             <div class="history-card-header">
                 <div class="article-title">Data Onboarding Method: Databricks Transfer</div>
                 <div class="score-badge good">9.0</div>
@@ -5805,7 +5837,7 @@
             </div>
         </div>
 
-        <div class="history-card good" style="animation-delay:11.2s">
+        <div class="history-card good" style="animation-delay:5.65s">
             <div class="history-card-header">
                 <div class="article-title">Retrieve Datavant SFTP Credentials</div>
                 <div class="score-badge good">8.8</div>
@@ -5825,7 +5857,7 @@
             </div>
         </div>
 
-        <div class="history-card good" style="animation-delay:11.3s">
+        <div class="history-card good" style="animation-delay:5.7s">
             <div class="history-card-header">
                 <div class="article-title">CLI v5 Upgrade FAQs</div>
                 <div class="score-badge good">8.6</div>
@@ -5845,7 +5877,7 @@
             </div>
         </div>
 
-        <div class="history-card good" style="animation-delay:11.4s">
+        <div class="history-card good" style="animation-delay:5.75s">
             <div class="history-card-header">
                 <div class="article-title">CLI v5 Message Updates</div>
                 <div class="score-badge good">8.5</div>
@@ -5865,7 +5897,7 @@
             </div>
         </div>
 
-        <div class="history-card good" style="animation-delay:11.5s">
+        <div class="history-card good" style="animation-delay:5.8s">
             <div class="history-card-header">
                 <div class="article-title">Create Glue Tables</div>
                 <div class="score-badge good">8.5</div>
@@ -5885,7 +5917,7 @@
             </div>
         </div>
 
-        <div class="history-card good" style="animation-delay:11.6s">
+        <div class="history-card good" style="animation-delay:5.85s">
             <div class="history-card-header">
                 <div class="article-title">Data Connectivity Project Dashboard</div>
                 <div class="score-badge good">8.4</div>
@@ -5905,7 +5937,7 @@
             </div>
         </div>
 
-        <div class="history-card good" style="animation-delay:11.7s">
+        <div class="history-card good" style="animation-delay:5.9s">
             <div class="history-card-header">
                 <div class="article-title">Defining the Data Types</div>
                 <div class="score-badge good">8.3</div>
@@ -5925,7 +5957,7 @@
             </div>
         </div>
 
-        <div class="history-card good" style="animation-delay:11.8s">
+        <div class="history-card good" style="animation-delay:5.95s">
             <div class="history-card-header">
                 <div class="article-title">Error Tokens</div>
                 <div class="score-badge good">6.3</div>
@@ -5954,6 +5986,10 @@
 </footer>
 
 <script>
+let currentFilter = 'all';
+let currentSort = 'score-high';
+let currentSearch = '';
+
 function toggleSection(id, btn) {
     const section = document.getElementById(id);
     const arrow = btn.querySelector('span:last-child');
@@ -5966,18 +6002,30 @@ function toggleSection(id, btn) {
     }
 }
 
+function handleSearch() {
+    currentSearch = document.getElementById('searchInput').value.toLowerCase();
+    applyFiltersAndSort();
+}
+
 function filterCards(status, btn) {
     document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
+    currentFilter = status;
+
     const articlesGrid = document.getElementById('articles-grid');
     const historyGrid = document.getElementById('history-grid');
     const legendBar = document.getElementById('legend-bar');
     const historyIntro = document.getElementById('history-intro');
+    const controlsBar = document.getElementById('controls-bar');
+    const noResults = document.getElementById('no-results');
+
     if (status === 'history') {
         articlesGrid.style.display = 'none';
         historyGrid.style.display = 'grid';
         legendBar.style.display = 'none';
         historyIntro.style.display = 'block';
+        controlsBar.style.display = 'none';
+        noResults.style.display = 'none';
         document.querySelectorAll('.history-card').forEach(card => {
             card.style.display = 'block';
         });
@@ -5986,14 +6034,70 @@ function filterCards(status, btn) {
         historyGrid.style.display = 'none';
         legendBar.style.display = 'flex';
         historyIntro.style.display = 'none';
-        document.querySelectorAll('.article-card').forEach(card => {
-            if (status === 'all' || card.dataset.status === status) {
-                card.classList.remove('hidden');
-            } else {
-                card.classList.add('hidden');
-            }
-        });
+        controlsBar.style.display = 'flex';
+        applyFiltersAndSort();
     }
+}
+
+function sortCards(sortType, btn) {
+    document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentSort = sortType;
+    applyFiltersAndSort();
+}
+
+function applyFiltersAndSort() {
+    const grid = document.getElementById('articles-grid');
+    const cards = Array.from(grid.querySelectorAll('.article-card'));
+    const noResults = document.getElementById('no-results');
+
+    let visibleCount = 0;
+
+    cards.forEach(card => {
+        const matchesFilter = currentFilter === 'all' || card.dataset.status === currentFilter;
+        const matchesSearch = currentSearch === '' || card.dataset.title.includes(currentSearch);
+
+        if (matchesFilter && matchesSearch) {
+            card.classList.remove('hidden');
+            visibleCount++;
+        } else {
+            card.classList.add('hidden');
+        }
+    });
+
+    const searchCount = document.getElementById('searchCount');
+    if (currentSearch) {
+        searchCount.textContent = visibleCount + ' found';
+    } else {
+        searchCount.textContent = '';
+    }
+
+    if (visibleCount === 0) {
+        noResults.style.display = 'block';
+        grid.style.display = 'none';
+    } else {
+        noResults.style.display = 'none';
+        grid.style.display = 'grid';
+    }
+
+    const visibleCards = cards.filter(c => !c.classList.contains('hidden'));
+
+    visibleCards.sort((a, b) => {
+        if (currentSort === 'score-high') {
+            return parseFloat(b.dataset.score) - parseFloat(a.dataset.score);
+        } else if (currentSort === 'score-low') {
+            return parseFloat(a.dataset.score) - parseFloat(b.dataset.score);
+        } else if (currentSort === 'date-new') {
+            return b.dataset.date.localeCompare(a.dataset.date);
+        } else if (currentSort === 'date-old') {
+            return a.dataset.date.localeCompare(b.dataset.date);
+        } else if (currentSort === 'alpha') {
+            return a.dataset.title.localeCompare(b.dataset.title);
+        }
+        return 0;
+    });
+
+    visibleCards.forEach(card => grid.appendChild(card));
 }
 </script>
 
