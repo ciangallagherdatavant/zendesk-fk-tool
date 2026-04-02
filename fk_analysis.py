@@ -91,20 +91,8 @@ Overall WCAG Writing Score: [Good / Needs Attention / Needs Significant Work]
 
 
 def extract_id_from_input(input_value):
-    """
-    Accepts either a full Zendesk URL or just an article ID
-    Returns the article ID and a name hint from the URL if available
-
-    Examples:
-    Input: https://support.datavant.com/hc/en-us/articles/26609721445140-Datavant-ID
-    Output: ('26609721445140', 'Datavant ID')
-
-    Input: 26609721445140
-    Output: ('26609721445140', None)
-    """
     input_value = input_value.strip()
     input_value = input_value.strip('"').strip("'")
-
     if 'http' in input_value or 'zendesk' in input_value or 'datavant.com' in input_value:
         id_match = re.search(r'/articles/(\d+)', input_value)
         if id_match:
@@ -116,11 +104,9 @@ def extract_id_from_input(input_value):
                 name_hint = None
             return article_id, name_hint
         return None, None
-
     clean_id = re.sub(r'[^0-9]', '', input_value)
     if clean_id and clean_id.isdigit():
         return clean_id, None
-
     return None, None
 
 
@@ -159,29 +145,22 @@ def get_pending_articles(worksheet):
             raw_input = row[0].strip()
             article_name = row[1].strip() if len(row) > 1 else ''
             status = row[2].strip() if len(row) > 2 else ''
-
             if not raw_input:
                 continue
-
             if status.lower() == 'done' or status.lower() == 'n/a':
                 continue
-
             article_id, name_hint = extract_id_from_input(raw_input)
-
             if not article_id:
                 print(f"Could not extract ID from row {i+1}: {raw_input}")
                 continue
-
             if not article_name and name_hint:
                 article_name = name_hint
-
             pending.append({
                 'row': i + 1,
                 'article_id': article_id,
                 'article_name': article_name,
                 'raw_input': raw_input
             })
-
         print(f"Found {len(pending)} pending articles")
         return pending
     except Exception as e:
@@ -447,7 +426,7 @@ def build_dashboard(results):
     for i, r in enumerate(results):
         status, status_text = get_status(r['score'])
         progress = get_progress_width(r['score'])
-        delay = round(0.1 + (i * 0.1), 1)
+        delay = round(0.1 + (i * 0.05), 2)
 
         fk_rec_lines = r['fk_recommendations'].split('\n')
         fk_rec_html = ""
@@ -468,7 +447,7 @@ def build_dashboard(results):
             wcag_html = "<p>Re-run this article to generate WCAG accessibility notes.</p>"
 
         cards_html += f"""
-        <div class="article-card {status}" data-status="{status}" style="animation-delay:{delay}s">
+        <div class="article-card {status}" data-status="{status}" data-title="{r['title'].lower()}" data-score="{r['score']}" data-date="{r['date']}" style="animation-delay:{delay}s">
             <div class="card-header">
                 <div class="article-title">{r['title']}</div>
                 <div class="score-badge {status}">{r['score']}</div>
@@ -559,6 +538,16 @@ def build_dashboard(results):
         .main {{ padding: 30px 40px; }}
         .section-title {{ font-size: 18px; font-weight: 700; margin-bottom: 8px; color: #1a1a2e; }}
         .last-updated {{ font-size: 11px; color: #aaa; margin-bottom: 20px; }}
+        .controls-bar {{ display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; align-items: center; }}
+        .search-wrap {{ flex: 1; min-width: 200px; position: relative; }}
+        .search-wrap input {{ width: 100%; padding: 10px 16px 10px 40px; border: 2px solid #eee; border-radius: 10px; font-size: 14px; outline: none; transition: border-color 0.2s; background: white; }}
+        .search-wrap input:focus {{ border-color: #1a1a2e; }}
+        .search-icon {{ position: absolute; left: 12px; top: 50%; transform: translateY(-50%); font-size: 16px; color: #aaa; }}
+        .search-count {{ position: absolute; right: 12px; top: 50%; transform: translateY(-50%); font-size: 11px; color: #aaa; font-weight: 600; }}
+        .sort-wrap {{ display: flex; gap: 6px; flex-wrap: wrap; }}
+        .sort-btn {{ padding: 8px 14px; border-radius: 8px; border: 2px solid #e0e0e0; background: white; font-size: 11px; font-weight: 600; cursor: pointer; transition: all 0.2s; color: #666; white-space: nowrap; }}
+        .sort-btn:hover {{ border-color: #1a1a2e; color: #1a1a2e; }}
+        .sort-btn.active {{ background: #1a1a2e; color: white; border-color: #1a1a2e; }}
         .filter-bar {{ display: flex; gap: 8px; margin-bottom: 24px; flex-wrap: wrap; }}
         .filter-btn {{ padding: 8px 18px; border-radius: 20px; border: 2px solid #e0e0e0; background: white; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s; color: #666; }}
         .filter-btn:hover {{ border-color: #1a1a2e; color: #1a1a2e; }}
@@ -574,6 +563,8 @@ def build_dashboard(results):
         .legend-dot.good {{ background: #27ae60; }}
         .legend-dot.warning {{ background: #f39c12; }}
         .legend-dot.bad {{ background: #e74c3c; }}
+        .no-results {{ text-align: center; padding: 60px 20px; color: #aaa; font-size: 16px; display: none; }}
+        .no-results-icon {{ font-size: 48px; margin-bottom: 12px; }}
         .articles-grid {{ display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 20px; margin-bottom: 40px; }}
         .article-card {{ background: white; border-radius: 14px; padding: 22px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); border-left: 5px solid #ccc; transition: transform 0.25s ease, box-shadow 0.25s ease; opacity: 0; animation: fadeInUp 0.5s ease forwards; }}
         .article-card:hover {{ transform: translateY(-4px); box-shadow: 0 8px 30px rgba(0,0,0,0.12); }}
@@ -699,6 +690,21 @@ def build_dashboard(results):
     <div class="section-title">All Article Results</div>
     <div class="last-updated">Last updated: {today}</div>
 
+    <div class="controls-bar" id="controls-bar">
+        <div class="search-wrap">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="searchInput" placeholder="Search articles by name..." oninput="handleSearch()" />
+            <span class="search-count" id="searchCount"></span>
+        </div>
+        <div class="sort-wrap">
+            <button class="sort-btn active" onclick="sortCards('score-high', this)">Score ↓</button>
+            <button class="sort-btn" onclick="sortCards('score-low', this)">Score ↑</button>
+            <button class="sort-btn" onclick="sortCards('date-new', this)">Newest</button>
+            <button class="sort-btn" onclick="sortCards('date-old', this)">Oldest</button>
+            <button class="sort-btn" onclick="sortCards('alpha', this)">A → Z</button>
+        </div>
+    </div>
+
     <div class="filter-bar">
         <button class="filter-btn active" onclick="filterCards('all', this)">All Articles ({total})</button>
         <button class="filter-btn good-filter" onclick="filterCards('good', this)">✅ Meets Target ({good_count})</button>
@@ -721,6 +727,11 @@ def build_dashboard(results):
         reflect genuine article rewrites not AI variation.
     </div>
 
+    <div class="no-results" id="no-results">
+        <div class="no-results-icon">🔍</div>
+        <div>No articles found matching your search</div>
+    </div>
+
     <div class="articles-grid" id="articles-grid">
         {cards_html}
     </div>
@@ -736,6 +747,10 @@ def build_dashboard(results):
 </footer>
 
 <script>
+let currentFilter = 'all';
+let currentSort = 'score-high';
+let currentSearch = '';
+
 function toggleSection(id, btn) {{
     const section = document.getElementById(id);
     const arrow = btn.querySelector('span:last-child');
@@ -748,18 +763,30 @@ function toggleSection(id, btn) {{
     }}
 }}
 
+function handleSearch() {{
+    currentSearch = document.getElementById('searchInput').value.toLowerCase();
+    applyFiltersAndSort();
+}}
+
 function filterCards(status, btn) {{
     document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
+    currentFilter = status;
+
     const articlesGrid = document.getElementById('articles-grid');
     const historyGrid = document.getElementById('history-grid');
     const legendBar = document.getElementById('legend-bar');
     const historyIntro = document.getElementById('history-intro');
+    const controlsBar = document.getElementById('controls-bar');
+    const noResults = document.getElementById('no-results');
+
     if (status === 'history') {{
         articlesGrid.style.display = 'none';
         historyGrid.style.display = 'grid';
         legendBar.style.display = 'none';
         historyIntro.style.display = 'block';
+        controlsBar.style.display = 'none';
+        noResults.style.display = 'none';
         document.querySelectorAll('.history-card').forEach(card => {{
             card.style.display = 'block';
         }});
@@ -768,14 +795,70 @@ function filterCards(status, btn) {{
         historyGrid.style.display = 'none';
         legendBar.style.display = 'flex';
         historyIntro.style.display = 'none';
-        document.querySelectorAll('.article-card').forEach(card => {{
-            if (status === 'all' || card.dataset.status === status) {{
-                card.classList.remove('hidden');
-            }} else {{
-                card.classList.add('hidden');
-            }}
-        }});
+        controlsBar.style.display = 'flex';
+        applyFiltersAndSort();
     }}
+}}
+
+function sortCards(sortType, btn) {{
+    document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentSort = sortType;
+    applyFiltersAndSort();
+}}
+
+function applyFiltersAndSort() {{
+    const grid = document.getElementById('articles-grid');
+    const cards = Array.from(grid.querySelectorAll('.article-card'));
+    const noResults = document.getElementById('no-results');
+
+    let visibleCount = 0;
+
+    cards.forEach(card => {{
+        const matchesFilter = currentFilter === 'all' || card.dataset.status === currentFilter;
+        const matchesSearch = currentSearch === '' || card.dataset.title.includes(currentSearch);
+
+        if (matchesFilter && matchesSearch) {{
+            card.classList.remove('hidden');
+            visibleCount++;
+        }} else {{
+            card.classList.add('hidden');
+        }}
+    }});
+
+    const searchCount = document.getElementById('searchCount');
+    if (currentSearch) {{
+        searchCount.textContent = visibleCount + ' found';
+    }} else {{
+        searchCount.textContent = '';
+    }}
+
+    if (visibleCount === 0) {{
+        noResults.style.display = 'block';
+        grid.style.display = 'none';
+    }} else {{
+        noResults.style.display = 'none';
+        grid.style.display = 'grid';
+    }}
+
+    const visibleCards = cards.filter(c => !c.classList.contains('hidden'));
+
+    visibleCards.sort((a, b) => {{
+        if (currentSort === 'score-high') {{
+            return parseFloat(b.dataset.score) - parseFloat(a.dataset.score);
+        }} else if (currentSort === 'score-low') {{
+            return parseFloat(a.dataset.score) - parseFloat(b.dataset.score);
+        }} else if (currentSort === 'date-new') {{
+            return b.dataset.date.localeCompare(a.dataset.date);
+        }} else if (currentSort === 'date-old') {{
+            return a.dataset.date.localeCompare(b.dataset.date);
+        }} else if (currentSort === 'alpha') {{
+            return a.dataset.title.localeCompare(b.dataset.title);
+        }}
+        return 0;
+    }});
+
+    visibleCards.forEach(card => grid.appendChild(card));
 }}
 </script>
 
