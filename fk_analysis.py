@@ -363,7 +363,7 @@ def read_all_results():
         all_by_title[title].append(entry)
     results = []
     for title, entries in all_by_title.items():
-        entries.sort(key=lambda x: x['date'])
+        entries.sort(key=lambda x: datetime.strptime(x['date'].strip()[:20], '%d %B %Y %H:%M') if len(x['date'].strip()) > 11 else datetime.strptime(x['date'].strip(), '%d %B %Y'))
         latest = entries[-1]
         history = entries[:-1]
         first_score = entries[0]['score'] if len(entries) > 1 else None
