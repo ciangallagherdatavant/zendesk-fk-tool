@@ -71,7 +71,12 @@ Target Audience: [description of who can read this comfortably]
 Summary: [one clear sentence explaining what this score means]
 
 FK RECOMMENDATIONS:
-[If Grade 12 or below: confirm content meets target and say well done]
+[Always give 3 specific suggestions to improve readability further.
+If Grade 12 or below: start by acknowledging the content meets
+the target then give 3 specific suggestions to improve it further.
+If above Grade 12: give 3 specific suggestions to bring the
+score below 12. Always reference specific examples from the
+actual article text in your suggestions]
 [If above Grade 12: give 3 very specific suggestions with actual
 examples from the article text provided]
 
