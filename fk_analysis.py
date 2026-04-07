@@ -142,6 +142,23 @@ def get_pending_articles(worksheet):
     try:
         all_rows = worksheet.get_all_values()
         pending = []
+        done_ids = set()
+
+        for i, row in enumerate(all_rows):
+            if i == 0:
+                continue
+            if not row or not row[0]:
+                continue
+            raw_input = row[0].strip()
+            status = row[2].strip() if len(row) > 2 else ''
+            if not raw_input:
+                continue
+            article_id, _ = extract_id_from_input(raw_input)
+            if not article_id:
+                continue
+            if status.lower() == 'done' or status.lower() == 'n/a':
+                done_ids.add(article_id)
+
         for i, row in enumerate(all_rows):
             if i == 0:
                 continue
@@ -158,6 +175,10 @@ def get_pending_articles(worksheet):
             if not article_id:
                 print(f"Could not extract ID from row {i+1}: {raw_input}")
                 continue
+            if article_id in done_ids:
+                print(f"Skipping row {i+1}: Article {article_id} already analysed")
+                worksheet.update_cell(i + 1, 3, 'Done (duplicate)')
+                continue
             if not article_name and name_hint:
                 article_name = name_hint
             pending.append({
@@ -166,6 +187,7 @@ def get_pending_articles(worksheet):
                 'article_name': article_name,
                 'raw_input': raw_input
             })
+
         print(f"Found {len(pending)} pending articles")
         return pending
     except Exception as e:
