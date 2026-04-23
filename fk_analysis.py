@@ -483,10 +483,10 @@ def build_dashboard(results):
             <div class="summary-text">{r['summary']}</div>
             <div class="card-meta">Tested: {r['date']} · Score calculated by Python textstat</div>
             <button class="rec-toggle" onclick="toggleSection('fk-{i}', this)">
-                <span>📊 FK Recommendations</span><span>▼</span>
+                <span>📊 Readability Recommendations </span><span>▼</span>
             </button>
             <div class="recommendations" id="fk-{i}">
-                <div class="rec-section-title">Flesch-Kincaid Recommendations</div>
+                <div class="rec-section-title">Readability Recommendations </div>
                 {fk_rec_html}
             </div>
             <button class="rec-toggle wcag-toggle" onclick="toggleSection('wcag-{i}', this)">
@@ -1114,7 +1114,7 @@ def build_dashboard(results):
             The tool runs automatically and updates this dashboard within 4 hours.
         </p>
         <a class="sheets-link" href="https://docs.google.com/spreadsheets/d/{GOOGLE_SHEET_ID}" target="_blank">
-            📊 Open FK Articles Google Sheet
+            📊 Open Datavant Help Center Articles
         </a>
         <div class="sheets-info">
             <strong>How to add a new article:</strong><br>
