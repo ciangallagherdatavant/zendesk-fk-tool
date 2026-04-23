@@ -6,6 +6,7 @@
 # Claude handles recommendations and WCAG
 # Google Sheets handles article queue
 # Supports full URLs or just article IDs
+# Datavant brand colours applied
 # ============================================
 
 import os
@@ -77,8 +78,6 @@ the target then give 3 specific suggestions to improve it further.
 If above Grade 12: give 3 specific suggestions to bring the
 score below 12. Always reference specific examples from the
 actual article text in your suggestions]
-[If above Grade 12: give 3 very specific suggestions with actual
-examples from the article text provided]
 
 WCAG 2.2 WRITING ACCESSIBILITY NOTES:
 
@@ -143,7 +142,6 @@ def get_pending_articles(worksheet):
         all_rows = worksheet.get_all_values()
         pending = []
         done_ids = set()
-
         for i, row in enumerate(all_rows):
             if i == 0:
                 continue
@@ -158,7 +156,6 @@ def get_pending_articles(worksheet):
                 continue
             if status.lower() == 'done' or status.lower() == 'n/a':
                 done_ids.add(article_id)
-
         for i, row in enumerate(all_rows):
             if i == 0:
                 continue
@@ -187,7 +184,6 @@ def get_pending_articles(worksheet):
                 'article_name': article_name,
                 'raw_input': raw_input
             })
-
         print(f"Found {len(pending)} pending articles")
         return pending
     except Exception as e:
@@ -545,116 +541,534 @@ def build_dashboard(results):
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FK Readability Dashboard - Datavant</title>
+    <title>Datavant Readability Tool</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         * {{ margin: 0; padding: 0; box-sizing: border-box; }}
-        body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f0f2f5; color: #333; }}
-        header {{ background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%); color: white; padding: 24px 40px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 20px rgba(0,0,0,0.3); }}
-        header h1 {{ font-size: 24px; font-weight: 700; letter-spacing: -0.5px; }}
-        header p {{ font-size: 13px; opacity: 0.6; margin-top: 4px; }}
-        .target-badge {{ background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); padding: 8px 18px; border-radius: 20px; font-size: 13px; backdrop-filter: blur(10px); }}
-        .stats-bar {{ background: white; padding: 24px 40px; display: flex; gap: 0; border-bottom: 1px solid #e8ecf0; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }}
-        .stat {{ text-align: center; flex: 1; padding: 8px 0; border-right: 1px solid #f0f0f0; transition: transform 0.2s; }}
+
+        body {{
+            font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #ECEAE4;
+            color: #020202;
+        }}
+
+        header {{
+            background: #020202;
+            color: white;
+            padding: 24px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 20px rgba(2,2,2,0.3);
+        }}
+
+        header h1 {{
+            font-size: 22px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            color: white;
+        }}
+
+        header h1 span {{
+            color: #14E7E8;
+        }}
+
+        header p {{
+            font-size: 12px;
+            opacity: 0.5;
+            margin-top: 4px;
+            color: white;
+        }}
+
+        .target-badge {{
+            background: rgba(20,231,232,0.15);
+            border: 1px solid rgba(20,231,232,0.3);
+            padding: 8px 18px;
+            border-radius: 20px;
+            font-size: 12px;
+            color: #14E7E8;
+            font-weight: 600;
+        }}
+
+        .stats-bar {{
+            background: #FFFFFF;
+            padding: 20px 40px;
+            display: flex;
+            gap: 0;
+            border-bottom: 1px solid #D9D7D1;
+            box-shadow: 0 2px 8px rgba(2,2,2,0.06);
+        }}
+
+        .stat {{
+            text-align: center;
+            flex: 1;
+            padding: 8px 0;
+            border-right: 1px solid #ECEAE4;
+            transition: transform 0.2s;
+        }}
+
         .stat:last-child {{ border-right: none; }}
         .stat:hover {{ transform: translateY(-2px); }}
-        .stat-number {{ font-size: 32px; font-weight: 800; color: #1a1a2e; line-height: 1; }}
-        .stat-label {{ font-size: 11px; color: #999; margin-top: 4px; text-transform: uppercase; letter-spacing: 0.5px; }}
-        .stat-number.good {{ color: #27ae60; }}
-        .stat-number.warning {{ color: #f39c12; }}
-        .stat-number.bad {{ color: #e74c3c; }}
-        .main {{ padding: 30px 40px; }}
-        .section-title {{ font-size: 18px; font-weight: 700; margin-bottom: 8px; color: #1a1a2e; }}
-        .last-updated {{ font-size: 11px; color: #aaa; margin-bottom: 20px; }}
-        .controls-bar {{ display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; align-items: center; }}
-        .search-wrap {{ flex: 1; min-width: 200px; position: relative; }}
-        .search-wrap input {{ width: 100%; padding: 10px 16px 10px 40px; border: 2px solid #eee; border-radius: 10px; font-size: 14px; outline: none; transition: border-color 0.2s; background: white; }}
-        .search-wrap input:focus {{ border-color: #1a1a2e; }}
-        .search-icon {{ position: absolute; left: 12px; top: 50%; transform: translateY(-50%); font-size: 16px; color: #aaa; }}
-        .search-count {{ position: absolute; right: 12px; top: 50%; transform: translateY(-50%); font-size: 11px; color: #aaa; font-weight: 600; }}
+
+        .stat-number {{
+            font-size: 30px;
+            font-weight: 800;
+            color: #020202;
+            line-height: 1;
+        }}
+
+        .stat-label {{
+            font-size: 10px;
+            color: #9A9A9A;
+            margin-top: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            font-weight: 600;
+        }}
+
+        .stat-number.good {{ color: #0F3D4C; }}
+        .stat-number.warning {{ color: #475FF2; }}
+        .stat-number.bad {{ color: #152271; }}
+
+        .main {{ padding: 28px 40px; }}
+
+        .section-title {{
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 6px;
+            color: #020202;
+        }}
+
+        .last-updated {{
+            font-size: 11px;
+            color: #9A9A9A;
+            margin-bottom: 20px;
+        }}
+
+        .controls-bar {{
+            display: flex;
+            gap: 12px;
+            margin-bottom: 18px;
+            flex-wrap: wrap;
+            align-items: center;
+        }}
+
+        .search-wrap {{
+            flex: 1;
+            min-width: 200px;
+            position: relative;
+        }}
+
+        .search-wrap input {{
+            width: 100%;
+            padding: 10px 16px 10px 40px;
+            border: 1.5px solid #D9D7D1;
+            border-radius: 8px;
+            font-size: 13px;
+            outline: none;
+            transition: border-color 0.2s;
+            background: white;
+            font-family: 'DM Sans', sans-serif;
+            color: #020202;
+        }}
+
+        .search-wrap input:focus {{ border-color: #14E7E8; }}
+        .search-icon {{ position: absolute; left: 12px; top: 50%; transform: translateY(-50%); font-size: 15px; color: #9A9A9A; }}
+        .search-count {{ position: absolute; right: 12px; top: 50%; transform: translateY(-50%); font-size: 11px; color: #9A9A9A; font-weight: 600; }}
+
         .sort-wrap {{ display: flex; gap: 6px; flex-wrap: wrap; }}
-        .sort-btn {{ padding: 8px 14px; border-radius: 8px; border: 2px solid #e0e0e0; background: white; font-size: 11px; font-weight: 600; cursor: pointer; transition: all 0.2s; color: #666; white-space: nowrap; }}
-        .sort-btn:hover {{ border-color: #1a1a2e; color: #1a1a2e; }}
-        .sort-btn.active {{ background: #1a1a2e; color: white; border-color: #1a1a2e; }}
-        .filter-bar {{ display: flex; gap: 8px; margin-bottom: 24px; flex-wrap: wrap; }}
-        .filter-btn {{ padding: 8px 18px; border-radius: 20px; border: 2px solid #e0e0e0; background: white; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s; color: #666; }}
-        .filter-btn:hover {{ border-color: #1a1a2e; color: #1a1a2e; }}
-        .filter-btn.active {{ background: #1a1a2e; color: white; border-color: #1a1a2e; }}
-        .filter-btn.good-filter.active {{ background: #27ae60; border-color: #27ae60; }}
-        .filter-btn.warning-filter.active {{ background: #f39c12; border-color: #f39c12; }}
-        .filter-btn.bad-filter.active {{ background: #e74c3c; border-color: #e74c3c; }}
-        .filter-btn.history-filter.active {{ background: #8e44ad; border-color: #8e44ad; }}
-        .legend {{ background: white; border-radius: 12px; padding: 16px 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 24px; display: flex; gap: 24px; flex-wrap: wrap; align-items: center; }}
-        .legend-title {{ font-size: 12px; font-weight: 700; color: #1a1a2e; text-transform: uppercase; letter-spacing: 0.5px; }}
-        .legend-item {{ display: flex; align-items: center; gap: 8px; font-size: 12px; color: #555; }}
+
+        .sort-btn {{
+            padding: 8px 14px;
+            border-radius: 6px;
+            border: 1.5px solid #D9D7D1;
+            background: white;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: #676767;
+            white-space: nowrap;
+            font-family: 'DM Sans', sans-serif;
+        }}
+
+        .sort-btn:hover {{ border-color: #020202; color: #020202; }}
+        .sort-btn.active {{ background: #020202; color: white; border-color: #020202; }}
+
+        .filter-bar {{ display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }}
+
+        .filter-btn {{
+            padding: 7px 16px;
+            border-radius: 20px;
+            border: 1.5px solid #D9D7D1;
+            background: white;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: #676767;
+            font-family: 'DM Sans', sans-serif;
+        }}
+
+        .filter-btn:hover {{ border-color: #020202; color: #020202; }}
+        .filter-btn.active {{ background: #020202; color: white; border-color: #020202; }}
+        .filter-btn.good-filter.active {{ background: #0F3D4C; border-color: #0F3D4C; color: #14E7E8; }}
+        .filter-btn.warning-filter.active {{ background: #475FF2; border-color: #475FF2; color: white; }}
+        .filter-btn.bad-filter.active {{ background: #152271; border-color: #152271; color: #D6D6FF; }}
+        .filter-btn.history-filter.active {{ background: #7C8CEF; border-color: #7C8CEF; color: white; }}
+
+        .legend {{
+            background: white;
+            border-radius: 10px;
+            padding: 14px 20px;
+            box-shadow: 0 2px 8px rgba(2,2,2,0.06);
+            margin-bottom: 20px;
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            align-items: center;
+            border: 1px solid #F0EEE9;
+        }}
+
+        .legend-title {{ font-size: 11px; font-weight: 700; color: #020202; text-transform: uppercase; letter-spacing: 0.8px; }}
+        .legend-item {{ display: flex; align-items: center; gap: 8px; font-size: 11px; color: #676767; }}
         .legend-dot {{ width: 10px; height: 10px; border-radius: 50%; }}
-        .legend-dot.good {{ background: #27ae60; }}
-        .legend-dot.warning {{ background: #f39c12; }}
-        .legend-dot.bad {{ background: #e74c3c; }}
-        .no-results {{ text-align: center; padding: 60px 20px; color: #aaa; font-size: 16px; display: none; }}
+        .legend-dot.good {{ background: #14E7E8; }}
+        .legend-dot.warning {{ background: #475FF2; }}
+        .legend-dot.bad {{ background: #152271; }}
+
+        .no-results {{ text-align: center; padding: 60px 20px; color: #9A9A9A; font-size: 15px; display: none; }}
         .no-results-icon {{ font-size: 48px; margin-bottom: 12px; }}
-        .articles-grid {{ display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 20px; margin-bottom: 40px; }}
-        .article-card {{ background: white; border-radius: 14px; padding: 22px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); border-left: 5px solid #ccc; transition: transform 0.25s ease, box-shadow 0.25s ease; opacity: 0; animation: fadeInUp 0.5s ease forwards; }}
-        .article-card:hover {{ transform: translateY(-4px); box-shadow: 0 8px 30px rgba(0,0,0,0.12); }}
-        .article-card.good {{ border-left-color: #27ae60; }}
-        .article-card.warning {{ border-left-color: #f39c12; }}
-        .article-card.bad {{ border-left-color: #e74c3c; }}
-        .history-card {{ background: white; border-radius: 14px; padding: 22px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); border-left: 5px solid #ccc; transition: transform 0.25s ease, box-shadow 0.25s ease; opacity: 0; animation: fadeInUp 0.5s ease forwards; display: none; }}
-        .history-card:hover {{ transform: translateY(-4px); box-shadow: 0 8px 30px rgba(0,0,0,0.12); }}
-        .history-card.good {{ border-left-color: #27ae60; }}
-        .history-card.warning {{ border-left-color: #f39c12; }}
-        .history-card.bad {{ border-left-color: #e74c3c; }}
+
+        .articles-grid {{
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+            gap: 16px;
+            margin-bottom: 40px;
+        }}
+
+        .article-card {{
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(2,2,2,0.06);
+            border-left: 4px solid #ECEAE4;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            opacity: 0;
+            animation: fadeInUp 0.4s ease forwards;
+            border-top: 1px solid #F0EEE9;
+            border-right: 1px solid #F0EEE9;
+            border-bottom: 1px solid #F0EEE9;
+        }}
+
+        .article-card:hover {{
+            transform: translateY(-3px);
+            box-shadow: 0 8px 24px rgba(2,2,2,0.1);
+        }}
+
+        .article-card.good {{ border-left-color: #14E7E8; }}
+        .article-card.warning {{ border-left-color: #475FF2; }}
+        .article-card.bad {{ border-left-color: #152271; }}
+
+        .history-card {{
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(2,2,2,0.06);
+            border-left: 4px solid #ECEAE4;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            opacity: 0;
+            animation: fadeInUp 0.4s ease forwards;
+            display: none;
+            border-top: 1px solid #F0EEE9;
+            border-right: 1px solid #F0EEE9;
+            border-bottom: 1px solid #F0EEE9;
+        }}
+
+        .history-card:hover {{
+            transform: translateY(-3px);
+            box-shadow: 0 8px 24px rgba(2,2,2,0.1);
+        }}
+
+        .history-card.good {{ border-left-color: #14E7E8; }}
+        .history-card.warning {{ border-left-color: #475FF2; }}
+        .history-card.bad {{ border-left-color: #152271; }}
         .history-card-header {{ display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }}
-        .trend-badge {{ display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; margin: 8px 0 12px; }}
-        .trend-good {{ background: #eafaf1; color: #27ae60; }}
-        .trend-bad {{ background: #fdf0ed; color: #e74c3c; }}
-        .trend-neutral {{ background: #f8f9fa; color: #999; }}
+
+        .trend-badge {{
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 700;
+            margin: 8px 0 12px;
+        }}
+
+        .trend-good {{ background: #D6FFFF; color: #0F3D4C; }}
+        .trend-bad {{ background: #D6D6FF; color: #152271; }}
+        .trend-neutral {{ background: #ECEAE4; color: #676767; }}
+
         .history-entries {{ margin-top: 8px; }}
-        .history-row {{ display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #f5f5f5; font-size: 12px; }}
+
+        .history-row {{
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 7px 0;
+            border-bottom: 1px solid #F0EEE9;
+            font-size: 12px;
+        }}
+
         .history-row:last-child {{ border-bottom: none; }}
-        .history-date {{ color: #999; }}
-        .history-score {{ font-weight: 800; font-size: 14px; }}
-        .history-score.good {{ color: #27ae60; }}
-        .history-score.warning {{ color: #f39c12; }}
-        .history-score.bad {{ color: #e74c3c; }}
-        .history-label {{ background: #1a1a2e; color: white; font-size: 9px; padding: 2px 6px; border-radius: 10px; font-weight: 700; text-transform: uppercase; }}
-        @keyframes fadeInUp {{ from {{ opacity: 0; transform: translateY(20px); }} to {{ opacity: 1; transform: translateY(0); }} }}
-        .card-header {{ display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }}
-        .article-title {{ font-size: 14px; font-weight: 700; color: #1a1a2e; flex: 1; margin-right: 12px; line-height: 1.4; }}
-        .score-badge {{ font-size: 26px; font-weight: 900; line-height: 1; }}
-        .score-badge.good {{ color: #27ae60; }}
-        .score-badge.warning {{ color: #f39c12; }}
-        .score-badge.bad {{ color: #e74c3c; }}
-        .progress-bar-wrap {{ height: 4px; background: #f0f0f0; border-radius: 2px; margin: 8px 0 10px; overflow: hidden; }}
-        .progress-bar {{ height: 100%; border-radius: 2px; transition: width 1s ease; }}
-        .progress-bar.good {{ background: #27ae60; }}
-        .progress-bar.warning {{ background: #f39c12; }}
-        .progress-bar.bad {{ background: #e74c3c; }}
-        .reading-level {{ font-size: 11px; color: #999; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.3px; }}
-        .status-pill {{ display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 700; margin-bottom: 10px; letter-spacing: 0.3px; }}
-        .status-pill.good {{ background: #eafaf1; color: #27ae60; }}
-        .status-pill.warning {{ background: #fef9e7; color: #f39c12; }}
-        .status-pill.bad {{ background: #fdf0ed; color: #e74c3c; }}
-        .summary-text {{ font-size: 12px; color: #666; margin-bottom: 10px; line-height: 1.6; }}
-        .card-meta {{ font-size: 11px; color: #bbb; border-top: 1px solid #f5f5f5; padding-top: 10px; margin-top: 4px; margin-bottom: 10px; }}
-        .rec-toggle {{ width: 100%; padding: 9px 12px; background: #f8f9fa; border: 1px solid #eee; border-radius: 8px; font-size: 12px; cursor: pointer; text-align: left; color: #1a1a2e; font-weight: 600; transition: all 0.2s; display: flex; justify-content: space-between; align-items: center; }}
-        .rec-toggle:hover {{ background: #e9ecef; border-color: #ddd; }}
-        .wcag-toggle {{ background: #f0f7ff; border-color: #daeaf8; margin-top: 6px; }}
-        .wcag-toggle:hover {{ background: #ddeeff; }}
-        .recommendations {{ margin-top: 8px; padding: 0 14px; background: #f9f9f9; border-radius: 8px; border-left: 3px solid #1a1a2e; max-height: 0; overflow: hidden; transition: max-height 0.4s ease, padding 0.3s ease; }}
-        .recommendations.open {{ max-height: 2000px; padding: 14px; }}
-        .wcag-rec {{ background: #f0f7ff; border-left-color: #3498db; }}
-        .rec-section-title {{ font-size: 10px; font-weight: 800; color: #aaa; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }}
-        .recommendations p {{ font-size: 12px; color: #444; margin-bottom: 8px; line-height: 1.7; }}
+        .history-date {{ color: #9A9A9A; }}
+        .history-score {{ font-weight: 800; font-size: 13px; }}
+        .history-score.good {{ color: #0F3D4C; }}
+        .history-score.warning {{ color: #475FF2; }}
+        .history-score.bad {{ color: #152271; }}
+
+        .history-label {{
+            background: #020202;
+            color: #14E7E8;
+            font-size: 9px;
+            padding: 2px 7px;
+            border-radius: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }}
+
+        @keyframes fadeInUp {{
+            from {{ opacity: 0; transform: translateY(16px); }}
+            to {{ opacity: 1; transform: translateY(0); }}
+        }}
+
+        .card-header {{
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 10px;
+        }}
+
+        .article-title {{
+            font-size: 13px;
+            font-weight: 700;
+            color: #020202;
+            flex: 1;
+            margin-right: 12px;
+            line-height: 1.4;
+        }}
+
+        .score-badge {{ font-size: 24px; font-weight: 900; line-height: 1; }}
+        .score-badge.good {{ color: #0F3D4C; }}
+        .score-badge.warning {{ color: #475FF2; }}
+        .score-badge.bad {{ color: #152271; }}
+
+        .progress-bar-wrap {{
+            height: 3px;
+            background: #ECEAE4;
+            border-radius: 2px;
+            margin: 8px 0 10px;
+            overflow: hidden;
+        }}
+
+        .progress-bar {{ height: 100%; border-radius: 2px; }}
+        .progress-bar.good {{ background: linear-gradient(90deg, #14E7E8, #46C4C3); }}
+        .progress-bar.warning {{ background: linear-gradient(90deg, #7C8CEF, #475FF2); }}
+        .progress-bar.bad {{ background: linear-gradient(90deg, #475FF2, #152271); }}
+
+        .reading-level {{
+            font-size: 10px;
+            color: #9A9A9A;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+        }}
+
+        .status-pill {{
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 10px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            letter-spacing: 0.3px;
+        }}
+
+        .status-pill.good {{ background: #D6FFFF; color: #0F3D4C; }}
+        .status-pill.warning {{ background: #D6D6FF; color: #475FF2; }}
+        .status-pill.bad {{ background: #D6D6FF; color: #152271; }}
+
+        .summary-text {{
+            font-size: 11px;
+            color: #676767;
+            margin-bottom: 8px;
+            line-height: 1.6;
+        }}
+
+        .card-meta {{
+            font-size: 10px;
+            color: #B3B3B3;
+            border-top: 1px solid #F0EEE9;
+            padding-top: 8px;
+            margin-top: 4px;
+            margin-bottom: 8px;
+        }}
+
+        .rec-toggle {{
+            width: 100%;
+            padding: 8px 12px;
+            background: #F4F2EF;
+            border: 1px solid #ECEAE4;
+            border-radius: 6px;
+            font-size: 11px;
+            cursor: pointer;
+            text-align: left;
+            color: #020202;
+            font-weight: 600;
+            transition: all 0.2s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-family: 'DM Sans', sans-serif;
+        }}
+
+        .rec-toggle:hover {{ background: #ECEAE4; }}
+
+        .wcag-toggle {{
+            background: #F0F9FF;
+            border-color: #D6FFFF;
+            margin-top: 5px;
+            color: #0F3D4C;
+        }}
+
+        .wcag-toggle:hover {{ background: #D6FFFF; }}
+
+        .recommendations {{
+            margin-top: 6px;
+            padding: 0 12px;
+            background: #F4F2EF;
+            border-radius: 6px;
+            border-left: 3px solid #020202;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease, padding 0.3s ease;
+        }}
+
+        .recommendations.open {{ max-height: 2000px; padding: 12px; }}
+        .wcag-rec {{ background: #F0F9FF; border-left-color: #14E7E8; }}
+
+        .rec-section-title {{
+            font-size: 9px;
+            font-weight: 800;
+            color: #9A9A9A;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }}
+
+        .recommendations p {{
+            font-size: 11px;
+            color: #353535;
+            margin-bottom: 7px;
+            line-height: 1.7;
+        }}
+
         .recommendations p:last-child {{ margin-bottom: 0; }}
-        .analyse-section {{ background: white; border-radius: 14px; padding: 30px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); margin-bottom: 30px; }}
-        .analyse-section h2 {{ font-size: 18px; font-weight: 700; margin-bottom: 6px; color: #1a1a2e; }}
-        .analyse-section p {{ font-size: 13px; color: #999; margin-bottom: 18px; line-height: 1.6; }}
-        .sheets-link {{ display: inline-flex; align-items: center; gap: 8px; padding: 12px 24px; background: #27ae60; color: white; border-radius: 10px; font-size: 14px; font-weight: 700; text-decoration: none; transition: all 0.2s; margin-top: 4px; }}
-        .sheets-link:hover {{ background: #219a52; transform: translateY(-2px); box-shadow: 0 6px 20px rgba(39,174,96,0.4); }}
-        .sheets-info {{ background: #f0fff4; border-radius: 10px; padding: 16px 20px; border-left: 4px solid #27ae60; font-size: 13px; color: #333; line-height: 1.8; margin-top: 16px; }}
-        .history-intro {{ background: white; border-radius: 12px; padding: 16px 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 24px; font-size: 13px; color: #666; display: none; border-left: 4px solid #8e44ad; }}
-        .python-badge {{ display: inline-block; background: #f0f7ff; color: #3498db; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 10px; margin-left: 6px; border: 1px solid #daeaf8; }}
-        footer {{ text-align: center; padding: 24px; font-size: 12px; color: #bbb; border-top: 1px solid #eee; background: white; }}
+
+        .analyse-section {{
+            background: white;
+            border-radius: 10px;
+            padding: 24px;
+            box-shadow: 0 2px 8px rgba(2,2,2,0.06);
+            margin-bottom: 24px;
+            border: 1px solid #F0EEE9;
+        }}
+
+        .analyse-section h2 {{
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 4px;
+            color: #020202;
+        }}
+
+        .analyse-section p {{
+            font-size: 12px;
+            color: #9A9A9A;
+            margin-bottom: 16px;
+            line-height: 1.6;
+        }}
+
+        .sheets-link {{
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 20px;
+            background: #020202;
+            color: #14E7E8;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 700;
+            text-decoration: none;
+            transition: all 0.2s;
+            margin-top: 4px;
+            font-family: 'DM Sans', sans-serif;
+        }}
+
+        .sheets-link:hover {{
+            background: #0F3D4C;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(2,2,2,0.2);
+        }}
+
+        .sheets-info {{
+            background: #F4F2EF;
+            border-radius: 8px;
+            padding: 14px 18px;
+            border-left: 3px solid #14E7E8;
+            font-size: 12px;
+            color: #353535;
+            line-height: 1.8;
+            margin-top: 14px;
+        }}
+
+        .history-intro {{
+            background: white;
+            border-radius: 10px;
+            padding: 14px 20px;
+            box-shadow: 0 2px 8px rgba(2,2,2,0.06);
+            margin-bottom: 20px;
+            font-size: 12px;
+            color: #676767;
+            display: none;
+            border-left: 3px solid #7C8CEF;
+            border-top: 1px solid #F0EEE9;
+            border-right: 1px solid #F0EEE9;
+            border-bottom: 1px solid #F0EEE9;
+        }}
+
+        .datavant-badge {{
+            display: inline-block;
+            background: #020202;
+            color: #14E7E8;
+            font-size: 9px;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 10px;
+            margin-left: 6px;
+            letter-spacing: 0.5px;
+        }}
+
+        footer {{
+            text-align: center;
+            padding: 20px;
+            font-size: 11px;
+            color: #9A9A9A;
+            border-top: 1px solid #D9D7D1;
+            background: white;
+        }}
+
         .hidden {{ display: none !important; }}
     </style>
 </head>
@@ -662,8 +1076,8 @@ def build_dashboard(results):
 
 <header>
     <div>
-        <h1>FK Readability Dashboard</h1>
-        <p>Datavant Technical Writing Team</p>
+        <h1>Datavant <span>Readability</span> Tool</h1>
+        <p>Technical Writing Team · Powered by Python textstat and Claude AI</p>
     </div>
     <div class="target-badge">🎯 Target: Grade 12 or below</div>
 </header>
@@ -671,7 +1085,7 @@ def build_dashboard(results):
 <div class="stats-bar">
     <div class="stat">
         <div class="stat-number">{total}</div>
-        <div class="stat-label">Total Tested</div>
+        <div class="stat-label">Total Articles</div>
     </div>
     <div class="stat">
         <div class="stat-number good">{good_count}</div>
@@ -696,21 +1110,18 @@ def build_dashboard(results):
     <div class="analyse-section">
         <h2>Analyse a New Article</h2>
         <p>
-            To analyse a new article simply paste the full Zendesk article URL
-            into the Google Sheet and it will be analysed automatically.
-            You can also paste just the article ID if you prefer.
+            Paste a Zendesk article URL into the Google Sheet to queue it for analysis.
+            The tool runs automatically and updates this dashboard within 4 hours.
         </p>
         <a class="sheets-link" href="https://docs.google.com/spreadsheets/d/{GOOGLE_SHEET_ID}" target="_blank">
             📊 Open FK Articles Google Sheet
         </a>
         <div class="sheets-info">
             <strong>How to add a new article:</strong><br>
-            1. Open the article in Zendesk<br>
-            2. Copy the full URL from your browser<br>
-            3. Click the button above to open the Google Sheet<br>
-            4. Paste the URL in column A of a new row<br>
-            5. Leave column C blank<br>
-            6. The analysis will run automatically and update this dashboard
+            1. Open the article in Zendesk and copy the URL<br>
+            2. Click the button above to open the Google Sheet<br>
+            3. Paste the URL in column A of a new row<br>
+            4. Leave column C blank — the analysis runs automatically
         </div>
     </div>
 
@@ -720,7 +1131,7 @@ def build_dashboard(results):
     <div class="controls-bar" id="controls-bar">
         <div class="search-wrap">
             <span class="search-icon">🔍</span>
-            <input type="text" id="searchInput" placeholder="Search articles by name..." oninput="handleSearch()" />
+            <input type="text" id="searchInput" placeholder="Search articles..." oninput="handleSearch()" />
             <span class="search-count" id="searchCount"></span>
         </div>
         <div class="sort-wrap">
@@ -745,13 +1156,13 @@ def build_dashboard(results):
         <div class="legend-item"><div class="legend-dot good"></div><span>12.0 or below = Meets Target</span></div>
         <div class="legend-item"><div class="legend-dot warning"></div><span>12.1 to 14.9 = Needs Improvement</span></div>
         <div class="legend-item"><div class="legend-dot bad"></div><span>15.0 and above = Needs Significant Work</span></div>
-        <div class="legend-item"><span class="python-badge">Python</span><span>Scores calculated by textstat library</span></div>
+        <div class="legend-item"><span class="datavant-badge">Python</span><span>Consistent mathematical scores</span></div>
     </div>
 
     <div class="history-intro" id="history-intro">
         📈 <strong>Score History</strong> shows how each article has changed over time.
-        Scores are calculated by the Python textstat library so changes here
-        reflect genuine article rewrites not AI variation.
+        Because scores are calculated by Python textstat, any change here reflects
+        a genuine article rewrite — not AI variation.
     </div>
 
     <div class="no-results" id="no-results">
@@ -770,7 +1181,7 @@ def build_dashboard(results):
 </div>
 
 <footer>
-    FK Readability Dashboard · Datavant Technical Writing Team · Built by Cian Gallagher
+    Datavant Readability Tool · Technical Writing Team · Built by Cian Gallagher
 </footer>
 
 <script>
@@ -925,7 +1336,7 @@ def push_to_github(article_title):
 
 def run_sheets_mode():
     print("========================================")
-    print("  FK Readability Analysis Tool")
+    print("  Datavant Readability Tool")
     print("  Running in Google Sheets mode")
     print("========================================")
 
@@ -980,8 +1391,8 @@ def run_sheets_mode():
 
 def main():
     print("========================================")
-    print("  FK Readability Analysis Tool")
-    print("  Datavant Technical Writing Team")
+    print("  Datavant Readability Tool")
+    print("  Technical Writing Team")
     print("  Scores: Python textstat library")
     print("  Recommendations: Claude AI")
     print("========================================")
