@@ -6,7 +6,7 @@
 # Claude handles recommendations and WCAG
 # Google Sheets handles article queue
 # Supports full URLs or just article IDs
-# Datavant brand colours applied
+# New Datavant dashboard design integrated
 # ============================================
 
 import os
@@ -404,11 +404,11 @@ def read_all_results():
 
 def get_status(score):
     if score <= 12.0:
-        return 'good', '✅ Meets Target'
+        return 'good', '✓ Meets target'
     elif score <= 14.9:
-        return 'warning', '⚠️ Needs Improvement'
+        return 'warning', 'Needs improvement'
     else:
-        return 'bad', '🔴 Needs Significant Work'
+        return 'bad', 'Needs significant work'
 
 
 def get_progress_width(score):
@@ -443,6 +443,10 @@ def build_dashboard(results):
     ) if total > 0 else 0
     today = datetime.now().strftime('%d %B %Y')
 
+    good_pct = round((good_count / total) * 100) if total > 0 else 0
+    warning_pct = round((warning_count / total) * 100) if total > 0 else 0
+    bad_pct = round((bad_count / total) * 100) if total > 0 else 0
+
     cards_html = ""
     history_cards_html = ""
 
@@ -458,7 +462,7 @@ def build_dashboard(results):
             if line:
                 fk_rec_html += f"<p>{line}</p>"
         if not fk_rec_html:
-            fk_rec_html = "<p>Re-run this article to generate FK recommendations.</p>"
+            fk_rec_html = "<p>Re-run this article to generate readability recommendations.</p>"
 
         wcag_lines = r.get('wcag_notes', '').split('\n')
         wcag_html = ""
@@ -483,10 +487,10 @@ def build_dashboard(results):
             <div class="summary-text">{r['summary']}</div>
             <div class="card-meta">Tested: {r['date']} · Score calculated by Python textstat</div>
             <button class="rec-toggle" onclick="toggleSection('fk-{i}', this)">
-                <span>📊 Readability Recommendations </span><span>▼</span>
+                <span>📊 Readability Recommendations</span><span>▼</span>
             </button>
             <div class="recommendations" id="fk-{i}">
-                <div class="rec-section-title">Readability Recommendations </div>
+                <div class="rec-section-title">Readability Recommendations</div>
                 {fk_rec_html}
             </div>
             <button class="rec-toggle wcag-toggle" onclick="toggleSection('wcag-{i}', this)">
@@ -541,178 +545,434 @@ def build_dashboard(results):
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Datavant Readability Tool</title>
+    <title>Readability Tool - Datavant</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         * {{ margin: 0; padding: 0; box-sizing: border-box; }}
+        body {{ font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif; background: #fafbfc; color: #1a1a2e; min-height: 100vh; }}
 
-        body {{
-            font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
-            background: #ECEAE4;
-            color: #020202;
+        body::before {{
+            content: '';
+            position: fixed;
+            top: 0; left: 0; right: 0; height: 300px;
+            background-image:
+                radial-gradient(circle at 20% 50%, rgba(20,231,232,0.06) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(71,95,242,0.05) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
         }}
 
-        header {{
-            background: #020202;
-            color: white;
+        .layout {{ display: flex; min-height: 100vh; position: relative; z-index: 1; }}
+
+        .sidebar {{
+            width: 220px;
+            background: white;
+            border-right: 1px solid #eef0f3;
+            padding: 28px 16px;
+            display: flex;
+            flex-direction: column;
+            position: sticky;
+            top: 0;
+            height: 100vh;
+        }}
+
+        .logo {{
+            font-size: 20px;
+            font-weight: 800;
+            color: #020202;
+            padding: 0 12px 32px;
+            letter-spacing: -0.5px;
+        }}
+
+        .logo span {{ color: #14E7E8; }}
+
+        .nav-item {{
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 11px 14px;
+            border-radius: 10px;
+            color: #64748b;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-bottom: 2px;
+        }}
+
+        .nav-item:hover {{ background: #f8f9fc; color: #1a1a2e; }}
+        .nav-item.active {{ background: #f0fffe; color: #0F3D4C; font-weight: 600; }}
+        .nav-icon {{ width: 18px; font-size: 14px; }}
+
+        .sidebar-footer {{
+            margin-top: auto;
+            background: #f8f9fc;
+            border-radius: 12px;
+            padding: 14px;
+            font-size: 12px;
+        }}
+
+        .sidebar-footer-title {{
+            font-weight: 700;
+            color: #1a1a2e;
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }}
+
+        .sidebar-footer-text {{ color: #64748b; line-height: 1.5; margin-bottom: 6px; }}
+
+        .main-wrap {{ flex: 1; display: flex; flex-direction: column; min-width: 0; }}
+
+        .topbar {{
+            background: white;
+            border-bottom: 1px solid #eef0f3;
             padding: 24px 40px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            box-shadow: 0 4px 20px rgba(2,2,2,0.3);
+            position: relative;
+            overflow: hidden;
         }}
 
-        header h1 {{
-            font-size: 22px;
-            font-weight: 700;
-            letter-spacing: -0.5px;
-            color: white;
+        .topbar::before {{
+            content: '';
+            position: absolute;
+            top: -50%; right: 0; width: 60%; height: 200%;
+            background-image:
+                radial-gradient(circle at 30% 50%, rgba(20,231,232,0.05) 0%, transparent 40%),
+                radial-gradient(circle at 70% 30%, rgba(71,95,242,0.04) 0%, transparent 40%);
+            pointer-events: none;
         }}
 
-        header h1 span {{
-            color: #14E7E8;
-        }}
+        .topbar-left {{ position: relative; z-index: 1; }}
+        .topbar h1 {{ font-size: 24px; font-weight: 800; color: #020202; letter-spacing: -0.5px; }}
+        .topbar h1 span {{ color: #14E7E8; }}
+        .topbar p {{ font-size: 13px; color: #64748b; margin-top: 4px; }}
 
-        header p {{
-            font-size: 12px;
-            opacity: 0.5;
-            margin-top: 4px;
-            color: white;
-        }}
-
-        .target-badge {{
-            background: rgba(20,231,232,0.15);
-            border: 1px solid rgba(20,231,232,0.3);
-            padding: 8px 18px;
-            border-radius: 20px;
-            font-size: 12px;
-            color: #14E7E8;
-            font-weight: 600;
-        }}
-
-        .stats-bar {{
-            background: #FFFFFF;
-            padding: 20px 40px;
+        .user-badge {{
             display: flex;
-            gap: 0;
-            border-bottom: 1px solid #D9D7D1;
-            box-shadow: 0 2px 8px rgba(2,2,2,0.06);
+            align-items: center;
+            gap: 10px;
+            background: white;
+            border: 1px solid #eef0f3;
+            padding: 8px 14px 8px 8px;
+            border-radius: 24px;
+            font-size: 13px;
+            color: #1a1a2e;
+            font-weight: 600;
+            position: relative;
+            z-index: 1;
         }}
 
-        .stat {{
-            text-align: center;
-            flex: 1;
-            padding: 8px 0;
-            border-right: 1px solid #ECEAE4;
-            transition: transform 0.2s;
+        .user-avatar {{
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #0F3D4C, #14E7E8);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 11px;
         }}
 
-        .stat:last-child {{ border-right: none; }}
-        .stat:hover {{ transform: translateY(-2px); }}
+        .content {{ padding: 28px 40px 40px; flex: 1; }}
 
-        .stat-number {{
-            font-size: 30px;
-            font-weight: 800;
-            color: #020202;
-            line-height: 1;
+        .stats-row {{
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 14px;
+            margin-bottom: 24px;
         }}
 
-        .stat-label {{
+        .stat-card {{
+            background: white;
+            border: 1px solid #eef0f3;
+            border-radius: 14px;
+            padding: 18px;
+            transition: transform 0.2s, box-shadow 0.2s;
+            position: relative;
+            overflow: hidden;
+        }}
+
+        .stat-card:hover {{ transform: translateY(-2px); box-shadow: 0 8px 24px rgba(20,231,232,0.08); }}
+        .stat-card::before {{ content: ''; position: absolute; left: 0; top: 20px; bottom: 20px; width: 3px; border-radius: 0 3px 3px 0; background: #eef0f3; }}
+        .stat-card.meets::before {{ background: #14E7E8; }}
+        .stat-card.improve::before {{ background: #475FF2; }}
+        .stat-card.significant::before {{ background: #152271; }}
+        .stat-card.average::before {{ background: #46C4C3; }}
+
+        .stat-icon {{
+            width: 34px;
+            height: 34px;
+            border-radius: 10px;
+            background: #f0fffe;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 10px;
+            font-size: 15px;
+        }}
+
+        .stat-card.improve .stat-icon {{ background: #eef2ff; }}
+        .stat-card.significant .stat-icon {{ background: #f0f0ff; }}
+        .stat-card.average .stat-icon {{ background: #f0fffe; }}
+
+        .stat-label {{ font-size: 11px; color: #64748b; font-weight: 500; margin-bottom: 4px; }}
+        .stat-value {{ font-size: 26px; font-weight: 800; color: #020202; line-height: 1; }}
+        .stat-sub {{ font-size: 10px; color: #94a3b8; margin-top: 4px; }}
+
+        .main-grid {{
+            display: grid;
+            grid-template-columns: 1fr 300px;
+            gap: 18px;
+            margin-bottom: 24px;
+        }}
+
+        .analyse-card {{
+            background: white;
+            border: 1px solid #eef0f3;
+            border-radius: 16px;
+            padding: 26px;
+            position: relative;
+            overflow: hidden;
+        }}
+
+        .analyse-card::before {{
+            content: '';
+            position: absolute;
+            top: -20px; right: -20px; width: 160px; height: 160px;
+            background: radial-gradient(circle, rgba(20,231,232,0.06) 0%, transparent 70%);
+            pointer-events: none;
+        }}
+
+        .analyse-header {{
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 20px;
+            margin-bottom: 18px;
+            position: relative;
+            z-index: 1;
+        }}
+
+        .analyse-header h2 {{ font-size: 17px; font-weight: 700; color: #020202; margin-bottom: 6px; }}
+        .analyse-header p {{ font-size: 12px; color: #64748b; line-height: 1.6; max-width: 480px; }}
+
+        .analyse-illustration {{
+            width: 52px;
+            height: 52px;
+            background: linear-gradient(135deg, #f0fffe, #eef2ff);
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            flex-shrink: 0;
+        }}
+
+        .sheets-link {{
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 11px 20px;
+            background: #020202;
+            color: #14E7E8;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.2s;
+            position: relative;
+            z-index: 1;
+        }}
+
+        .sheets-link:hover {{
+            background: #0F3D4C;
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(2,2,2,0.2);
+        }}
+
+        .sheets-info {{
+            background: #f0fffe;
+            border-radius: 10px;
+            padding: 12px 16px;
+            margin-top: 14px;
+            font-size: 11px;
+            color: #475569;
+            line-height: 1.8;
+            position: relative;
+            z-index: 1;
+            border-left: 3px solid #14E7E8;
+        }}
+
+        .sheets-info strong {{ color: #020202; }}
+
+        .auto-note {{
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            color: #64748b;
+            margin-top: 10px;
+            position: relative;
+            z-index: 1;
+        }}
+
+        .auto-note-icon {{ color: #14E7E8; }}
+
+        .side-col {{ display: flex; flex-direction: column; gap: 14px; }}
+
+        .side-panel {{
+            background: white;
+            border: 1px solid #eef0f3;
+            border-radius: 14px;
+            padding: 18px;
+        }}
+
+        .side-panel-header {{
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }}
+
+        .side-panel-title {{ font-size: 13px; font-weight: 700; color: #020202; }}
+
+        .status-indicator {{
+            display: flex;
+            align-items: center;
+            gap: 6px;
             font-size: 10px;
-            color: #9A9A9A;
-            margin-top: 4px;
-            text-transform: uppercase;
-            letter-spacing: 0.8px;
+            color: #14E7E8;
             font-weight: 600;
         }}
 
-        .stat-number.good {{ color: #0F3D4C; }}
-        .stat-number.warning {{ color: #475FF2; }}
-        .stat-number.bad {{ color: #152271; }}
-
-        .main {{ padding: 28px 40px; }}
-
-        .section-title {{
-            font-size: 16px;
-            font-weight: 700;
-            margin-bottom: 6px;
-            color: #020202;
+        .status-dot {{
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #14E7E8;
         }}
 
-        .last-updated {{
+        .side-row {{
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 7px 0;
             font-size: 11px;
-            color: #9A9A9A;
-            margin-bottom: 20px;
+            border-bottom: 1px solid #f8f9fc;
         }}
+
+        .side-row:last-of-type {{ border-bottom: none; }}
+        .side-row-label {{ color: #64748b; }}
+        .side-row-value {{ color: #020202; font-weight: 600; }}
+
+        .target-panel {{
+            background: white;
+            border: 1px solid #eef0f3;
+            border-radius: 14px;
+            padding: 18px;
+            display: flex;
+            gap: 12px;
+        }}
+
+        .target-icon {{
+            width: 34px;
+            height: 34px;
+            border-radius: 10px;
+            background: #f0fffe;
+            color: #0F3D4C;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 15px;
+            flex-shrink: 0;
+        }}
+
+        .target-text h3 {{ font-size: 12px; font-weight: 700; color: #020202; margin-bottom: 4px; }}
+        .target-text p {{ font-size: 11px; color: #64748b; line-height: 1.5; }}
+
+        .section-header {{
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-bottom: 16px;
+        }}
+
+        .section-title {{ font-size: 17px; font-weight: 700; color: #020202; }}
+        .section-sub {{ font-size: 11px; color: #94a3b8; margin-top: 2px; }}
 
         .controls-bar {{
             display: flex;
-            gap: 12px;
-            margin-bottom: 18px;
+            gap: 10px;
+            margin-bottom: 14px;
             flex-wrap: wrap;
             align-items: center;
         }}
 
-        .search-wrap {{
-            flex: 1;
-            min-width: 200px;
-            position: relative;
-        }}
+        .search-wrap {{ flex: 1; min-width: 220px; position: relative; }}
 
         .search-wrap input {{
             width: 100%;
-            padding: 10px 16px 10px 40px;
-            border: 1.5px solid #D9D7D1;
-            border-radius: 8px;
+            padding: 10px 14px 10px 36px;
+            border: 1px solid #eef0f3;
+            border-radius: 10px;
             font-size: 13px;
             outline: none;
-            transition: border-color 0.2s;
             background: white;
-            font-family: 'DM Sans', sans-serif;
+            transition: all 0.2s;
             color: #020202;
+            font-family: 'DM Sans', sans-serif;
         }}
 
-        .search-wrap input:focus {{ border-color: #14E7E8; }}
-        .search-icon {{ position: absolute; left: 12px; top: 50%; transform: translateY(-50%); font-size: 15px; color: #9A9A9A; }}
-        .search-count {{ position: absolute; right: 12px; top: 50%; transform: translateY(-50%); font-size: 11px; color: #9A9A9A; font-weight: 600; }}
+        .search-wrap input:focus {{
+            border-color: #14E7E8;
+            box-shadow: 0 0 0 3px rgba(20,231,232,0.1);
+        }}
+
+        .search-icon {{ position: absolute; left: 11px; top: 50%; transform: translateY(-50%); font-size: 13px; color: #94a3b8; }}
+        .search-count {{ position: absolute; right: 11px; top: 50%; transform: translateY(-50%); font-size: 10px; color: #94a3b8; font-weight: 600; }}
 
         .sort-wrap {{ display: flex; gap: 6px; flex-wrap: wrap; }}
 
         .sort-btn {{
-            padding: 8px 14px;
-            border-radius: 6px;
-            border: 1.5px solid #D9D7D1;
+            padding: 8px 13px;
+            border-radius: 8px;
+            border: 1px solid #eef0f3;
             background: white;
             font-size: 11px;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.2s;
-            color: #676767;
-            white-space: nowrap;
+            color: #64748b;
             font-family: 'DM Sans', sans-serif;
         }}
 
-        .sort-btn:hover {{ border-color: #020202; color: #020202; }}
-        .sort-btn.active {{ background: #020202; color: white; border-color: #020202; }}
+        .sort-btn:hover {{ border-color: #14E7E8; color: #0F3D4C; }}
+        .sort-btn.active {{ background: #020202; color: #14E7E8; border-color: #020202; }}
 
-        .filter-bar {{ display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }}
+        .filter-bar {{ display: flex; gap: 7px; margin-bottom: 18px; flex-wrap: wrap; }}
 
         .filter-btn {{
-            padding: 7px 16px;
+            padding: 7px 15px;
             border-radius: 20px;
-            border: 1.5px solid #D9D7D1;
+            border: 1px solid #eef0f3;
             background: white;
             font-size: 11px;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.2s;
-            color: #676767;
+            color: #64748b;
             font-family: 'DM Sans', sans-serif;
         }}
 
-        .filter-btn:hover {{ border-color: #020202; color: #020202; }}
+        .filter-btn:hover {{ border-color: #cbd5e1; color: #020202; }}
         .filter-btn.active {{ background: #020202; color: white; border-color: #020202; }}
         .filter-btn.good-filter.active {{ background: #0F3D4C; border-color: #0F3D4C; color: #14E7E8; }}
         .filter-btn.warning-filter.active {{ background: #475FF2; border-color: #475FF2; color: white; }}
@@ -721,94 +981,118 @@ def build_dashboard(results):
 
         .legend {{
             background: white;
-            border-radius: 10px;
-            padding: 14px 20px;
-            box-shadow: 0 2px 8px rgba(2,2,2,0.06);
-            margin-bottom: 20px;
+            border: 1px solid #eef0f3;
+            border-radius: 12px;
+            padding: 12px 18px;
+            margin-bottom: 18px;
             display: flex;
-            gap: 20px;
+            gap: 18px;
             flex-wrap: wrap;
             align-items: center;
-            border: 1px solid #F0EEE9;
         }}
 
-        .legend-title {{ font-size: 11px; font-weight: 700; color: #020202; text-transform: uppercase; letter-spacing: 0.8px; }}
-        .legend-item {{ display: flex; align-items: center; gap: 8px; font-size: 11px; color: #676767; }}
-        .legend-dot {{ width: 10px; height: 10px; border-radius: 50%; }}
+        .legend-title {{ font-size: 10px; font-weight: 700; color: #020202; text-transform: uppercase; letter-spacing: 0.5px; }}
+        .legend-item {{ display: flex; align-items: center; gap: 7px; font-size: 11px; color: #475569; }}
+        .legend-dot {{ width: 8px; height: 8px; border-radius: 50%; }}
         .legend-dot.good {{ background: #14E7E8; }}
         .legend-dot.warning {{ background: #475FF2; }}
         .legend-dot.bad {{ background: #152271; }}
 
-        .no-results {{ text-align: center; padding: 60px 20px; color: #9A9A9A; font-size: 15px; display: none; }}
-        .no-results-icon {{ font-size: 48px; margin-bottom: 12px; }}
+        .python-badge {{
+            display: inline-block;
+            background: #f0fffe;
+            color: #0F3D4C;
+            font-size: 9px;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 10px;
+            border: 1px solid #D6FFFF;
+        }}
+
+        .history-intro {{
+            background: white;
+            border: 1px solid #eef0f3;
+            border-left: 3px solid #7C8CEF;
+            border-radius: 12px;
+            padding: 12px 18px;
+            margin-bottom: 18px;
+            font-size: 12px;
+            color: #475569;
+            display: none;
+        }}
+
+        .no-results {{
+            text-align: center;
+            padding: 60px 20px;
+            color: #94a3b8;
+            font-size: 14px;
+            display: none;
+            background: white;
+            border: 1px solid #eef0f3;
+            border-radius: 14px;
+        }}
+
+        .no-results-icon {{ font-size: 36px; margin-bottom: 12px; opacity: 0.4; }}
 
         .articles-grid {{
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-            gap: 16px;
-            margin-bottom: 40px;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 14px;
+            margin-bottom: 32px;
         }}
 
         .article-card {{
             background: white;
-            border-radius: 10px;
-            padding: 20px;
-            box-shadow: 0 2px 8px rgba(2,2,2,0.06);
-            border-left: 4px solid #ECEAE4;
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            border: 1px solid #eef0f3;
+            border-radius: 14px;
+            padding: 18px;
+            transition: transform 0.2s, box-shadow 0.2s;
             opacity: 0;
             animation: fadeInUp 0.4s ease forwards;
-            border-top: 1px solid #F0EEE9;
-            border-right: 1px solid #F0EEE9;
-            border-bottom: 1px solid #F0EEE9;
+            position: relative;
+            overflow: hidden;
         }}
 
-        .article-card:hover {{
-            transform: translateY(-3px);
-            box-shadow: 0 8px 24px rgba(2,2,2,0.1);
-        }}
-
-        .article-card.good {{ border-left-color: #14E7E8; }}
-        .article-card.warning {{ border-left-color: #475FF2; }}
-        .article-card.bad {{ border-left-color: #152271; }}
+        .article-card:hover {{ transform: translateY(-2px); box-shadow: 0 8px 24px rgba(2,2,2,0.08); }}
+        .article-card::before {{ content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; }}
+        .article-card.good::before {{ background: #14E7E8; }}
+        .article-card.warning::before {{ background: #475FF2; }}
+        .article-card.bad::before {{ background: #152271; }}
 
         .history-card {{
             background: white;
-            border-radius: 10px;
-            padding: 20px;
-            box-shadow: 0 2px 8px rgba(2,2,2,0.06);
-            border-left: 4px solid #ECEAE4;
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            border: 1px solid #eef0f3;
+            border-radius: 14px;
+            padding: 18px;
+            transition: transform 0.2s, box-shadow 0.2s;
+            display: none;
             opacity: 0;
             animation: fadeInUp 0.4s ease forwards;
-            display: none;
-            border-top: 1px solid #F0EEE9;
-            border-right: 1px solid #F0EEE9;
-            border-bottom: 1px solid #F0EEE9;
+            position: relative;
+            overflow: hidden;
         }}
 
-        .history-card:hover {{
-            transform: translateY(-3px);
-            box-shadow: 0 8px 24px rgba(2,2,2,0.1);
-        }}
-
-        .history-card.good {{ border-left-color: #14E7E8; }}
-        .history-card.warning {{ border-left-color: #475FF2; }}
-        .history-card.bad {{ border-left-color: #152271; }}
-        .history-card-header {{ display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }}
+        .history-card:hover {{ transform: translateY(-2px); box-shadow: 0 8px 24px rgba(2,2,2,0.08); }}
+        .history-card::before {{ content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; }}
+        .history-card.good::before {{ background: #14E7E8; }}
+        .history-card.warning::before {{ background: #475FF2; }}
+        .history-card.bad::before {{ background: #152271; }}
+        .history-card-header {{ display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }}
 
         .trend-badge {{
             display: inline-block;
             padding: 3px 10px;
             border-radius: 20px;
-            font-size: 11px;
+            font-size: 10px;
             font-weight: 700;
-            margin: 8px 0 12px;
+            margin: 6px 0 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
         }}
 
         .trend-good {{ background: #D6FFFF; color: #0F3D4C; }}
         .trend-bad {{ background: #D6D6FF; color: #152271; }}
-        .trend-neutral {{ background: #ECEAE4; color: #676767; }}
+        .trend-neutral {{ background: #f8f9fc; color: #94a3b8; }}
 
         .history-entries {{ margin-top: 8px; }}
 
@@ -816,14 +1100,14 @@ def build_dashboard(results):
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 7px 0;
-            border-bottom: 1px solid #F0EEE9;
-            font-size: 12px;
+            padding: 6px 0;
+            border-bottom: 1px solid #f1f5f9;
+            font-size: 11px;
         }}
 
         .history-row:last-child {{ border-bottom: none; }}
-        .history-date {{ color: #9A9A9A; }}
-        .history-score {{ font-weight: 800; font-size: 13px; }}
+        .history-date {{ color: #94a3b8; }}
+        .history-score {{ font-weight: 800; font-size: 12px; }}
         .history-score.good {{ color: #0F3D4C; }}
         .history-score.warning {{ color: #475FF2; }}
         .history-score.bad {{ color: #152271; }}
@@ -831,15 +1115,15 @@ def build_dashboard(results):
         .history-label {{
             background: #020202;
             color: #14E7E8;
-            font-size: 9px;
-            padding: 2px 7px;
+            font-size: 8px;
+            padding: 2px 6px;
             border-radius: 10px;
             font-weight: 700;
             text-transform: uppercase;
         }}
 
         @keyframes fadeInUp {{
-            from {{ opacity: 0; transform: translateY(16px); }}
+            from {{ opacity: 0; transform: translateY(12px); }}
             to {{ opacity: 1; transform: translateY(0); }}
         }}
 
@@ -847,7 +1131,7 @@ def build_dashboard(results):
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
         }}
 
         .article-title {{
@@ -855,20 +1139,20 @@ def build_dashboard(results):
             font-weight: 700;
             color: #020202;
             flex: 1;
-            margin-right: 12px;
+            margin-right: 10px;
             line-height: 1.4;
         }}
 
-        .score-badge {{ font-size: 24px; font-weight: 900; line-height: 1; }}
+        .score-badge {{ font-size: 22px; font-weight: 900; line-height: 1; }}
         .score-badge.good {{ color: #0F3D4C; }}
         .score-badge.warning {{ color: #475FF2; }}
         .score-badge.bad {{ color: #152271; }}
 
         .progress-bar-wrap {{
             height: 3px;
-            background: #ECEAE4;
+            background: #f1f5f9;
             border-radius: 2px;
-            margin: 8px 0 10px;
+            margin: 7px 0 9px;
             overflow: hidden;
         }}
 
@@ -878,11 +1162,11 @@ def build_dashboard(results):
         .progress-bar.bad {{ background: linear-gradient(90deg, #475FF2, #152271); }}
 
         .reading-level {{
-            font-size: 10px;
-            color: #9A9A9A;
+            font-size: 9px;
+            color: #94a3b8;
             margin-bottom: 6px;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.4px;
             font-weight: 600;
         }}
 
@@ -902,15 +1186,15 @@ def build_dashboard(results):
 
         .summary-text {{
             font-size: 11px;
-            color: #676767;
+            color: #475569;
             margin-bottom: 8px;
             line-height: 1.6;
         }}
 
         .card-meta {{
             font-size: 10px;
-            color: #B3B3B3;
-            border-top: 1px solid #F0EEE9;
+            color: #94a3b8;
+            border-top: 1px solid #f1f5f9;
             padding-top: 8px;
             margin-top: 4px;
             margin-bottom: 8px;
@@ -919,9 +1203,9 @@ def build_dashboard(results):
         .rec-toggle {{
             width: 100%;
             padding: 8px 12px;
-            background: #F4F2EF;
-            border: 1px solid #ECEAE4;
-            border-radius: 6px;
+            background: #f8f9fc;
+            border: 1px solid #eef0f3;
+            border-radius: 8px;
             font-size: 11px;
             cursor: pointer;
             text-align: left;
@@ -934,35 +1218,28 @@ def build_dashboard(results):
             font-family: 'DM Sans', sans-serif;
         }}
 
-        .rec-toggle:hover {{ background: #ECEAE4; }}
-
-        .wcag-toggle {{
-            background: #F0F9FF;
-            border-color: #D6FFFF;
-            margin-top: 5px;
-            color: #0F3D4C;
-        }}
-
-        .wcag-toggle:hover {{ background: #D6FFFF; }}
+        .rec-toggle:hover {{ background: #f0fffe; border-color: #D6FFFF; }}
+        .wcag-toggle {{ background: #eef2ff; border-color: #D6D6FF; margin-top: 5px; }}
+        .wcag-toggle:hover {{ background: #D6D6FF; }}
 
         .recommendations {{
             margin-top: 6px;
             padding: 0 12px;
-            background: #F4F2EF;
-            border-radius: 6px;
-            border-left: 3px solid #020202;
+            background: #f8f9fc;
+            border-radius: 8px;
+            border-left: 2px solid #14E7E8;
             max-height: 0;
             overflow: hidden;
             transition: max-height 0.4s ease, padding 0.3s ease;
         }}
 
         .recommendations.open {{ max-height: 2000px; padding: 12px; }}
-        .wcag-rec {{ background: #F0F9FF; border-left-color: #14E7E8; }}
+        .wcag-rec {{ background: #eef2ff; border-left-color: #475FF2; }}
 
         .rec-section-title {{
             font-size: 9px;
             font-weight: 800;
-            color: #9A9A9A;
+            color: #94a3b8;
             text-transform: uppercase;
             letter-spacing: 1px;
             margin-bottom: 8px;
@@ -970,219 +1247,221 @@ def build_dashboard(results):
 
         .recommendations p {{
             font-size: 11px;
-            color: #353535;
+            color: #475569;
             margin-bottom: 7px;
             line-height: 1.7;
         }}
 
         .recommendations p:last-child {{ margin-bottom: 0; }}
 
-        .analyse-section {{
-            background: white;
-            border-radius: 10px;
-            padding: 24px;
-            box-shadow: 0 2px 8px rgba(2,2,2,0.06);
-            margin-bottom: 24px;
-            border: 1px solid #F0EEE9;
-        }}
-
-        .analyse-section h2 {{
-            font-size: 16px;
-            font-weight: 700;
-            margin-bottom: 4px;
-            color: #020202;
-        }}
-
-        .analyse-section p {{
-            font-size: 12px;
-            color: #9A9A9A;
-            margin-bottom: 16px;
-            line-height: 1.6;
-        }}
-
-        .sheets-link {{
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 10px 20px;
-            background: #020202;
-            color: #14E7E8;
-            border-radius: 8px;
-            font-size: 13px;
-            font-weight: 700;
-            text-decoration: none;
-            transition: all 0.2s;
-            margin-top: 4px;
-            font-family: 'DM Sans', sans-serif;
-        }}
-
-        .sheets-link:hover {{
-            background: #0F3D4C;
-            transform: translateY(-2px);
-            box-shadow: 0 6px 16px rgba(2,2,2,0.2);
-        }}
-
-        .sheets-info {{
-            background: #F4F2EF;
-            border-radius: 8px;
-            padding: 14px 18px;
-            border-left: 3px solid #14E7E8;
-            font-size: 12px;
-            color: #353535;
-            line-height: 1.8;
-            margin-top: 14px;
-        }}
-
-        .history-intro {{
-            background: white;
-            border-radius: 10px;
-            padding: 14px 20px;
-            box-shadow: 0 2px 8px rgba(2,2,2,0.06);
-            margin-bottom: 20px;
-            font-size: 12px;
-            color: #676767;
-            display: none;
-            border-left: 3px solid #7C8CEF;
-            border-top: 1px solid #F0EEE9;
-            border-right: 1px solid #F0EEE9;
-            border-bottom: 1px solid #F0EEE9;
-        }}
-
-        .datavant-badge {{
-            display: inline-block;
-            background: #020202;
-            color: #14E7E8;
-            font-size: 9px;
-            font-weight: 700;
-            padding: 2px 8px;
-            border-radius: 10px;
-            margin-left: 6px;
-            letter-spacing: 0.5px;
-        }}
-
         footer {{
             text-align: center;
             padding: 20px;
             font-size: 11px;
-            color: #9A9A9A;
-            border-top: 1px solid #D9D7D1;
+            color: #94a3b8;
+            border-top: 1px solid #eef0f3;
             background: white;
         }}
 
         .hidden {{ display: none !important; }}
+
+        @media (max-width: 1100px) {{
+            .main-grid {{ grid-template-columns: 1fr; }}
+            .stats-row {{ grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }}
+        }}
+
+        @media (max-width: 768px) {{
+            .sidebar {{ display: none; }}
+            .content {{ padding: 16px; }}
+            .topbar {{ padding: 16px 20px; }}
+        }}
     </style>
 </head>
 <body>
 
-<header>
-    <div>
-        <h1>Datavant <span>Readability</span> Tool</h1>
-        <p>Technical Writing Team · Powered by Python textstat and Claude AI</p>
-    </div>
-    <div class="target-badge">🎯 Target: Grade 12 or below</div>
-</header>
+<div class="layout">
 
-<div class="stats-bar">
-    <div class="stat">
-        <div class="stat-number">{total}</div>
-        <div class="stat-label">Total Articles</div>
-    </div>
-    <div class="stat">
-        <div class="stat-number good">{good_count}</div>
-        <div class="stat-label">Meets Target</div>
-    </div>
-    <div class="stat">
-        <div class="stat-number warning">{warning_count}</div>
-        <div class="stat-label">Needs Improvement</div>
-    </div>
-    <div class="stat">
-        <div class="stat-number bad">{bad_count}</div>
-        <div class="stat-label">Needs Significant Work</div>
-    </div>
-    <div class="stat">
-        <div class="stat-number">{avg_score}</div>
-        <div class="stat-label">Average Score</div>
+    <aside class="sidebar">
+        <div class="logo">data<span>vant</span></div>
+        <div class="nav-item active"><span class="nav-icon">⌂</span> Overview</div>
+        <div class="nav-item"><span class="nav-icon">📄</span> Articles</div>
+        <div class="nav-item"><span class="nav-icon">⏱</span> Run history</div>
+        <div class="nav-item"><span class="nav-icon">📊</span> Insights</div>
+        <div class="nav-item"><span class="nav-icon">📋</span> Reports</div>
+        <div class="nav-item"><span class="nav-icon">⚙</span> Settings</div>
+        <div class="sidebar-footer">
+            <div class="sidebar-footer-title">🛡 Automated</div>
+            <div class="sidebar-footer-text">Scores update every 4 hours on weekdays</div>
+        </div>
+    </aside>
+
+    <div class="main-wrap">
+
+        <header class="topbar">
+            <div class="topbar-left">
+                <h1>Readability <span>Tool</span></h1>
+                <p>Readability insights across your Datavant knowledge base</p>
+            </div>
+            <div class="user-badge">
+                <div class="user-avatar">TW</div>
+                <span>Technical Writing</span>
+            </div>
+        </header>
+
+        <div class="content">
+
+            <div class="stats-row">
+                <div class="stat-card">
+                    <div class="stat-icon">📄</div>
+                    <div class="stat-label">Total tested</div>
+                    <div class="stat-value">{total}</div>
+                    <div class="stat-sub">Articles analysed</div>
+                </div>
+                <div class="stat-card meets">
+                    <div class="stat-icon">✓</div>
+                    <div class="stat-label">Meets target</div>
+                    <div class="stat-value">{good_count}</div>
+                    <div class="stat-sub">{good_pct}% of total</div>
+                </div>
+                <div class="stat-card improve">
+                    <div class="stat-icon">📈</div>
+                    <div class="stat-label">Needs improvement</div>
+                    <div class="stat-value">{warning_count}</div>
+                    <div class="stat-sub">{warning_pct}% of total</div>
+                </div>
+                <div class="stat-card significant">
+                    <div class="stat-icon">!</div>
+                    <div class="stat-label">Needs significant work</div>
+                    <div class="stat-value">{bad_count}</div>
+                    <div class="stat-sub">{bad_pct}% of total</div>
+                </div>
+                <div class="stat-card average">
+                    <div class="stat-icon">⚙</div>
+                    <div class="stat-label">Average score</div>
+                    <div class="stat-value">{avg_score}</div>
+                    <div class="stat-sub">Grade level</div>
+                </div>
+            </div>
+
+            <div class="main-grid">
+                <div class="analyse-card">
+                    <div class="analyse-header">
+                        <div>
+                            <h2>Analyse a new article</h2>
+                            <p>Paste a Zendesk article URL into the Google Sheet to queue it for analysis. The tool runs automatically and updates this dashboard every 4 hours.</p>
+                        </div>
+                        <div class="analyse-illustration">📄</div>
+                    </div>
+                    <a class="sheets-link" href="https://docs.google.com/spreadsheets/d/{GOOGLE_SHEET_ID}" target="_blank">
+                        📊 Open Datavant Help Center Articles →
+                    </a>
+                    <div class="sheets-info">
+                        <strong>How to add a new article:</strong><br>
+                        1. Open the article in Zendesk and copy the URL<br>
+                        2. Click the button above to open the Google Sheet<br>
+                        3. Paste the URL in column A of a new row<br>
+                        4. Leave column C blank — the analysis runs automatically
+                    </div>
+                    <div class="auto-note">
+                        <span class="auto-note-icon">✓</span>
+                        Runs automatically every 4 hours on weekdays and 7am on weekends
+                    </div>
+                </div>
+
+                <div class="side-col">
+                    <div class="side-panel">
+                        <div class="side-panel-header">
+                            <div class="side-panel-title">System status</div>
+                            <div class="status-indicator"><span class="status-dot"></span> Operational</div>
+                        </div>
+                        <div class="side-row">
+                            <span class="side-row-label">⏱ Last updated</span>
+                            <span class="side-row-value">{today}</span>
+                        </div>
+                        <div class="side-row">
+                            <span class="side-row-label">📄 Articles processed</span>
+                            <span class="side-row-value">{total}</span>
+                        </div>
+                        <div class="side-row">
+                            <span class="side-row-label">✓ Meets target</span>
+                            <span class="side-row-value">{good_count} articles</span>
+                        </div>
+                    </div>
+
+                    <div class="target-panel">
+                        <div class="target-icon">🎯</div>
+                        <div class="target-text">
+                            <h3>Target: Grade 12 or below</h3>
+                            <p>Content should be readable for anyone at leaving cert level and above. Average score: {avg_score}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section-header">
+                <div>
+                    <div class="section-title">All article results</div>
+                    <div class="section-sub">Last updated: {today}</div>
+                </div>
+            </div>
+
+            <div class="controls-bar" id="controls-bar">
+                <div class="search-wrap">
+                    <span class="search-icon">🔍</span>
+                    <input type="text" id="searchInput" placeholder="Search articles..." oninput="handleSearch()" />
+                    <span class="search-count" id="searchCount"></span>
+                </div>
+                <div class="sort-wrap">
+                    <button class="sort-btn active" onclick="sortCards('score-high', this)">Score ↓</button>
+                    <button class="sort-btn" onclick="sortCards('score-low', this)">Score ↑</button>
+                    <button class="sort-btn" onclick="sortCards('date-new', this)">Newest</button>
+                    <button class="sort-btn" onclick="sortCards('date-old', this)">Oldest</button>
+                    <button class="sort-btn" onclick="sortCards('alpha', this)">A → Z</button>
+                </div>
+            </div>
+
+            <div class="filter-bar">
+                <button class="filter-btn active" onclick="filterCards('all', this)">All articles ({total})</button>
+                <button class="filter-btn good-filter" onclick="filterCards('good', this)">✓ Meets target ({good_count})</button>
+                <button class="filter-btn warning-filter" onclick="filterCards('warning', this)">Needs improvement ({warning_count})</button>
+                <button class="filter-btn bad-filter" onclick="filterCards('bad', this)">Needs significant work ({bad_count})</button>
+                <button class="filter-btn history-filter" onclick="filterCards('history', this)">📈 Score history</button>
+            </div>
+
+            <div class="legend" id="legend-bar">
+                <span class="legend-title">Score guide:</span>
+                <div class="legend-item"><div class="legend-dot good"></div><span>12.0 or below — Meets target</span></div>
+                <div class="legend-item"><div class="legend-dot warning"></div><span>12.1 to 14.9 — Needs improvement</span></div>
+                <div class="legend-item"><div class="legend-dot bad"></div><span>15.0 and above — Needs significant work</span></div>
+                <div class="legend-item"><span class="python-badge">Python</span><span>Consistent scores by textstat</span></div>
+            </div>
+
+            <div class="history-intro" id="history-intro">
+                📈 <strong>Score history</strong> shows how each article has changed over time.
+                Scores are calculated by Python textstat so changes reflect genuine article rewrites not AI variation.
+            </div>
+
+            <div class="no-results" id="no-results">
+                <div class="no-results-icon">🔍</div>
+                <div>No articles found matching your search</div>
+            </div>
+
+            <div class="articles-grid" id="articles-grid">
+                {cards_html}
+            </div>
+
+            <div class="articles-grid" id="history-grid" style="display:none">
+                {history_cards_html}
+            </div>
+
+        </div>
+
+        <footer>
+            Readability Tool · Datavant Technical Writing Team · Built by Cian Gallagher
+        </footer>
+
     </div>
 </div>
-
-<div class="main">
-
-    <div class="analyse-section">
-        <h2>Analyse a New Article</h2>
-        <p>
-            Paste a Zendesk article URL into the Google Sheet to queue it for analysis.
-            The tool runs automatically and updates this dashboard within 4 hours.
-        </p>
-        <a class="sheets-link" href="https://docs.google.com/spreadsheets/d/{GOOGLE_SHEET_ID}" target="_blank">
-            📊 Open Datavant Help Center Articles
-        </a>
-        <div class="sheets-info">
-            <strong>How to add a new article:</strong><br>
-            1. Open the article in Zendesk and copy the URL<br>
-            2. Click the button above to open the Google Sheet<br>
-            3. Paste the URL in column A of a new row<br>
-            4. Leave column C blank — the analysis runs automatically
-        </div>
-    </div>
-
-    <div class="section-title">All Article Results</div>
-    <div class="last-updated">Last updated: {today}</div>
-
-    <div class="controls-bar" id="controls-bar">
-        <div class="search-wrap">
-            <span class="search-icon">🔍</span>
-            <input type="text" id="searchInput" placeholder="Search articles..." oninput="handleSearch()" />
-            <span class="search-count" id="searchCount"></span>
-        </div>
-        <div class="sort-wrap">
-            <button class="sort-btn active" onclick="sortCards('score-high', this)">Score ↓</button>
-            <button class="sort-btn" onclick="sortCards('score-low', this)">Score ↑</button>
-            <button class="sort-btn" onclick="sortCards('date-new', this)">Newest</button>
-            <button class="sort-btn" onclick="sortCards('date-old', this)">Oldest</button>
-            <button class="sort-btn" onclick="sortCards('alpha', this)">A → Z</button>
-        </div>
-    </div>
-
-    <div class="filter-bar">
-        <button class="filter-btn active" onclick="filterCards('all', this)">All Articles ({total})</button>
-        <button class="filter-btn good-filter" onclick="filterCards('good', this)">✅ Meets Target ({good_count})</button>
-        <button class="filter-btn warning-filter" onclick="filterCards('warning', this)">⚠️ Needs Improvement ({warning_count})</button>
-        <button class="filter-btn bad-filter" onclick="filterCards('bad', this)">🔴 Needs Significant Work ({bad_count})</button>
-        <button class="filter-btn history-filter" onclick="filterCards('history', this)">📈 Score History</button>
-    </div>
-
-    <div class="legend" id="legend-bar">
-        <span class="legend-title">Score Guide:</span>
-        <div class="legend-item"><div class="legend-dot good"></div><span>12.0 or below = Meets Target</span></div>
-        <div class="legend-item"><div class="legend-dot warning"></div><span>12.1 to 14.9 = Needs Improvement</span></div>
-        <div class="legend-item"><div class="legend-dot bad"></div><span>15.0 and above = Needs Significant Work</span></div>
-        <div class="legend-item"><span class="datavant-badge">Python</span><span>Consistent mathematical scores</span></div>
-    </div>
-
-    <div class="history-intro" id="history-intro">
-        📈 <strong>Score History</strong> shows how each article has changed over time.
-        Because scores are calculated by Python textstat, any change here reflects
-        a genuine article rewrite — not AI variation.
-    </div>
-
-    <div class="no-results" id="no-results">
-        <div class="no-results-icon">🔍</div>
-        <div>No articles found matching your search</div>
-    </div>
-
-    <div class="articles-grid" id="articles-grid">
-        {cards_html}
-    </div>
-
-    <div class="articles-grid" id="history-grid" style="display:none">
-        {history_cards_html}
-    </div>
-
-</div>
-
-<footer>
-    Datavant Readability Tool · Technical Writing Team · Built by Cian Gallagher
-</footer>
 
 <script>
 let currentFilter = 'all';
