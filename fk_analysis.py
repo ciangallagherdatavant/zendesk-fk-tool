@@ -1283,12 +1283,15 @@ def build_dashboard(results):
 
     <aside class="sidebar">
         <div class="logo">data<span>vant</span></div>
-        <div class="nav-item active"><span class="nav-icon">⌂</span> Overview</div>
-        <div class="nav-item"><span class="nav-icon">📄</span> Articles</div>
-        <div class="nav-item"><span class="nav-icon">⏱</span> Run history</div>
-        <div class="nav-item"><span class="nav-icon">📊</span> Insights</div>
-        <div class="nav-item"><span class="nav-icon">📋</span> Reports</div>
-        <div class="nav-item"><span class="nav-icon">⚙</span> Settings</div>
+        <button class="nav-item active" id="nav-overview" onclick="navTo('overview')">
+            <span class="nav-icon">⌂</span> Overview
+        </button>
+        <button class="nav-item" id="nav-articles" onclick="navTo('articles')">
+            <span class="nav-icon">📄</span> Articles
+        </button>
+        <button class="nav-item" id="nav-history" onclick="navTo('history')">
+            <span class="nav-icon">⏱</span> Score History
+        </button>
         <div class="sidebar-footer">
             <div class="sidebar-footer-title">🛡 Automated</div>
             <div class="sidebar-footer-text">Scores update every 4 hours on weekdays</div>
@@ -1297,7 +1300,7 @@ def build_dashboard(results):
 
     <div class="main-wrap">
 
-        <header class="topbar">
+        <header class="topbar" id="section-overview">
             <div class="topbar-left">
                 <h1>Readability <span>Tool</span></h1>
                 <p>Readability insights across your Datavant knowledge base</p>
@@ -1398,7 +1401,7 @@ def build_dashboard(results):
                 </div>
             </div>
 
-            <div class="section-header">
+            <div class="section-header" id="section-articles">
                 <div>
                     <div class="section-title">All article results</div>
                     <div class="section-sub">Last updated: {today}</div>
@@ -1421,11 +1424,11 @@ def build_dashboard(results):
             </div>
 
             <div class="filter-bar">
-                <button class="filter-btn active" onclick="filterCards('all', this)">All articles ({total})</button>
+                <button class="filter-btn active" id="filter-all" onclick="filterCards('all', this)">All articles ({total})</button>
                 <button class="filter-btn good-filter" onclick="filterCards('good', this)">✓ Meets target ({good_count})</button>
                 <button class="filter-btn warning-filter" onclick="filterCards('warning', this)">Needs improvement ({warning_count})</button>
                 <button class="filter-btn bad-filter" onclick="filterCards('bad', this)">Needs significant work ({bad_count})</button>
-                <button class="filter-btn history-filter" onclick="filterCards('history', this)">📈 Score history</button>
+                <button class="filter-btn history-filter" id="filter-history" onclick="filterCards('history', this)">📈 Score history</button>
             </div>
 
             <div class="legend" id="legend-bar">
@@ -1464,6 +1467,25 @@ def build_dashboard(results):
 </div>
 
 <script>
+function navTo(section) {{
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    if (section === 'overview') {{
+        document.getElementById('nav-overview').classList.add('active');
+        window.scrollTo({{ top: 0, behavior: 'smooth' }});
+    }} else if (section === 'articles') {{
+        document.getElementById('nav-articles').classList.add('active');
+        filterCards('all', document.getElementById('filter-all'));
+        setTimeout(function() {{
+            var el = document.getElementById('section-articles');
+            if (el) el.scrollIntoView({{ behavior: 'smooth' }});
+        }}, 100);
+    }} else if (section === 'history') {{
+        document.getElementById('nav-history').classList.add('active');
+        filterCards('history', document.getElementById('filter-history'));
+        window.scrollTo({{ top: 0, behavior: 'smooth' }});
+    }}
+}}
+
 let currentFilter = 'all';
 let currentSort = 'score-high';
 let currentSearch = '';
