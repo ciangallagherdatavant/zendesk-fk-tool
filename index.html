@@ -739,14 +739,14 @@
 
 <div class="layout">
 
-    <aside class="sidebar">
+   <aside class="sidebar">
         <div class="logo">data<span>vant</span></div>
-        <div class="nav-item active"><span class="nav-icon">⌂</span> Overview</div>
-        <div class="nav-item"><span class="nav-icon">📄</span> Articles</div>
-        <div class="nav-item"><span class="nav-icon">⏱</span> Run history</div>
-        <div class="nav-item"><span class="nav-icon">📊</span> Insights</div>
-        <div class="nav-item"><span class="nav-icon">📋</span> Reports</div>
-        <div class="nav-item"><span class="nav-icon">⚙</span> Settings</div>
+        <div class="nav-item active" onclick="window.scrollTo({top:0,behavior:'smooth'})" style="cursor:pointer"><span class="nav-icon">⌂</span> Overview</div>
+        <div class="nav-item" onclick="document.querySelector('.section-title').scrollIntoView({behavior:'smooth'})" style="cursor:pointer"><span class="nav-icon">📄</span> Articles</div>
+        <div class="nav-item" onclick="document.getElementById('history-grid').scrollIntoView({behavior:'smooth'});filterCards('history',document.querySelector('.history-filter'))" style="cursor:pointer"><span class="nav-icon">⏱</span> Run history</div>
+        <div class="nav-item" onclick="alert('Coming soon')" style="cursor:pointer"><span class="nav-icon">📊</span> Insights</div>
+        <div class="nav-item" onclick="alert('Coming soon')" style="cursor:pointer"><span class="nav-icon">📋</span> Reports</div>
+        <div class="nav-item" onclick="alert('Coming soon')" style="cursor:pointer"><span class="nav-icon">⚙</span> Settings</div>
         <div class="sidebar-footer">
             <div class="sidebar-footer-title">🛡 Automated</div>
             <div class="sidebar-footer-text">Scores update every 4 hours on weekdays</div>
