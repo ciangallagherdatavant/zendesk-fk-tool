@@ -1285,15 +1285,12 @@ def build_dashboard(results):
 
     <aside class="sidebar">
         <div class="logo">data<span>vant</span></div>
-        <button class="nav-item active" id="nav-overview" onclick="navTo('overview')">
-            <span class="nav-icon">⌂</span> Overview
-        </button>
-        <button class="nav-item" id="nav-articles" onclick="navTo('articles')">
-            <span class="nav-icon">📄</span> Articles
-        </button>
-        <button class="nav-item" id="nav-history" onclick="navTo('history')">
-            <span class="nav-icon">⏱</span> Score History
-        </button>
+        <div class="nav-item active" onclick="window.scrollTo({{top:0,behavior:'smooth'}})" style="cursor:pointer"><span class="nav-icon">⌂</span> Overview</div>
+        <div class="nav-item" onclick="document.querySelector('.section-title').scrollIntoView({{behavior:'smooth'}})" style="cursor:pointer"><span class="nav-icon">📄</span> Articles</div>
+        <div class="nav-item" onclick="document.getElementById('section-history').scrollIntoView({{behavior:'smooth'}});filterCards('history',document.querySelector('.history-filter'))" style="cursor:pointer"><span class="nav-icon">⏱</span> Run history</div>
+        <div class="nav-item" onclick="alert('Coming soon')" style="cursor:pointer"><span class="nav-icon">📊</span> Insights</div>
+        <div class="nav-item" onclick="alert('Coming soon')" style="cursor:pointer"><span class="nav-icon">📋</span> Reports</div>
+        <div class="nav-item" onclick="alert('Coming soon')" style="cursor:pointer"><span class="nav-icon">⚙</span> Settings</div>
         <div class="sidebar-footer">
             <div class="sidebar-footer-title">🛡 Automated</div>
             <div class="sidebar-footer-text">Scores update every 4 hours on weekdays</div>
