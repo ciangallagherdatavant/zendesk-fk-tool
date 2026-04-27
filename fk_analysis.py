@@ -1264,6 +1264,8 @@ def build_dashboard(results):
         }}
 
         .hidden {{ display: none !important; }}
+#section-overview, #section-articles, #section-history {{ scroll-margin-top: 20px; }}
+
 
         @media (max-width: 1100px) {{
             .main-grid {{ grid-template-columns: 1fr; }}
@@ -1453,7 +1455,7 @@ def build_dashboard(results):
                 {cards_html}
             </div>
 
-            <div class="articles-grid" id="history-grid" style="display:none">
+            <div class="articles-grid" id="section-history" style="display:none">
                 {history_cards_html}
             </div>
 
@@ -1471,18 +1473,19 @@ function navTo(section) {{
     document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
     if (section === 'overview') {{
         document.getElementById('nav-overview').classList.add('active');
-        window.scrollTo({{ top: 0, behavior: 'smooth' }});
+        document.getElementById('section-overview').scrollIntoView({{ behavior: 'smooth', block: 'start' }});
     }} else if (section === 'articles') {{
         document.getElementById('nav-articles').classList.add('active');
         filterCards('all', document.getElementById('filter-all'));
         setTimeout(function() {{
-            var el = document.getElementById('section-articles');
-            if (el) el.scrollIntoView({{ behavior: 'smooth' }});
-        }}, 100);
+            document.getElementById('section-articles').scrollIntoView({{ behavior: 'smooth', block: 'start' }});
+        }}, 150);
     }} else if (section === 'history') {{
         document.getElementById('nav-history').classList.add('active');
         filterCards('history', document.getElementById('filter-history'));
-        window.scrollTo({{ top: 0, behavior: 'smooth' }});
+        setTimeout(function() {{
+            document.getElementById('section-history').scrollIntoView({{ behavior: 'smooth', block: 'start' }});
+        }}, 150);
     }}
 }}
 
@@ -1513,7 +1516,7 @@ function filterCards(status, btn) {{
     currentFilter = status;
 
     const articlesGrid = document.getElementById('articles-grid');
-    const historyGrid = document.getElementById('history-grid');
+    const historyGrid = document.getElementById('section-history');
     const legendBar = document.getElementById('legend-bar');
     const historyIntro = document.getElementById('history-intro');
     const controlsBar = document.getElementById('controls-bar');
