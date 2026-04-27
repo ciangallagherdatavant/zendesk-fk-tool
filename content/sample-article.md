@@ -39,15 +39,3 @@ Copy
 6. Press **Command + S** to save
 
 ---
-
-## Why This Sample File is So Useful
-It contains all the tricky things Claude needs to learn to handle:
-- The word **Tokenization** which is a team name not a complex word
-- A **code block** that should be ignored in scoring
-- An **image reference** that should be ignored in scoring
-- Normal readable text that should be scored
-
----
-
-## When You Have Saved That File
-Tell me and we will move straight into writing the Claude prompt which is the brain of the whole tool. This is where it gets really interesting!Add to Conversation903

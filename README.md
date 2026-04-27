@@ -1,34 +1,34 @@
-# Zendesk FK Readability Analysis Tool
+# Datavant Readability Tool
 
-## What This Tool Does
-This tool performs automated Flesch-Kincaid Grade Level (FKGL) 
-readability assessments on Zendesk help centre content.
+Automated Flesch-Kincaid readability analysis for Datavant's Zendesk
+help centre articles.
 
-It is designed for the Datavant technical writing team to quickly 
-assess and improve the readability of their documentation.
+**Live Dashboard:** https://ciangallagherdatavant.github.io/zendesk-fk-tool/
 
-## How it Works
-1. Zendesk article content is exported and stored in the content folder
-2. The content is pasted into Claude Console Workbench
-3. Claude applies the FK formula using the official exclusion criteria
-4. A full grade level score and breakdown is returned in seconds
-5. Results are saved to the results folder for record keeping
+## What It Does
+- Fetches Zendesk articles via the Zendesk API
+- Calculates the Flesch-Kincaid Grade Level using Python's `textstat`
+  library (consistent, mathematical, no AI variance)
+- Uses Claude AI to generate plain-English recommendations and
+  WCAG 2.2 writing accessibility notes
+- Publishes results to a live dashboard
+- Runs automatically every 4 hours via GitHub Actions
 
 ## Target Score
-All content should aim for Grade 8 or below on the 
-Flesch-Kincaid Grade Level scale.
+Grade 12 or below for all Datavant help centre content.
 
-## Repository Structure
-- content/ - Zendesk articles for analysis
-- prompts/ - Claude analysis prompt and exclusion criteria
-- results/ - Saved FK analysis outputs
+## How to Add an Article
+Paste the Zendesk URL into column A of the linked Google Sheet.
+The next scheduled run will analyse it automatically.
 
-## How to Use
-See HOW-TO-USE.md for full instructions
+Full instructions in [HOW-TO-USE.md](HOW-TO-USE.md).
 
-## Tool Location
-Claude Console Workbench - FK Readability Analysis Tool
-platform.claude.com
+## Architecture
+- `fk_analysis.py` — main script
+- `index.html` — auto-generated dashboard
+- `results/` — markdown record of every analysis
+- `.github/workflows/analyse.yml` — schedule
+- `prompts/` — reference copy of Claude prompt
 
 ## Built By
-Cian Gallagher - Intern Engineer
+Cian Gallagher · Datavant Technical Writing Team
